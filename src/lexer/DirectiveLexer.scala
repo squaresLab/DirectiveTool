@@ -9,8 +9,8 @@ object DirectiveLexer extends RegexParsers {
 
   def apply(code: String): Either[LexerError, List[DirectiveToken]] = {
     parse(tokens, code) match {
-      case Failure(message, next) => Left(LexerError(Location(next.pos.line, next.pos.column), message))
-      case Error(message, next) => Left(LexerError(Location(next.pos.line, next.pos.column), message))
+      case Failure(message, next) => Left(LexerError(Location(next.pos.line, next.pos.column), message+"\n"+next.rest.first))
+      case Error(message, next) => Left(LexerError(Location(next.pos.line, next.pos.column), message+"\n"+next.rest.first))
       case Success(result, _) => Right(result)
     }
   }
@@ -32,7 +32,8 @@ object DirectiveLexer extends RegexParsers {
 
       // if the indentation level stays unchanged, no tokens are produced
       case Some(INDENTATION(spaces)) if spaces == indents.head =>
-        NEW_LINE :: processIndentation(tokens.tail, indents)
+        //NEW_LINE :: processIndentation(tokens.tail, indents)
+        processIndentation(tokens.tail, indents)
 
       //other tokens are ignored
       case Some(token) =>
@@ -46,7 +47,18 @@ object DirectiveLexer extends RegexParsers {
   }
 
   def identifier: Parser[IDENTIFIER] = {
-    "[a-zA-Z][_a-zA-Z1-9]+".r ^^ { str => IDENTIFIER(str)}
+    "[a-zA-Z][_a-zA-Z0-9]+".r ^^ { str => IDENTIFIER(str)}
+  }
+
+  def refIdentifier: Parser[REFERENCE_IDENTIFIER] = {
+    "@[_a-zA-Z0-9]+".r ^^ { str => REFERENCE_IDENTIFIER(str)}
+  }
+
+  def objectMethodCall: Parser[METHOD_CALL] = {
+    """[a-zA-Z][_a-zA-Z0-9]+\.[_a-zA-Z]+\(.*\)""".r ^^ { str =>
+      val callInfo = str.split('.')
+      METHOD_CALL(callInfo(0),callInfo(1))
+    }
   }
 
   def indentation: Parser[INDENTATION] = positioned {
@@ -59,17 +71,25 @@ object DirectiveLexer extends RegexParsers {
 
 
   def tokens: Parser[List[DirectiveToken]] = {
-    phrase(rep1(colon | equals | comma | or | and | leftAngleBracket | rightAngleBracket| binaryState | statesHeader | indentation | identifier)) ^^
+    phrase(rep1(colon | equals | comma | or | and | leftAngleBracket | rightAngleBracket|
+      binaryState | statesHeader |  period | indentation | directiveHeader | allowWhen |
+      require | in | not | objectMethodCall | identifier | refIdentifier )) ^^
     { rawTokens => processIndentation(rawTokens)}
   }
 
   def colon = positioned {":"                   ^^ {_ => COLON}}
   def equals = positioned {"="                  ^^ {_ => EQUALS}}
   def comma = positioned {","                   ^^ {_ => COMMA}}
+  def period = positioned{"."                   ^^ {_ => PERIOD}}
   def statesHeader = positioned { "States:"     ^^ {_ => STATES_HEADER}}
   def or = positioned { "or"                    ^^ {_ => OR}}
   def and = positioned{ "and"                   ^^ {_ => AND}}
   def leftAngleBracket = positioned {"<"        ^^ {_ => LEFT_ANGLE_BRACKET}}
   def rightAngleBracket = positioned { ">"      ^^ {_ => RIGHT_ANGLE_BRACKET}}
-  def binaryState = positioned { "binary-state" ^^ {_ => BINARY_STATE}}
+  def binaryState = positioned { "Binary-state" ^^ {_ => BINARY_STATE}}
+  def directiveHeader = positioned { "Directives:" ^^ {_ => DIRECTIVE_HEADER}}
+  def allowWhen = positioned {"allow-when"      ^^ {_ => ALLOW_WHEN}}
+  def require = positioned{"require"            ^^ {_ => REQUIRE}}
+  def in = positioned{"in"                      ^^ {_ => IN}}
+  def not = positioned{"not"               ^^ {_ => NOT}}
 }
