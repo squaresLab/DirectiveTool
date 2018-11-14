@@ -1,14 +1,13 @@
 import org.xmlpull.v1.XmlPullParserException
-import soot.{PhaseOptions, Scene, SootClass, SootMethod}
-import soot.jimple.infoflow.android.SetupApplication
 import java.io.IOException
 import java.util
 
-import soot.JastAddJ.Stmt
+import soot.jimple.Stmt
+import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 import soot.jimple.infoflow.InfoflowConfiguration
-import soot.jimple.infoflow.InfoflowConfiguration.{CallgraphAlgorithm, CodeEliminationMode, ImplicitFlowMode}
-import soot.jimple.infoflow.android.entryPointCreators.AndroidEntryPointConstants
-import soot.jimple.infoflow.solver.cfg.{IInfoflowCFG, InfoflowCFG}
+import soot.jimple.infoflow.InfoflowConfiguration.{CallgraphAlgorithm, ImplicitFlowMode}
+import soot.jimple.infoflow.android.SetupApplication
+import soot.jimple.infoflow.solver.cfg.InfoflowCFG
 import soot.jimple.toolkits.ide.icfg.OnTheFlyJimpleBasedICFG
 import soot.options.Options
 
@@ -55,7 +54,7 @@ object ExtractCFGMain {
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
         uBox.getUnit() match {
           case stmt: Stmt =>
-            println(stmt.toString)
+            println(stmt.toString())
           case x =>
             println(x.toString())
         }
