@@ -64,10 +64,6 @@ object DetectSetArgumentsMain {
         }
 
         def superClassIsActionBarTabListener(c: SootClass): Boolean = {
-          //I was going to make this method not application specific but FlowDroid seems to
-          //fail to be able to get the parent class of a nested class, even when the
-          //parent class is declared in the file. I might have to add this functionality myself
-          //if (c.getName().contains("ActionBar.TabListener")) {
           if (c.getName().contains("TabListener")){
             return true
           }
