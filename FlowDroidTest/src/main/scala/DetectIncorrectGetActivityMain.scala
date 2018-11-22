@@ -82,6 +82,7 @@ object DetectIncorrectGetActivityMain {
     //of which class is calling getActivity to make the checker better
     val methodNameToCheckFor = "getActivity"
     var callChains: List[ControlFlowChain] = List()
+    val checkingClasses = true
     //not sure how to write this functionally; might want to figure out later to clean this
     //up but I'm going to implement the quick way first
     while (stillChanging) {
@@ -100,7 +101,7 @@ object DetectIncorrectGetActivityMain {
               if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
                 println(s"found method in: ${stmt} ")
                 extractMethodCallInStatement(stmt) match {
-                  case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m))))
+                  case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
                   case None => ()
                 }
                 println(s"size of new call chains: ${newCallChains.size}")
@@ -137,7 +138,7 @@ object DetectIncorrectGetActivityMain {
                 }
                 if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall) {
                   println(s"found match")
-                  val newChain = (new ControlFlowItem(m) +: chainToCheck.controlChain)
+                  val newChain = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
                   newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(newChain))
                   chainToCheck.wasExtended = true
                   stillChanging = true
@@ -172,17 +173,15 @@ object DetectIncorrectGetActivityMain {
     }
     println("call chains")
     for (callChain <- callChains) {
-      for (item <- callChain.controlChain) {
-        print(s"${item.methodCall.toString()} ")
-      }
-      println("")
+      println(s"${callChain.controlChain}")
     }
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))){
+      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
+      && (!checkingClasses || !chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
         val errorString = "@@@@ Found a problem: getActivity may be called when " +
           "the Fragment is not attached to an Activity" +
-          s"call sequence ${chain.controlChain}"
+          s": call sequence ${chain.controlChain}"
         println(errorString)
         System.out.flush()
         System.err.println(errorString)
@@ -191,6 +190,18 @@ object DetectIncorrectGetActivityMain {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+  }
+
+  def classIsSubClassOfFragment(c: SootClass): Boolean = {
+    if(c.toString() == "android.app.Fragment"){
+      return true
+    } else {
+      if(c.hasSuperclass) {
+        return classIsSubClassOfFragment(c.getSuperclass)
+      } else {
+        return false
+      }
+    }
   }
 
   def addControlFlowChain(controlFlowChainList: List[ControlFlowChain], controlFlowChainToAdd: ControlFlowChain): List[ControlFlowChain] = {

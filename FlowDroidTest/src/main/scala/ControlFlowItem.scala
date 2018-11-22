@@ -24,9 +24,10 @@ class ControlFlowItem(val methodCall: SootMethod, isCheckingClasses: Boolean = t
     val prime = 31
     var result = 1
     //might need to change this to the hashCode of the string if the objects are not equal when the names are
-    result = prime * result + methodCall.hashCode;
     if(isCheckingClasses) {
-      result = prime * result + methodCall.getDeclaringClass.hashCode()
+      result = prime * result + methodCall.hashCode;
+    } else {
+      result = prime * result + methodCall.getName.hashCode
     }
     return result
   }
@@ -35,7 +36,7 @@ class ControlFlowItem(val methodCall: SootMethod, isCheckingClasses: Boolean = t
     if (isCheckingClasses){
       return methodCall.toString()
     } else {
-      return methodCall.getName.toString()
+      return methodCall.getName
     }
   }
 }
