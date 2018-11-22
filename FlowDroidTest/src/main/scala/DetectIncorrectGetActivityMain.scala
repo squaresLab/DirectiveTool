@@ -97,14 +97,11 @@ object DetectIncorrectGetActivityMain {
           for (m: SootMethod <- cl.getMethods().asScala) {
             for (stmt <- m.getActiveBody.getUnits.asScala) {
               //println("in second for")
-              println(s"checking ${stmt} ")
               if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
-                println(s"found method in: ${stmt} ")
                 extractMethodCallInStatement(stmt) match {
                   case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
                   case None => ()
                 }
-                println(s"size of new call chains: ${newCallChains.size}")
                 stillChanging = true
               }
               for (chainToCheck <- callChains) {
@@ -129,52 +126,26 @@ object DetectIncorrectGetActivityMain {
 
                 //If we find the method we are interested in. Add it to the call chain
                 val possibleMethod = extractMethodCallInStatement(stmt)
-                if (chainToCheck.controlChain.size > 0 && stmt.toString().contains("loadBitmapFromContactUri") && chainToCheck.controlChain.head.toString.contains("loadBitmapFromContactUri")) {
-                  println(s"chain to check : ${chainToCheck.controlChain.head.methodCall.toString()}")
-                  println("")
-                  //println(possibleMethod.get)
-                  println(chainToCheck.controlChain.head.methodCall)
-                  extractMethodCallInStatement(stmt)
-                }
                 if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall) {
-                  println(s"found match")
                   val newChain = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
                   newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(newChain))
                   chainToCheck.wasExtended = true
                   stillChanging = true
                 }
-
-                println(stmt.getUnitBoxes())
-                for (unitBox <- stmt.getUnitBoxes.asScala) {
-                  println(s"all uses in ${unitBox.toString()}")
-                  for (use <- unitBox.getUnit.getUseBoxes.asScala) {
-                    println(use)
-                    //new ControlFlowItem(stmt.rightBox.value.methodRef)
-                  }
-                }
-                println("")
               }
             }
           }
         }
       }
-      println("saved call chains")
       val savedCallChains = callChains.filter(x => !x.wasExtended)
-      for (callChain <- savedCallChains) {
-        println(s"${callChain.controlChain}")
-      }
       newCallChains = newCallChains ++ callChains.filter(x => !x.wasExtended)
-      println("new call chains")
-      for (callChain <- newCallChains) {
-        println(s"${callChain.controlChain}")
-      }
       callChains = newCallChains
       stillOnFirstPass = false
     }
-    println("call chains")
+/*    println("call chains")
     for (callChain <- callChains) {
       println(s"${callChain.controlChain}")
-    }
+    }*/
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
       if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
@@ -217,7 +188,6 @@ object DetectIncorrectGetActivityMain {
     def handleStmt(stmt: soot.jimple.Stmt): Option[SootMethod] = {
       stmt match {
         case assignmentStatment: JAssignStmt => {
-          println(s"right side: ${assignmentStatment.rightBox.getValue} class :- ${assignmentStatment.rightBox.getValue.getClass.toString()}")
           assignmentStatment.rightBox.getValue match {
             case staticExpr: JStaticInvokeExpr => {
               return Some(staticExpr.getMethod)
@@ -230,7 +200,6 @@ object DetectIncorrectGetActivityMain {
               return Some(linkedBox.getMethod)
             }
             case _ => {
-              //println(s"${assignmentStatment.rightBox.getValue.getClass.toString()}")
               return None}
           }
         }

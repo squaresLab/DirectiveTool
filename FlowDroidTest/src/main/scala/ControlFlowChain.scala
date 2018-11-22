@@ -6,8 +6,6 @@ class ControlFlowChain(val controlChain: List[ControlFlowItem], var wasExtended 
     that match {
       case that: ControlFlowChain => {
         if(that.canEqual(this)) {
-          println(s"hash code comparison result: ${(this.hashCode == that.hashCode)}")
-          println(s"alternative equals check result: ${alternativeEqualsCheck(that)}")
           assert ((this.hashCode == that.hashCode) == alternativeEqualsCheck(that))
           return this.hashCode == that.hashCode
         } else {
@@ -19,16 +17,13 @@ class ControlFlowChain(val controlChain: List[ControlFlowItem], var wasExtended 
 
   def alternativeEqualsCheck(chainToCheck: ControlFlowChain): Boolean = {
     if(this.controlChain.size != chainToCheck.controlChain.size){
-      println("alternative equals check: false (size)")
       return false
     } else {
       for( (item1: ControlFlowItem, item2: ControlFlowItem) <- (this.controlChain zip chainToCheck.controlChain)){
         if(item1.toString() != item2.toString()){
-          println(s"alternative equals check: false ${item1.toString} and ${item2.toString} do not match")
           return false
         }
       }
-      println("alternative equals check: true")
       return true
     }
   }
@@ -40,7 +35,6 @@ class ControlFlowChain(val controlChain: List[ControlFlowItem], var wasExtended 
     for(item <- controlChain){
       result = prime * result + item.hashCode
     }
-    println(s"hash code result: ${result}")
     return result
   }
 }
