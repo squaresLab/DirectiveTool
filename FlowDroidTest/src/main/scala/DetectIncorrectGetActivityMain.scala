@@ -1,3 +1,5 @@
+import java.io.{FileOutputStream, PrintStream}
+
 import com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator
 import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 import soot.jimple.infoflow.InfoflowConfiguration
@@ -25,6 +27,15 @@ What would I need to check for this directive?:
 
 object DetectIncorrectGetActivityMain {
   def main(args: Array[String]): Unit = {
+
+  /*  System.setOut(new PrintStream(new FileOutputStream(java.io.FileDescriptor.out)) {
+      override def print(s: String): Unit = {
+        super.print(s)
+        if (s.contains("android.support")) throw new RuntimeException("Found you!")
+      }
+    })
+    */
+
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",

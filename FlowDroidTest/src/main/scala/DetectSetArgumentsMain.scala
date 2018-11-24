@@ -1,3 +1,5 @@
+import java.io.{FileOutputStream, PrintStream}
+
 import com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator
 import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 import soot.jimple.infoflow.InfoflowConfiguration
@@ -20,6 +22,9 @@ What would I need to check for this directive?:
 */
 
 object DetectSetArgumentsMain {
+
+
+
   def main(args: Array[String]): Unit = {
    System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
