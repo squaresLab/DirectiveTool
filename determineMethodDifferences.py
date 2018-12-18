@@ -66,9 +66,152 @@ def getStatementNumberXFromParseTree(parseTree, statementNumber):
   return statementList[statementNumber]
 
 
-#TODO: about to add this
-def createNodeToLineNumberList(fileInput, fileTree):
-  pass
+#TODO: about to add this; actually, I'm not sure that it isn't a better idea
+#to recreate the line from the parse tree information. I'm going to stop on this
+#method and try the other approach and then come back to this if necessary
+#commenting out for now
+#def createNodeToLineNumberList(fileInput, fileTree):
+  #lineIndex = 0
+  #lineList = fileInput.splitlines()
+  #currentLine = lineList[lineIndex]
+  #methodStatementList = fileTree.types[0].body[0].body
+  #methodStatementIndex = 0
+  #methodStatementToLineListMapping = {}
+  #nestingCount = 0
+  #while(methodStatementIndex < len(methodStatementList) and lineIndex < len(lineList)):
+    ##currently making the assumption that there aren't random ;'s in the file
+    #may want to adjust this later if I notice the assumption is wrong
+    #for c in currentLine:
+      #if c == '{':
+        #nestingCount = nestingCount + 1
+      #elif c == '}':
+        #nestingCount = nestingCount + 1
+
+    
+def nodeToCodeLine(node):
+  def isBlank(nodeAttribute):
+    if nodeAttribute == None or nodeAttribute == "" or nodeAttribute == []:
+      return True
+    else:
+      return False
+  def testAttributesNotHandledAreBlank(node, nodeAttributeList):
+    for n in nodeAttributeList:
+      if not isBlank(getattr(node,n)):
+        print('error: unsupported attribute {0} for node: {1}'.format(n, node))
+        sys.exit(1)
+  def prependQualifierIfProvided(currentString, possibleQualifier):
+    if isBlank(possibleQualifier):
+      return currentString
+    else:
+      return '{0}.{1}'.format(possibleQualifier, currentString)
+  if isinstance(node, javalang.tree.StatementExpression):
+    unsupportedAttributes = ["label"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return nodeToCodeLine(node.expression)
+  elif isinstance(node, javalang.tree.MethodInvocation):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators"]
+    #selectors are how the multiple function calls are chained together
+    selectorString = ''
+    if not isBlank(getattr(node, "selectors")):
+      for s in node.selectors:
+        selectorString = '{0}.{1}'.format(selectorString, nodeToCodeLine(s))
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    argumentItemStrings = [nodeToCodeLine(a) for a in node.arguments]
+    argumentString = ','.join(argumentItemStrings)
+    methodCallWithoutQualifier = '{0}({1}){2}'.format(node.member, argumentString, selectorString)
+    return prependQualifierIfProvided(methodCallWithoutQualifier, node.qualifier)
+  elif isinstance(node, javalang.tree.SuperMethodInvocation):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators", "selectors","type_arguments"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    argumentItemStrings = [nodeToCodeLine(a) for a in node.arguments]
+    argumentString = ','.join(argumentItemStrings)
+    methodCallWithoutQualifier = '{0}({1})'.format(node.member, argumentString)
+  elif isinstance(node, javalang.tree.Literal):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators", "selectors"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return prependQualifierIfProvided(node.value, node.qualifier)
+  elif isinstance(node, javalang.tree.MemberReference):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators", "selectors"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    if isinstance(node.member, str):
+      memberString = node.member
+    else:
+      memberString = nodeToCodeLine(node.member)
+    return prependQualifierIfProvided(memberString, node.qualifier)
+  elif isinstance(node, javalang.tree.LocalVariableDeclaration):
+    unsupportedAttributes = ["annotations"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    #for some reason the default modifiers here is the empty set string, so 
+    #have to check for that explicitly
+    if not len(getattr(node,"modifiers")) < 1:
+      print('error: unsupported attribute {0} for node: {1}'.format("modifiers", node))
+      print('found |{0}| instead of set()'.format(getattr(node,"modifiers")))
+      print('comparison result: {0}'.format(getattr(node,"modifiers") == "set()"))
+      print('type is {0}'.format(type(getattr(node,"modifiers"))))
+      sys.exit(1)
+    else:
+      declaratorList = [ nodeToCodeLine(d) for d in node.declarators] 
+      declaratorsString = ','.join(declaratorList)
+      return '{0} {1};'.format(nodeToCodeLine(node.type), declaratorsString)
+  elif isinstance(node, javalang.tree.VariableDeclarator):
+    unsupportedAttributes = ["dimensions"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    if isBlank(getattr(node, "initializer")):
+      return node.name
+    else:
+      return '{0} = {1}'.format(node.name, nodeToCodeLine(node.initializer))
+  elif isinstance(node, javalang.tree.Assignment):
+    #unsupportedAttributes = []
+    #testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return '{0} = {1};'.format(nodeToCodeLine(node.expressionl), nodeToCodeLine(node.value))
+  #block handling is controversal in my opinion, since I'm probably only intersted in the 
+  #condition, when I run into an instance or this case; however, I'll also return the 
+  #inner block contents at the moment and allow another method to extract the important
+  #parts
+  elif isinstance(node, javalang.tree.IfStatement):
+    unsupportedAttributes = ["label"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    if isBlank(node.else_statement):
+      return 'if({0}){{\n{1}}};'.format(nodeToCodeLine(node.condition), nodeToCodeLine(node.then_statement))
+    else:
+      return 'if({0}){{\n{1}\n}}\nelse{{{2}\n}};'.format(nodeToCodeLine(node.condition), nodeToCodeLine(node.then_statement), nodeToCodeLine(node.else_statement))
+  elif isinstance(node, javalang.tree.BlockStatement):
+    unsupportedAttributes = ["label"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return '\n'.join([nodeToCodeLine(b) for b in node.statements])
+  elif isinstance(node, javalang.tree.ClassCreator):
+    unsupportedAttributes = ["body", "constructor_type_arguments", "postfix_operators", "prefix_operators","selectors"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    if isBlank(getattr(node,"arguments")):
+      return 'new {0}()'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier))
+    else:
+      argList = ','.join([nodeToCodeLine(a) for a in node.arguments])
+      return 'new {0}({1})'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier), argList)
+  elif isinstance(node, javalang.tree.Cast):
+    return '({0}) {1}'.format(nodeToCodeLine(node.type), nodeToCodeLine(node.expression))
+  elif isinstance(node, javalang.tree.ReferenceType):
+    unsupportedAttributes = ["arguments", "dimensions", "sub_type"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return node.name
+  elif isinstance(node, javalang.tree.This):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return 'this'
+  else:
+    print('error: unsupported node type: {0}'.format(type(node)))
+    print('node: {0}'.format(node))
+    sys.exit(1)
+
+
+
+
+
+
+
+
+
+
+
 
 
 #later change this to take a parameter or argument; but hard coding for initial testing
@@ -93,7 +236,7 @@ def getParseInfo(fileToRead):
     if not 'class' in fileInput[firstLineIndex]:
       fileInput = 'class Test{{\n {0}\n}}'.format(fileInput)
     fileTree = javalang.parse.parse(fileInput)
-    nodeToLineNumberList = createNodeToLineNumberList(fileInput, fileTree)
+    #nodeToLineNumberList = createNodeToLineNumberList(fileInput, fileTree)
     # debating on if I should put a break after the 
     #for path, node in testTree:
     #  print("{0}".format(testTree.types[0].body))
@@ -122,6 +265,7 @@ def getParseInfo(fileToRead):
       return getTypeOfVar(variableTypeDict, varName)
     for statementNumber, s in enumerate(node.body):
       #use 1 as the starting index instead of 0 as the starting index
+      print(nodeToCodeLine(s))
       if isinstance(s, javalang.tree.LocalVariableDeclaration): 
         for d in s.declarators:
           if d.name in variableTypeDict:
