@@ -9,6 +9,7 @@ import json
 #import urllib.request
 import urllib
 import os
+import os.path
 import itertools
 import distutils.dir_util
 import shutil
@@ -43,6 +44,7 @@ import operator
 #with requests.Session() as session:
 #loginToGitHub(session)
 
+debugCounter = 0
 
 runFlowDroidCommand= '/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=59095:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.sbt/boot/scala-2.12.7/lib/scala-library.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/protobuf-java-2.5.0.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/cos.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/j2ee.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/.ivy2/cache/commons-io/commons-io/jars/commons-io-2.6.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.64.jar:/Users/zack/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.ivy2/cache/org.smali/util/jars/util-2.2.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-simple/jars/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.5.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar:/Users/zack/git/soot/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-cmd/target/scala-2.12/classes DetectMissingSetHasOptionsMenu'
 
@@ -113,6 +115,10 @@ def extractOriginalMethodsOfInterest():
         methodsToCompare.append(methodName)
         newFileName = 'original_{0}.txt'.format(methodName)
         createdFileListToDelete.append(newFileName)
+        if len(linesToSave) < 3:
+          print('error: {0} is too small; likely parsing error'.format(newFileName))
+          print(linesToSave)
+          sys.exit(1)
         with open(newFileName,'w') as fout:
           for line in linesToSave:
             fout.write(line)
@@ -174,6 +180,12 @@ def addChangeToFile(change, method):
             fileContents.insert(lineCount, change)
             print("inserted value: {0}".format(fileContents[lineCount]))
             #print(fileContents)
+            if len(fileContents) < 3:
+              print('error: file contents are too small')
+              print(fileContents)
+              sys.exit(1)
+            print('testing out new file ')
+            print(fileToChange)
             with open(fileToChange,'w') as fout:
               for line in fileContents:
                 #\n's are needed here
@@ -219,6 +231,12 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall):
           resultLines.append(line)
       else:
         resultLines.append(line)
+  if resultLines < 3:
+    print('error: result lines are too small')
+    print(resultLines)
+    sys.exit(1)
+  print('testing result file')
+  print(resultLines)
   with open(fileToChange,'w') as fout:
     for line in resultLines:
       #I don't think I need to add the \n at the end, but check to make sure
@@ -374,8 +392,213 @@ def testAddingOrRemovingMethodCalls():
     print('Unable to find fix')
     return False
 
+#TODO: need to test this method
+def deleteTypeDifferences(fileName, mismatchList, methodDeclaration):
+  for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):
+    path = createNewCopyOfTestProgram()
+    foundMethodOfInterest = False
+    newFileContents = []
+    nestingCount = 0
+    everFoundMethodOfInterest = False
+    if len(changeItemList) > 0:
+      deleteList = []
+      for i in changeItemList:
+        deleteList.append(i[2])
+      print(deleteList)
+      with open(fileToChange, 'r') as fin:
+        #might not need this line count in this method; delete later if so
+        lineCountInMethodOfInterest = 0
+        incrementLineCountInMethodOfInterest = False
+        deleteCount = 0
+        for line in fin:
+          #print('line count in method of interest (top): {0}'.format(lineCountInMethodOfInterest))
+          #print(line)
+          #This public void declaration might be too specific
+          if foundMethodOfInterest or nestingCount > 0:
+            everFoundMethodOfInterest = True
+            #use nesting count if they are both true
+            if nestingCount > 0:
+              foundMethodOfInterest = False
+            for c in line:
+              if c == '{':
+                nestingCount = nestingCount + 1
+              elif c == '}':
+                nestingCount = nestingCount - 1
+                if nestingCount < 1:
+                  foundMethodOfInterest = False
+                  incrementLineCountInMethodOfInterest = False
+            if not(line.strip() == '{' or line.strip() == '}'):
+              incrementLineCountInMethodOfInterest = True
+          elif not everFoundMethodOfInterest and methodDeclaration in line:
+            foundMethodOfInterest = True         
+            for c in line:
+              if c == '{':
+                nestingCount = nestingCount + 1
+              elif c == '}': 
+                nestingCount = nestingCount - 1
+                if nestingCount < 1:
+                  foundMethodOfInterest = False
+                  incrementLineCountInMethodOfInterest = False
+          if incrementLineCountInMethodOfInterest:
+            if not lineCountInMethodOfInterest in deleteList:
+              newFileContents.append(line)
+            else:
+              print('deleting line: {0}'.format(line))
+              deleteCount = deleteCount  + 1
+              #print('line in delete list ({0} in {1})'.format(lineCountInMethodOfInterest, deleteList))
+            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
+            #print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
+          else:
+            newFileContents.append(line)
+      if len(newFileContents) < 3:
+        print('error: new file contents are too small (first)')
+        print(newFileContents)
+        #skipping for now
+        return
+        #sys.exit(1)
+      print('testing new file')
+      print(newFileContents)
+      print('deleted {0} lines'.format(deleteCount))
+      if deleteCount < 1:
+        print('error: no lines deleted')
+        print('list to delete: {0}'.format(deleteList))
+        sys.exit(1)
+      with open(fileToChange, 'w') as fout:
+        for line in newFileContents:
+          fout.write(line)
+    wasFixed = executeTestOfChangedApp(path)
+    if wasFixed:
+      return wasFixed
+  return False
+     
+#TODO: test this method
+def addTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict):
+  lineIndexList = list(map(lambda x: x[2], mismatchList))
+  print(lineIndexList)
+  #get the strings for the lines to add
+  lineList = determineMethodDifferences.getLinesFromTree(downloadedFileTree, lineIndexList)
+  #convert the variable names from variable names in the original code to a valid 
+  #object of the same type in the file to change
+  updatedLineList = []
+  savedFoundMatch = False
+  for l in lineList:
+    for v in downloadedVariableTypeDict:
+      if v in l:
+        foundMatch = False
+        vReplace = ""
+        vType = downloadedVariableTypeDict[v]
+        for newV in originalVariableTypeDict:
+          if vType == originalVariableTypeDict[newV]:
+            vReplace = newV
+            foundMatch = True
+            break
+        #TODO: this may replace unwanted sections of the code (will mistakenly change
+        #part of one name if it contains the method of interest - for example, if the
+        #variable is i, this will change all i's in the line, even for another 
+        #variable named min)
+        if foundMatch:
+          l = l.replace(v, vReplace)
+          print('replace {0} with {1}'.format(v, vReplace))
+          savedFoundMatch = True
+        else: 
+          print('did not find match for {0} <type: {1}> in {2}'.format(v, vType, originalVariableTypeDict))
+    updatedLineList.append(l)
+  lineList = updatedLineList
+  print(lineList)
+  #if savedFoundMatch:
+  #  sys.exit(0)
+  #global debugCounter
+  #if debugCounter > 0:
+  #  sys.exit(0)
+  #else:
+  #  debugCounter = debugCounter + 1
+  #create a tuple list of the line indexes and the strings
+  lineIndexStringPairs = list(zip(lineIndexList, lineList))
+  #can't get the length of lineIndexStringPairs - can't get the len of a zip object for some reason
+  for changeItemList in itertools.chain.from_iterable(itertools.combinations(lineIndexStringPairs,n) for n in range(len(lineList)+1)):
+    path = createNewCopyOfTestProgram()
+    if len(changeItemList) > 0:
+      newFileContents = []
+      tempLineIndexList = sorted(list(map(lambda x: x[0], changeItemList)))
+      tempStringList = list(map(lambda x: x[1], changeItemList))
+      lineStringMap = dict((x, y) for x, y in changeItemList) 
+      #if len(changeItemList) > 0:
+      #  addList = []
+      #  for i in changeItemList:
+      #    addList.append(i[3])
+      addedLineCount = 0
+      with open(fileToChange, 'r') as fin:
+        #initializing the line count to negative one so that 0 starts on the 
+        #first valid line in the method
+        lineCountInMethodOfInterest = -1
+        newFileContents = []
+        beforeEndOfMethodOfInterest = True
+        foundMethodOfInterest = False
+        everFoundMethodOfInterest = False
+        nestingCount = 0
+        fileContents = fin.read().splitlines()
+        lineCount = 0
+        for line in fileContents:
+          incrementLineCountInMethodOfInterest = False
+          #This public void declaration might be too specific
+          if foundMethodOfInterest or nestingCount > 0:
+            everFoundMethodOfInterest = True
+            #use nesting count if they are both true
+            if nestingCount > 0:
+              foundMethodOfInterest = False
+            for c in line:
+              if c == '{':
+                nestingCount = nestingCount + 1
+              elif c == '}':
+                nestingCount = nestingCount - 1
+                if nestingCount < 1:
+                  foundMethodOfInterest = False
+            if not(line.strip() == '{' or line.strip() == '}'):
+              incrementLineCountInMethodOfInterest = True
+          elif not everFoundMethodOfInterest and methodDeclaration in line:
+            foundMethodOfInterest = True         
+            for c in line:
+              if c == '{':
+                nestingCount = nestingCount + 1
+              elif c == '}': 
+                nestingCount = nestingCount - 1
+          if nestingCount < 1 and everFoundMethodOfInterest and beforeEndOfMethodOfInterest:
+            beforeEndOfMethodOfInterest = False
+            for i in tempLineIndexList:
+              if i > lineCountInMethodOfInterest:
+                newFileContents.append(lineStringMap[i])
+                print('added line: {0}'.format(lineStringMap[i]))
+                addedLineCount = addedLineCount + 1
+          newFileContents.append(line)
+          if incrementLineCountInMethodOfInterest:
+            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
+            if lineCountInMethodOfInterest in tempLineIndexList:
+              newFileContents.append(lineStringMap[lineCountInMethodOfInterest])
+      if len(newFileContents) < 3:
+        print('error: new file contents are too small (second)')
+        print(newFileContents)
+        sys.exit(1)
+      if addedLineCount < 1:
+        print('error: did not add any lines')
+        print(lineStringMap)
+        print(mismatchList)
+        print('method declaration to look for: {0}'.format(methodDeclaration))
+        print('ever found declaration of interest: {0}'.format(everFoundMethodOfInterest))
+        sys.exit(1)
+      with open(fileToChange, 'w') as fout:
+        for line in newFileContents:
+          fout.write(line)
+          fout.write('\n')
+    wasFixed = executeTestOfChangedApp(path)
+    if wasFixed:
+      return wasFixed
+  return False
+
+
+
+
 def testTypeDifferences():
-  print('in test type differences')
+#  print('in test type differences')
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
@@ -386,8 +609,8 @@ def testTypeDifferences():
       determineMethodDifferences.getParseInfo(originalFileName)
     (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
       determineMethodDifferences.getParseInfo(downloadedFileName)
-    typeMismatches = determineMethodDifferences.checkUnmatchedTypeCallsForBothLists(originalDependencyChains, downloadedDependencyChains)
-    print(typeMismatches)
+    typeMismatches = determineMethodDifferences.checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
+    #print(typeMismatches)
     originalTypeMismatchList = []
     downloadedTypeMismatchList = []
     if len(typeMismatches) < 1:
@@ -399,15 +622,19 @@ def testTypeDifferences():
       everFoundMethodOfInterest = False
       for m in typeMismatches:
         (originalTypeMismatchList if m[1] == 1 else downloadedTypeMismatchList).append(m) 
+      print('original type mismatch list: {0}'.format(originalTypeMismatchList))
+      print('downloaded type mismatch list: {0}'.format(downloadedTypeMismatchList))
       lineOfInterestSet = set()
-      for fileInfo, fileName in enumerate([(originalFileName, originalTypeMismatchList), (downloadedFileName, downloadedTypeMismatchList)]):
+      pairList = [(originalFileName, originalTypeMismatchList), (downloadedFileName, downloadedTypeMismatchList)]
+      #print(pairList)
+      for fileCount, fileInfo in enumerate(pairList):
         (fileName, typeMismatchList) =  fileInfo
-        if len(typeMismatchList > 0):
+        if len(typeMismatchList) > 0:
           for t in typeMismatchList:
             lineOfInterestSet.add(t[2])
           #first just handling the original file case
+          debugBool = False
           with open(fileName, 'r') as fin:
-            debugBool = False
             lineCountInMethodOfInterest = 0
             for line in fin:
               #This public void declaration might be too specific
@@ -427,24 +654,43 @@ def testTypeDifferences():
                     if nestingCount < 1:
                       foundMethodOfInterest = False
                 if lineCountInMethodOfInterest in lineOfInterestSet:
+                  #I think all list numbers in the typeMismatchList are the same
+                  #for first attempt - if from list 1, delete the line; 
+                  #if from list 2, add the line in that place
+                  #print('type mismatch list: {0}'.format(typeMismatchList))
                   debugBool = True
                 lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
-              if not everFoundMethodOfInterest and methodDeclaration in line:
+              elif not everFoundMethodOfInterest and methodDeclaration in line:
                 foundMethodOfInterest = True         
-              if not everFoundMethodOfInterest:
+              elif not everFoundMethodOfInterest:
                 for c in line:
                   if c == '{':
                     nestingCount = nestingCount + 1
                   elif c == '}': 
                     nestingCount = nestingCount - 1
-            if debugBool:
-              sys.exit(0)
-            else:
-              print('error: did not find lines of interest')
-              sys.exit(1)
-            if not everFoundMethodOfInterest:
-              print('error: never found method of interest {0} in {1}'.format(methodDeclaration, fileName))
-
+          print('debug bool: {0}'.format(debugBool))
+          print('type mismatch list value: {0}'.format(typeMismatchList[0][1]))
+          if debugBool:
+            if typeMismatchList[0][1] == 1:
+              #fileName is always originalFileName here
+              wasFixedWithDelete = deleteTypeDifferences(fileName, typeMismatchList, methodDeclaration)
+              if wasFixedWithDelete:
+                return True
+            elif typeMismatchList[0][1] == 2:
+              print('calling add type differences')
+              wasFixedWithAdd = addTypeDifferences(originalFileName, downloadedFileTree, typeMismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict)
+              if wasFixedWithAdd:
+                return True
+          else:
+            print(typeMismatchList)
+            print('error: did not find lines of interest')
+            sys.exit(1)
+          #print('stopping at debugBool check')
+          #sys.exit(0)
+          if not everFoundMethodOfInterest:
+            print('error: never found method of interest {0} in {1}'.format(methodDeclaration, fileName))
+            sys.exit(1)
+  return False
 
 
 def handleAndTestAdvancedDiff():
@@ -457,22 +703,21 @@ def handleAndTestAdvancedDiff():
 
 def main():
   extractOriginalMethodsOfInterest()
-  shouldLoadFromWebsite = True
-  saveFileName = 'savedSearch.json'
   pageNumber = 1
   notDone = True
   changeSet = set()
   while notDone: 
-    if shouldLoadFromWebsite: 
+    saveFileName = 'savedGitHubSearches/savedSearch{0}.json'.format(pageNumber)
+    if os.path.isfile(saveFileName):
+      with open(saveFileName,'r') as fin:
+        searchResult = json.loads(fin.read())
+    else:
       command = 'curl -n https://api.github.com/search/code?q=onCreate+Fragment+onCreateOptionsMenu+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
       commandList = command.split(" ")
       commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE).stdout.decode('utf-8') 
       searchResult = json.loads(commandOutput)
       with open(saveFileName,'w') as fout:
         json.dump(searchResult,fout)
-    else: 
-      with open(saveFileName,'r') as fin:
-        searchResult = json.loads(fin.read())
 
     #print(searchResult['total_count'])
     currentCount = 0
@@ -493,6 +738,10 @@ def main():
         #fout.write(line.decode("utf-8"))
 
       currentCount = currentCount + 1
+      if 'items' not in searchResult:
+        print('no more GitHub results')
+        print(searchResult)
+        sys.exit(0)
       urlToSearch = searchResult['items'][currentCount]['html_url']
       #print(searchResult['items'][currentCount])
      #print(urlToSearch)
@@ -549,8 +798,16 @@ def main():
                   nestingCountWasGreaterThanZero = False
                   newFileName = 'downloaded_{0}.txt'.format(methodName)
                   createdFileListToDelete.append(newFileName)
+                  if len(linesToSave) < 3:
+                    print('error: lines to save are too small')
+                    print(linesToSave)
+                    sys.exit(1)
                   with open(newFileName,'w') as fout:
                     for line in linesToSave:
+                      if len(linesToSave) < 3:
+                        print('error: method is too short, likely parsing error')
+                        print(linesToSave)
+                        sys.exit(1)
                       fout.write(line)
                       #\n seems to be required here
                       fout.write('\n')

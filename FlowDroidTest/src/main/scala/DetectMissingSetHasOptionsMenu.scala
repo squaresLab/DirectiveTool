@@ -9,10 +9,23 @@ import scala.collection.JavaConverters._
 object DetectMissingSetHasOptionsMenu {
 
   def main(args: Array[String]): Unit = {
+    def getAPKLocation(args: Array[String]): String = {
+      //Scala doesn't seem to have the first argument default to the program name like Java
+      if (args.length > 0){
+        return args(0)
+      } else {
+        return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
+      }
+    }
+    println(s"number of command line arguments: ${args.length}")
+    println(args)
+    val apkLocation = getAPKLocation(args)
+    println(s"apk location variable: ${apkLocation}")
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
-      "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk")
+      apkLocation
+      )
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
     //if this is not set
@@ -49,7 +62,7 @@ object DetectMissingSetHasOptionsMenu {
             containsOnCreateOptionsMenu = true
           } else if (m.getName == "onCreate"){
             for (stmt <- m.getActiveBody.getUnits.asScala) {
-              println(stmt.getClass.toString() + ": "  + stmt)
+              //println(stmt.getClass.toString() + ": "  + stmt)
               //1 is true in FlowDroid
               val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
               if(invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"

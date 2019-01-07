@@ -8,6 +8,7 @@ import os
 
 #important! remember that line numbers are 0 indexed in this file
 
+errorFile = 'errorLog.txt'
 
 class lineCheckInfo:
   def __init__(self, originalStatement, methodCallList, typeList, lineNumber):
@@ -87,7 +88,7 @@ def getStatementNumberXFromParseTree(parseTree, statementNumber):
       #elif c == '}':
         #nestingCount = nestingCount + 1
 
-    
+#note, this method often doesn't add the ';' at the end of the line at the moment    
 def nodeToCodeLine(node):
   def isBlank(nodeAttribute):
     if nodeAttribute == None or nodeAttribute == "" or nodeAttribute == []:
@@ -174,7 +175,7 @@ def nodeToCodeLine(node):
     if isBlank(node.else_statement):
       return 'if({0}){{\n{1}}};'.format(nodeToCodeLine(node.condition), nodeToCodeLine(node.then_statement))
     else:
-      return 'if({0}){{\n{1}\n}}\nelse{{{2}\n}};'.format(nodeToCodeLine(node.condition), nodeToCodeLine(node.then_statement), nodeToCodeLine(node.else_statement))
+      return 'if({0}){{\n{1}\n}}\nelse{{\n{2}\n}};'.format(nodeToCodeLine(node.condition), nodeToCodeLine(node.then_statement), nodeToCodeLine(node.else_statement))
   elif isinstance(node, javalang.tree.BlockStatement):
     unsupportedAttributes = ["label"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
@@ -197,21 +198,76 @@ def nodeToCodeLine(node):
     unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
     return 'this'
+  elif isinstance(node, javalang.tree.BinaryOperation):
+    return "{0}{1}{2}".format(nodeToCodeLine(node.operandl),node.operator, nodeToCodeLine(node.operandr))
   else:
     print('error: unsupported node type: {0}'.format(type(node)))
     print('node: {0}'.format(node))
+    traceback.print_stack() 
     sys.exit(1)
 
 
 
+def getLinesFromTree(fileTree, lineIndexList):
+  lineList = []
+  node = fileTree.types[0].body[0]
+  statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
+  for statementNumber, s in enumerate(statementNodes): 
+    if statementNumber in lineIndexList:
+      stringOfNode = nodeToCodeLine(s)
+      if not stringOfNode[1] == ';':
+        lineList.append('{0};'.format(nodeToCodeLine(s)))
+  return lineList
 
 
 
 
 
 
-
-
+def isStatementOfInterest(nodeToTest):
+  if isinstance(nodeToTest, javalang.tree.MethodInvocation) or \
+     isinstance(nodeToTest, javalang.tree.SuperMethodInvocation) or \
+     isinstance(nodeToTest, javalang.tree.Assignment):
+     return True
+  # if isinstance(nodeToTest, javalang.tree.StatementExpression) or \
+  #   isinstance(nodeToTest, javalang.tree.SuperMethodInvocation):
+  #   if isinstance(nodeToTest.expression, javalang.tree.Cast):
+  #     expressionToTest = nodeToTest.expression.expression
+  #   else: 
+  #     expressionToTest = nodeToTest.expression
+  #   if isinstance(expressionToTest, javalang.tree.MethodInvocation) or \
+  #   isinstance(expressionToTest, javalang.tree.SuperMethodInvocation) or \
+  #   isinstance(expressionToTest, javalang.tree.Assignment):
+  #     return True
+  #   else:
+  #     print('error node type unsupported')
+  #     print("{0}: {1}".format(type(nodeToTest.expression), nodeToTest.expression))
+  #     print("is a statement type: {0}".format(isinstance(nodeToTest, javalang.tree.StatementExpression)))
+  #     sys.exit(1)
+  elif isinstance(nodeToTest, javalang.tree.CompilationUnit) or \
+    isinstance(nodeToTest, javalang.tree.ClassDeclaration) or \
+    isinstance(nodeToTest, javalang.tree.MethodDeclaration) or \
+    isinstance(nodeToTest, javalang.tree.FormalParameter) or \
+    isinstance(nodeToTest, javalang.tree.ReferenceType) or \
+    isinstance(nodeToTest, javalang.tree.StatementExpression) or \
+    isinstance(nodeToTest, javalang.tree.MemberReference) or \
+    isinstance(nodeToTest, javalang.tree.Cast) or \
+    isinstance(nodeToTest, javalang.tree.Annotation) or \
+    isinstance(nodeToTest, javalang.tree.Literal) or \
+    isinstance(nodeToTest, javalang.tree.BinaryOperation) or \
+    isinstance(nodeToTest, javalang.tree.LocalVariableDeclaration) or \
+    isinstance(nodeToTest, javalang.tree.VariableDeclarator) or \
+    isinstance(nodeToTest, javalang.tree.IfStatement) or \
+    isinstance(nodeToTest, javalang.tree.BlockStatement) or \
+    isinstance(nodeToTest, javalang.tree.ClassCreator) or \
+    isinstance(nodeToTest, javalang.tree.This):
+    return False
+  else:
+    print('unsupported expression: {0}'.format(nodeToTest))
+    print('type of expression: {0}'.format(type(nodeToTest)))
+    traceback.print_stack() 
+    sys.exit(1)
+    return False
 
 
 #later change this to take a parameter or argument; but hard coding for initial testing
@@ -227,6 +283,7 @@ def getParseInfo(fileToRead):
     filePath = os.getcwd()+fileToRead
     print('reading file: {0}'.format(filePath))
     print(fileInput)
+    print('')
     firstLineIndex = 0
     fileInputLines = fileInput.splitlines()
     while(fileInputLines[firstLineIndex].strip() == ''):
@@ -235,7 +292,12 @@ def getParseInfo(fileToRead):
         break
     if not 'class' in fileInput[firstLineIndex]:
       fileInput = 'class Test{{\n {0}\n}}'.format(fileInput)
-    fileTree = javalang.parse.parse(fileInput)
+    try:
+      fileTree = javalang.parse.parse(fileInput)
+    except javalang.parser.JavaSyntaxError as j:
+      print(j)
+      print('error: unable to parse {0}'.format(fileToRead))
+      sys.exit(1)
     #nodeToLineNumberList = createNodeToLineNumberList(fileInput, fileTree)
     # debating on if I should put a break after the 
     #for path, node in testTree:
@@ -265,7 +327,7 @@ def getParseInfo(fileToRead):
       return getTypeOfVar(variableTypeDict, varName)
     for statementNumber, s in enumerate(node.body):
       #use 1 as the starting index instead of 0 as the starting index
-      print(nodeToCodeLine(s))
+      #print(nodeToCodeLine(s))
       if isinstance(s, javalang.tree.LocalVariableDeclaration): 
         for d in s.declarators:
           if d.name in variableTypeDict:
@@ -311,26 +373,9 @@ def getParseInfo(fileToRead):
     for var in variableTypeDict:
       variableDependencyChains[getTypeOfVar(variableTypeDict, var)] = []
 
-    def isStatementOfInterest(nodeToTest):
-      if isinstance(nodeToTest, javalang.tree.StatementExpression):
-        if isinstance(nodeToTest.expression, javalang.tree.Cast):
-          expressionToTest = nodeToTest.expression.expression
-        else: 
-          expressionToTest = nodeToTest.expression
-        if isinstance(expressionToTest, javalang.tree.MethodInvocation) or \
-        isinstance(expressionToTest, javalang.tree.SuperMethodInvocation) or \
-        isinstance(expressionToTest, javalang.tree.Assignment):
-          return True
-        else:
-          print('error node type unsupported')
-          print("{0}: {1}".format(type(nodeToTest.expression), nodeToTest.expression))
-          print("is a statement type: {0}".format(isinstance(nodeToTest, javalang.tree.StatementExpression)))
-          sys.exit(1)
-      else:
-        print('unsupported expression: {0}'.format(nodeToTest))
-        return False
-
-    statementNodes = [ s for s in node.body if isStatementOfInterest(s)]
+    
+    #statementNodes = [ s for s in node.body if isStatementOfInterest(s)]
+    statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
     for statementNumber, s in enumerate(statementNodes): 
       def processMethodCall(variableDependencyChains, statementNumber, methodCall):
         if not (methodCall.qualifier == None or methodCall.qualifier == "" or methodCall.qualifier == "super"):
@@ -351,29 +396,38 @@ def getParseInfo(fileToRead):
       #we only care about statement expressions this time (when considering
       #only statementexpressions and variabledeclarations) - although may 
       #expand to handle more later
-      print(s)
-      if isinstance(s.expression, javalang.tree.Assignment):
-        typeQ = getTypeOfVar(variableTypeDict, s.expression.expressionl.member)
+      #print(s)
+      if isinstance(s, javalang.tree.Assignment):
+        typeQ = getTypeOfVar(variableTypeDict, s.expressionl.member)
         if typeQ:
           variableDependencyChains[typeQ].append(statementNumber)
-        if isinstance(s.expression.value, javalang.tree.Cast):
-          methodCall = s.expression.value.expression
+        if isinstance(s.value, javalang.tree.Cast):
+          methodCall = s.value.expression
         else:
-          methodCall = s.expression.value
-        print(methodCall)
-        print('chain before: {0}'.format(variableDependencyChains))
+          methodCall = s.value
+        #print(methodCall)
+        #print('chain before: {0}'.format(variableDependencyChains))
         variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
-        print('chain after: {0}'.format(variableDependencyChains))
+        #print('chain after: {0}'.format(variableDependencyChains))
       else: 
-        print(s.expression)
-        print('chain before: {0}'.format(variableDependencyChains))
-        variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s.expression)
-        print('chain after: {0}'.format(variableDependencyChains))
-    print('final dependency chains: {0}'.format(variableDependencyChains))
+        #print(s)
+        #print('chain before: {0}'.format(variableDependencyChains))
+        variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s)
+        #print('chain after: {0}'.format(variableDependencyChains))
+    #print('final dependency chains: {0}'.format(variableDependencyChains))
     for typeName in variableDependencyChains:
       if len(variableDependencyChains[typeName]) < 1:
-        print('error: this code violates the assumption that all locally declared types are used')
-        sys.exit(1)
+        print('possible error: this code violates the assumption that all locally declared types are used')
+        print('filename: {0}'.format(fileToRead))
+        print('original code:\n{0}'.format(fileInput))
+        with open(errorFile, 'a') as errorFout:
+          errorFout.write('possible error: this code violates the assumption that all locally declared types are used\n')
+          errorFout.write('filename: {0}'.format(fileToRead))
+          errorFout.write('\n')
+          errorFout.write('original code:\n{0}'.format(fileInput))
+          errorFout.write('\n')
+
+        #sys.exit(1)
     return (variableDependencyChains, variableTypeDict, fileTree)
 
 def getTypesInStatementNumber(statementNumber, typeName, dependencyChains):
@@ -391,23 +445,23 @@ def getTypesInStatementNumber(statementNumber, typeName, dependencyChains):
 #Currently, this method pays attention to line ordering
 def checkIfEveryCallHasTheExpectedTypesWithIt(chain1, chain2, listNumber):
   resultList = []
-  print('in check if expected types')
+  #print('in check if expected types')
   for typeName in chain1.keys():
-    print("in first for")
-    print(chain1)
-    print("end of chain1")
+    #print("in first for")
+    #print(chain1)
+    #print("end of chain1")
     previousStatementNumberInChain2Lines = -1
     for statementNumber in chain1[typeName]:
-      print("in second for")
+      #print("in second for")
       typesToLookFor = getTypesInStatementNumber(statementNumber, typeName, chain1)
-      print("placeholder: {0}".format(typesToLookFor))
+      #print("placeholder: {0}".format(typesToLookFor))
       foundMatch = False
       if typeName in chain2: 
         for chain2StatementNumber in chain2[typeName]:
-          print('in third for')
+          #print('in third for')
           if chain2StatementNumber > previousStatementNumberInChain2Lines:
             chain2Types = getTypesInStatementNumber(chain2StatementNumber, typeName, chain2) 
-            print(chain2Types)
+            #print(chain2Types)
             #if statementNumber == 1:
             if typesToLookFor == chain2Types:
               previousStatementNumberInChain2Lines = chain2StatementNumber
@@ -416,11 +470,27 @@ def checkIfEveryCallHasTheExpectedTypesWithIt(chain1, chain2, listNumber):
 
       if not foundMatch:
         resultList.append((typeName, listNumber, statementNumber))
+  #get the total number of statements for sanity check
+  #skipping this case for now
+  #statementSet = set()
+  #for typeName in chain1.keys():
+  #  for statementNumber in chain1[typeName]:
+  #    statementSet.add(statementNumber)
+  #totalStatementCount = len(statementSet)
+  #if (listNumber == 1 and totalStatementCount > 1 and totalStatementCount - len(resultList) < 2):
+  #  print('possible error: too many lines to delete')
+  #  print(chain1)
+  #  print('\n')
+  #  print(chain2)
+  #  print(resultList)
+  #  sys.exit(1)
   return resultList
 
-def checkUnmatchedTypeCallsForBothLists(list1, list2):
+def checkUnmatchedTypesForBothLists(list1, list2):
   result = checkIfEveryCallHasTheExpectedTypesWithIt(list1, list2, 1) + checkIfEveryCallHasTheExpectedTypesWithIt(list2, list1, 2)
   return result
+
+
 #how should I handle ordering of methods? sometimes the order matters and other
 #times it doesn't
 #currently the method is implemented as if ordering doesn't matter
@@ -532,7 +602,7 @@ def main():
     getParseInfo(originalFile)
   (downloadedDependencyChains, downloadedVariabletypeDict, downloadedFileTree) = \
     getParseInfo(downloadedFile)
-  typeMismatches = checkUnmatchedTypeCallsForBothLists(originalDependencyChains, downloadedDependencyChains)
+  typeMismatches = checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
   methodCallMismatches = checkMethodCallsInLines(originalFileTree, downloadedFileTree)
   #If type mismatches occur in list 1, (assuming the original list is list 1) then 
   #those lines can be deleted). If the type mismatch occurs in list 2, I have to figure
@@ -542,7 +612,7 @@ def main():
   #
   #changing the results a bit so I can test the implementation of this method, 
   #will remove the result changes later
-  typeMismatches = [(typeMismatches[0][0], 2, typeMismatches[0][2])]
+  #typeMismatches = [(typeMismatches[0][0], 2, typeMismatches[0][2])]
   for typeMismatch in typeMismatches:
     #findPossibleRangeOfTypeDifference(originalDependencyChains, downloadedDependencyChains, typeMismatch)
     #switching the chain ordering to test on the example I have. 
