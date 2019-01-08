@@ -181,25 +181,75 @@ def nodeToCodeLine(node):
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
     return '\n'.join([nodeToCodeLine(b) for b in node.statements])
   elif isinstance(node, javalang.tree.ClassCreator):
-    unsupportedAttributes = ["body", "constructor_type_arguments", "postfix_operators", "prefix_operators","selectors"]
+    unsupportedAttributes = ["constructor_type_arguments", "postfix_operators", "prefix_operators","selectors"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
-    if isBlank(getattr(node,"arguments")):
+    if isBlank(getattr(node,"arguments")) and isBlank(getattr(node,"body")):
       return 'new {0}()'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier))
-    else:
+    elif isBlank(getattr(node,"body")):
       argList = ','.join([nodeToCodeLine(a) for a in node.arguments])
       return 'new {0}({1})'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier), argList)
+    elif isBlank(getattr(node, "arguments")):
+      return 'new {0}(){{\n {1}\n}}'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier), nodeToCodeLine(node.body))
+    else: 
+      argList = ','.join([nodeToCodeLine(a) for a in node.arguments])
+      return 'new {0}({1}){{\n {2}\n}}'.format(prependQualifierIfProvided(nodeToCodeLine(node.type), node.qualifier), argList, nodeToCodeLine(node.body))
   elif isinstance(node, javalang.tree.Cast):
     return '({0}) {1}'.format(nodeToCodeLine(node.type), nodeToCodeLine(node.expression))
   elif isinstance(node, javalang.tree.ReferenceType):
-    unsupportedAttributes = ["arguments", "dimensions", "sub_type"]
+    unsupportedAttributes = ["arguments", "dimensions"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
-    return node.name
+    if isBlank(getattr(node, "sub_type")):
+      return node.name
+    else:
+      return '{0}.{1}'.format(node.name, nodeToCodeLine(node.sub_type))
   elif isinstance(node, javalang.tree.This):
     unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
     return 'this'
   elif isinstance(node, javalang.tree.BinaryOperation):
     return "{0}{1}{2}".format(nodeToCodeLine(node.operandl),node.operator, nodeToCodeLine(node.operandr))
+  elif isinstance(node, list):
+    resultString = ''
+    for i in node:
+      resultString = '{0}{1}\n'.format(resultString, nodeToCodeLine(i))
+    return resultString
+  elif isinstance(node, javalang.tree.MethodDeclaration):
+    unsupportedAttributes = ["documentation", "throws", "type_parameters"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    resultString = ''
+    if not isBlank(getattr(node, "annotations")):
+      resultString = '{0}\n'.format(nodeToCodeLine(node.annotations))
+    modifiersString = ''
+    for modifierCount, m in enumerate(node.modifiers):
+      if modifierCount == 0:
+        modifiersString = m
+      else:
+        modifiersString = '{0} {1}'.format(modifiersString, m)
+    paramerString = ''
+    for parameterCount, p in enumerate(node.parameters):
+      if parameterCount == 0:
+        parameterString = nodeToCodeLine(p)
+      else:
+        parameterString = '{0}, {1}'.format(parameterString, p)
+    if isBlank(getattr(node, "return_type")):
+      resultString = '{0} {1} void {2}({3}){{\n'.format(resultString, modifiersString, node.name, parameterString)
+    else:
+      resultString = '{0} {1} {2} {3}({4}){{\n'.format(resultString, modifiersString, nodeToCodeLine(node.return_type), node.name, parameterString)
+    resultString = '{0} {1}\n}}\n'.format(resultString, nodeToCodeLine(node.body))
+    return resultString
+  elif isinstance(node, javalang.tree.Annotation):
+    unsupportedAttributes = ["element"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return node.name
+  elif isinstance(node, javalang.tree.FormalParameter):
+    unsupportedAttributes = ["annotations", "modifiers"]
+    if node.varargs:
+      print('error: unhandled varargs in FormalParmaters\nNeed to fix when I see an example')
+      print('node: {0}'.format(node))
+      traceback.print_stack() 
+      sys.exit(1)
+    else:
+      return '{0} {1}'.format(nodeToCodeLine(node.type), node.name) 
   else:
     print('error: unsupported node type: {0}'.format(type(node)))
     print('node: {0}'.format(node))
@@ -280,7 +330,7 @@ def getParseInfo(fileToRead):
   variableDependencyChains = {}
   with open(fileToRead,'r') as fileFin:
     fileInput = fileFin.read()
-    filePath = os.getcwd()+fileToRead
+    filePath = os.getcwd()+os.sep + fileToRead
     print('reading file: {0}'.format(filePath))
     print(fileInput)
     print('')
@@ -325,16 +375,20 @@ def getParseInfo(fileToRead):
       #print(varName)
       varName = getFullNameOfArg(arg)
       return getTypeOfVar(variableTypeDict, varName)
-    for statementNumber, s in enumerate(node.body):
+    foundColorArgs = False
+    #collect all variable declarations in the node
+    for path, n in node:
       #use 1 as the starting index instead of 0 as the starting index
       #print(nodeToCodeLine(s))
-      if isinstance(s, javalang.tree.LocalVariableDeclaration): 
-        for d in s.declarators:
+      if isinstance(n, javalang.tree.LocalVariableDeclaration): 
+        for d in n.declarators:
+          if d.name == 'colorArgs':
+            foundColorArgs = True
           if d.name in variableTypeDict:
             print("error {0} already in {1}".format(varName, variableTypeDict))
             sys.exit(1)
           else:
-            variableTypeDict[d.name] = s.type.name
+            variableTypeDict[d.name] = n.type.name
       #I'm starting to think I've stopped using the code in this elif branch. 
       #I'm going to try comment it out and see what happens 
       #elif isinstance(s, javalang.tree.StatementExpression):
@@ -376,7 +430,12 @@ def getParseInfo(fileToRead):
     
     #statementNodes = [ s for s in node.body if isStatementOfInterest(s)]
     statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
+    print('statement nodes:\n') 
     for statementNumber, s in enumerate(statementNodes): 
+      print(nodeToCodeLine(s))
+      if(s == None):
+        print('error: s should not be None')
+        sys.exit(1)
       def processMethodCall(variableDependencyChains, statementNumber, methodCall):
         if not (methodCall.qualifier == None or methodCall.qualifier == "" or methodCall.qualifier == "super"):
           if methodCall.qualifier[0].islower():
@@ -389,6 +448,15 @@ def getParseInfo(fileToRead):
         for p in methodParams:
           if p[0].islower():
             typeOfP = getTypeOfVar(variableTypeDict, p) 
+            if typeOfP == None:
+              #I'm pretty sure all method params should have types, so I'd have 
+              #to look into why this situation fails
+              print('file contents:\n {0}'.format(fileInput))
+              print('variable of interest: {0}'.format(p))
+              print('variable type dict: {0}'.format(variableTypeDict))
+              print('method call: {0}'.format(methodCall))
+              print(fileTree)
+              sys.exit(1)
             if not typeOfP == "StaticFile":
               variableDependencyChains[typeOfP].append(statementNumber)
         return variableDependencyChains
@@ -598,9 +666,9 @@ def main():
   #downloadedFile='/Users/zack/git/DirectiveTool/downloaded_onCreateOptionsMenu.txt' 
   originalFile='/Users/zack/git/DirectiveTool/original_onCreate.txt' 
   downloadedFile='/Users/zack/git/DirectiveTool/downloaded_onCreate.txt' 
-  (originalDependencyChains, originalVariabletypeDict, originalFileTree) =  \
+  (originalDependencyChains, originalVariableTypeDict, originalFileTree) =  \
     getParseInfo(originalFile)
-  (downloadedDependencyChains, downloadedVariabletypeDict, downloadedFileTree) = \
+  (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
     getParseInfo(downloadedFile)
   typeMismatches = checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
   methodCallMismatches = checkMethodCallsInLines(originalFileTree, downloadedFileTree)
