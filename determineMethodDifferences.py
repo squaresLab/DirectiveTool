@@ -250,6 +250,10 @@ def nodeToCodeLine(node):
       sys.exit(1)
     else:
       return '{0} {1}'.format(nodeToCodeLine(node.type), node.name) 
+  elif isinstance(node, javalang.tree.ClassReference):
+    unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return '{0}.class'.format(nodeToCodeLine(node.type))
   else:
     print('error: unsupported node type: {0}'.format(type(node)))
     print('node: {0}'.format(node))
@@ -310,7 +314,8 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.IfStatement) or \
     isinstance(nodeToTest, javalang.tree.BlockStatement) or \
     isinstance(nodeToTest, javalang.tree.ClassCreator) or \
-    isinstance(nodeToTest, javalang.tree.This):
+    isinstance(nodeToTest, javalang.tree.This) or \
+    isinstance(nodeToTest, javalang.tree.ClassReference):
     return False
   else:
     print('unsupported expression: {0}'.format(nodeToTest))

@@ -60,7 +60,8 @@ object DetectMissingSetHasOptionsMenu {
         for (m: SootMethod <- cl.getMethods().asScala) {
           if(m.getName == "onCreateOptionsMenu") {
             containsOnCreateOptionsMenu = true
-          } else if (m.getName == "onCreate"){
+          } else if (m.getName == "onCreate" || m.getName == "onCreateView" || m.getName == "onActivityCreated" ||
+            m.getName == "onStart"){
             for (stmt <- m.getActiveBody.getUnits.asScala) {
               //println(stmt.getClass.toString() + ": "  + stmt)
               //1 is true in FlowDroid

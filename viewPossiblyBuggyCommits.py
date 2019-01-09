@@ -39,9 +39,12 @@ previousRepoNumber = -1
 skippingToNextRepo = False
 originalDir = os.getcwd()
 currentDownloadedRepo = ''
+print('before opening file')
 with open(fileToRead,'r') as fin:
+  print('opened file')
   bugInfoList = grouper(fin, 5, "")
   for bugInfoLines in bugInfoList:
+    print('found bug line')
     fullFilePath = bugInfoLines[0].split(' ')[3]
     commitOfInterest = bugInfoLines[0].strip().split(' ')[-1]
     repoName = bugInfoLines[1].strip().split(' ')[-1]
@@ -86,7 +89,7 @@ with open(fileToRead,'r') as fin:
     if inputResult == 'r':
       skippingToNextRepo = True
     os.chdir(originalDir)
-
+print('reached end of file')
 
 
 
