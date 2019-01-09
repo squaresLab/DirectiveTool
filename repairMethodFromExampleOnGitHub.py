@@ -664,6 +664,7 @@ def testTypeDifferences():
                     nestingCount = nestingCount - 1
                     if nestingCount < 1:
                       foundMethodOfInterest = False
+                print('checking line: {0}'.format(lineCountInMethodOfInterest))
                 if lineCountInMethodOfInterest in lineOfInterestSet:
                   #I think all list numbers in the typeMismatchList are the same
                   #for first attempt - if from list 1, delete the line; 
@@ -694,7 +695,8 @@ def testTypeDifferences():
                 return True
           else:
             print(typeMismatchList)
-            print('error: did not find lines of interest')
+            print('error: did not find lines of interest in file: {0}'.format(fileName))
+            print('method declaration of interest: {0}'.format(methodDeclaration))
             sys.exit(1)
           #print('stopping at debugBool check')
           #sys.exit(0)
