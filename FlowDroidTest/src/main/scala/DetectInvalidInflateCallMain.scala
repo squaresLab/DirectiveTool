@@ -13,7 +13,7 @@ import soot.options.Options
 
 import scala.collection.JavaConverters._
 
-object ExtractCFGMain {
+object DetectInvalidInflateCallMain {
   @throws[IOException]
   @throws[XmlPullParserException]
   def main(args: Array[String]): Unit = { // Initialize Soot
@@ -48,7 +48,7 @@ object ExtractCFGMain {
       println(m)
     }
     val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
-
+    var problemCount = 0
     for (edge <- Scene.v().getCallGraph.iterator().asScala){
       println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
@@ -67,7 +67,7 @@ object ExtractCFGMain {
     for( entry <- Scene.v().getReachableMethods.listener().asScala){
       entry match {
         case m: SootMethod =>
-          if (isCustomClassName(m.getDeclaringClass.toString)) {
+          if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
             println(s"calls for ${m}")
             for (call <- cfg.getCallsFromWithin(m).asScala) {
               println(call)
@@ -80,36 +80,40 @@ object ExtractCFGMain {
     }
     println("printing bodies")
 
-    for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala){
+    for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
-      for (m: SootMethod <- cl.getMethods().asScala) {
-       //println(s"method: ${m.getName}")
-        if(cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView"){
-          println("here")
-          println(s"is concrete: ${m.isConcrete}")
-          println(s"has active body: ${m.hasActiveBody}")
-        }
-        if (m.isConcrete && m.hasActiveBody) {
-          if (m.getName.contains("onCreateView")) {
-            println("new method")
-            println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
-            for (stmt <- m.getActiveBody.getUnits.asScala) {
-              println(stmt)
-              if(stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")){
-                // 0 is how soot stores the final false parameter
-                if(!stmt.toString().endsWith("0)")){
-                   println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class "+m.getDeclaringClass.getName)
-                   System.out.flush()
-                   System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class "+m.getDeclaringClass.getName)
-                   System.err.flush();
+      if (DetectionUtils.classIsSubClassOfFragment((cl))) {
+        for (m: SootMethod <- cl.getMethods().asScala) {
+          //println(s"method: ${m.getName}")
+          if (cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView") {
+            println("here")
+            println(s"is concrete: ${m.isConcrete}")
+            println(s"has active body: ${m.hasActiveBody}")
+          }
+          if (m.isConcrete && m.hasActiveBody) {
+            if (m.getName.contains("onCreateView")) {
+              println("new method")
+              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
+                println(stmt)
+                if (stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")) {
+                  // 0 is how soot stores the final false parameter
+                  if (!stmt.toString().endsWith("0)")) {
+                    println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
+                    System.out.flush()
+                    System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
+                    System.err.flush();
+                    problemCount = problemCount + 1
+                  }
                 }
               }
+              println("")
             }
-            println("")
           }
         }
       }
     }
+    println(s"total number of caught problems: ${problemCount}")
 
     //println(s"main method of scene: ${Scene.v().getMainMethod}")
 
@@ -131,21 +135,7 @@ object ExtractCFGMain {
     }*/
   }
 
-  def isCustomClassName(s:String): Boolean ={
-    if (s.startsWith("java.lang")){
-      return false;
-    }
-    else if (s.startsWith("android.app")){
-      return false;
-    }
-    else if (s.startsWith("android.os")){
-      return false;
-    }
-    else if (s.startsWith("android.widget")){
-      return false;
-    }
-    return true;
-  }
+
 }
 
 

@@ -118,4 +118,19 @@ def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
     }
   }
 
+  def isCustomClassName(s:String): Boolean ={
+    if (s.startsWith("java.lang")){
+      return false;
+    }
+    else if (s.startsWith("android.app")){
+      return false;
+    }
+    else if (s.startsWith("android.os")){
+      return false;
+    }
+    else if (s.startsWith("android.widget")){
+      return false;
+    }
+    return true;
+  }
 }

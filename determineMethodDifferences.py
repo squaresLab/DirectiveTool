@@ -24,6 +24,11 @@ def getFullNameOfArg(arg):
     else: 
       varName = arg.qualifier + "." + arg.member
     return varName
+  elif (isinstance(arg, javalang.tree.Literal)):
+      if node.qualifier == None or node.qualifier == "" or node.qualifier == []:
+        return node.value
+      else:
+        return '{0}.{1}'.format(node.qualifier,node.value)
   else: 
     #There are abnormal parameters, like string being concatenated, that I don't 
     #currently handle
@@ -447,7 +452,8 @@ def getParseInfo(fileToRead):
             typeOfQ = getTypeOfVar(variableTypeDict, methodCall.qualifier)
             if not typeOfQ == None:
               variableDependencyChains[typeOfQ].append(statementNumber)
-        methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments if (not isinstance(a, javalang.tree.Literal)) ]  
+        #methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments if (not isinstance(a, javalang.tree.Literal)) ]  
+        methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments ]  
         methodParams = [ m for m in methodParams if not m==None ]
         #methodParams = map(getFullNameOfArg, s.expression.arguments)
         for p in methodParams:
@@ -501,6 +507,8 @@ def getParseInfo(fileToRead):
           errorFout.write('\n')
 
         #sys.exit(1)
+    print(variableDependencyChains)
+    print(variableTypeDict)
     return (variableDependencyChains, variableTypeDict, fileTree)
 
 def getTypesInStatementNumber(statementNumber, typeName, dependencyChains):

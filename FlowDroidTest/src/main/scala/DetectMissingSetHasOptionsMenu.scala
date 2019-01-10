@@ -55,7 +55,7 @@ object DetectMissingSetHasOptionsMenu {
       //println("in class loop")
       //no idea why I need this xmlpull check. These for loops through the classes and methods seem to
       //work on other checkers
-      if (ExtractCFGMain.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")
+      if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")
         && DetectionUtils.classIsSubClassOfFragment(cl) && !cl.isAbstract()) {
         for (m: SootMethod <- cl.getMethods().asScala) {
           if(m.getName == "onCreateOptionsMenu") {
