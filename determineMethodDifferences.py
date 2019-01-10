@@ -25,14 +25,15 @@ def getFullNameOfArg(arg):
       varName = arg.qualifier + "." + arg.member
     return varName
   elif (isinstance(arg, javalang.tree.Literal)):
-      if node.qualifier == None or node.qualifier == "" or node.qualifier == []:
-        return node.value
+      if arg.qualifier == None or arg.qualifier == "" or arg.qualifier == []:
+        return arg.value
       else:
-        return '{0}.{1}'.format(node.qualifier,node.value)
+        return '{0}.{1}'.format(arg.qualifier,arg.value)
   else: 
     #There are abnormal parameters, like string being concatenated, that I don't 
     #currently handle
     #returning None for those case
+    #another case is global variables that I don't have the type info for
     return None
     #traceback.print_stack()
     #print('invalid type: {0}'.format(type(arg)))
@@ -43,6 +44,8 @@ def getFullNameOfArg(arg):
 def getTypeOfVar(dictToUse, varName):
   if varName.startswith("R."):
     return "StaticFile"
+  if varName == 'true' or varName == 'false':
+    return "bool"
   else:
     #first example of this case was a global variable, which I'm currently
     #not handling; I'll have to look into if not handling those cases are a 
@@ -132,6 +135,8 @@ def nodeToCodeLine(node):
     argumentItemStrings = [nodeToCodeLine(a) for a in node.arguments]
     argumentString = ','.join(argumentItemStrings)
     methodCallWithoutQualifier = '{0}({1})'.format(node.member, argumentString)
+    resultWithoutSuperCall = prependQualifierIfProvided(methodCallWithoutQualifier, node.qualifier)
+    return 'super.{0}'.format(resultWithoutSuperCall)
   elif isinstance(node, javalang.tree.Literal):
     unsupportedAttributes = ["postfix_operators", "prefix_operators", "selectors"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
@@ -208,9 +213,16 @@ def nodeToCodeLine(node):
     else:
       return '{0}.{1}'.format(node.name, nodeToCodeLine(node.sub_type))
   elif isinstance(node, javalang.tree.This):
-    unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
+    unsupportedAttributes = ["postfix_operators", "prefix_operators"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
-    return 'this'
+    selectorString = ''
+    if not isBlank(getattr(node, "selectors")):
+      for s in node.selectors:
+        '{0}.{1}'.format(selectorString, nodeToCodeLine(s))
+    if isBlank(getattr(node, "qualifier")):
+      return 'this{0}'.format(selectorString)
+    else:
+      return '{0}.this{1}'.format(node.qualifier, selectorString)
   elif isinstance(node, javalang.tree.BinaryOperation):
     return "{0}{1}{2}".format(nodeToCodeLine(node.operandl),node.operator, nodeToCodeLine(node.operandr))
   elif isinstance(node, list):
@@ -274,8 +286,12 @@ def getLinesFromTree(fileTree, lineIndexList):
   for statementNumber, s in enumerate(statementNodes): 
     if statementNumber in lineIndexList:
       stringOfNode = nodeToCodeLine(s)
-      if not stringOfNode[1] == ';':
-        lineList.append('{0};'.format(nodeToCodeLine(s)))
+      if stringOfNode:
+        if not stringOfNode[1] == ';':
+          lineList.append('{0};'.format(nodeToCodeLine(s)))
+      else:
+        print('statement result string was None: {0}'.format(s))
+        sys.exit(1)
   return lineList
 
 
@@ -320,7 +336,10 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.BlockStatement) or \
     isinstance(nodeToTest, javalang.tree.ClassCreator) or \
     isinstance(nodeToTest, javalang.tree.This) or \
-    isinstance(nodeToTest, javalang.tree.ClassReference):
+    isinstance(nodeToTest, javalang.tree.ClassReference) or \
+    isinstance(nodeToTest, javalang.tree.ReturnStatement)or \
+    isinstance(nodeToTest, javalang.tree.BasicType) or \
+    isinstance(nodeToTest, javalang.tree.SuperMemberReference):
     return False
   else:
     print('unsupported expression: {0}'.format(nodeToTest))
@@ -453,23 +472,50 @@ def getParseInfo(fileToRead):
             if not typeOfQ == None:
               variableDependencyChains[typeOfQ].append(statementNumber)
         #methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments if (not isinstance(a, javalang.tree.Literal)) ]  
-        methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments ]  
+        try: 
+          methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments ]  
+        except AttributeError:
+          print('error: method call does not have arguments')
+          print('method call: {0}'.format(methodCall))
+          traceback.print_stack() 
+          sys.exit(1)
         methodParams = [ m for m in methodParams if not m==None ]
         #methodParams = map(getFullNameOfArg, s.expression.arguments)
         for p in methodParams:
           if p[0].islower():
             typeOfP = getTypeOfVar(variableTypeDict, p) 
             if typeOfP == None:
-              #I'm pretty sure all method params should have types, so I'd have 
-              #to look into why this situation fails
-              print('file contents:\n {0}'.format(fileInput))
-              print('variable of interest: {0}'.format(p))
-              print('variable type dict: {0}'.format(variableTypeDict))
-              print('method call: {0}'.format(methodCall))
-              print(fileTree)
-              sys.exit(1)
+              #if the variable is a global variable, then don't worry about it, since
+              #global variables are not supported at the moment.
+              #Currently using the heuristic that variables that start and stop 
+              #with quotes or numbers are not global variables
+              if p[0] == "\"" and p[-1] == "\"" or p[0].isdigit() and p[-1].isdigit():
+                #I'm pretty sure all method params should have types other
+                #than global variables, so I'd have 
+                #to look into why this situation fails
+                print('error: type of {0} is None'.format(p))
+                print('file contents:\n {0}'.format(fileInput))
+                print('variable of interest: {0}'.format(p))
+                print('variable type dict: {0}'.format(variableTypeDict))
+                print('method call: {0}'.format(methodCall))
+                print(fileTree)
+                sys.exit(1)
             if not typeOfP == "StaticFile":
-              variableDependencyChains[typeOfP].append(statementNumber)
+              if typeOfP in variableDependencyChains:
+                variableDependencyChains[typeOfP].append(statementNumber)
+              else:
+                #this else should only execute for the first occurrence of a Literal
+                #all other types should already be added
+                if typeOfP == 'bool':
+                  variableDependencyChains[typeOfP] = [statementNumber]
+                else:
+                  #skipping global variables
+                  if typeOfP is not None:
+                    print('error: type {0} not found in dependency chain dict for variable {1}'.format(typeOfP, p))
+                    print('is type of bool: {0}'.format(isinstance(p, bool)))
+                    print('python type of bool: {0}'.format(type(p)))
+                    print('dependency chain dict: {0}'.format(variableDependencyChains))
+                    sys.exit(1)
         return variableDependencyChains
 
       #we only care about statement expressions this time (when considering
@@ -484,9 +530,11 @@ def getParseInfo(fileToRead):
           methodCall = s.value.expression
         else:
           methodCall = s.value
+        #make sure method call is an actual method call and ignore all others
+        if not isinstance(methodCall, javalang.tree.MemberReference):
         #print(methodCall)
         #print('chain before: {0}'.format(variableDependencyChains))
-        variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
+          variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
         #print('chain after: {0}'.format(variableDependencyChains))
       else: 
         #print(s)

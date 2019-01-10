@@ -2,17 +2,20 @@
 
 #manual set up steps currently required
 #1. Change the Violations of directives repo to the right application to fix
-#2. create the APK for the application (the code here should also do this if you skip this step)
+#2. create the APK for the application (the code here should also do this if you skip this step, 
+#.  but I haven't checked and I'm not 100% sure)
 #3. change the programName variable in the runChecker function 
 #4. run this file to make sure everything is set up correctly
 #5. change the method declaration string to compare in repairMethodFromExampleOnGitHub.py 
 # to the callback of interest
 #6. change the checkerToRun variable in the repairMethodFromExampleOnGitHub
 #7. change the fileToChange if required
-#8. change the search command around line 723
+#8. change the search (curl) command around line 730 (I say around because I keep adding 
+#.  and deleting lines, so the line count may not be exactly correct)
 #9. Might need to change all the paths in repairMethodFromExample.. to your path settings
 #10. Delete the savedGitHubSearches folder unless the search query remained the same 
 #.   or you can reuse the old results
+#11. repairMethodExampleOnGitHub.. is now ready to run
 
 #call with the file to save the check results to as the first parameter
 function runChecker
@@ -44,7 +47,6 @@ initialTestFile=$testDir/initialTest.txt
 runChecker $initialTestFile
 #currently matching the line 'total number of caught problems: #'
 #might need to change if other totals are printed
-echo($1)
 problemCount=$(awk '$1 ~ /^total/ {print $NF}' $initialTestFile)
 echo "initial problem count: $problemCount"
 #loop until the problem has been removed
