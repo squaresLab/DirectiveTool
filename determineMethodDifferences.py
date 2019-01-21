@@ -18,6 +18,10 @@ class lineCheckInfo:
     self.lineNumber = lineNumber
 
 def getFullNameOfArg(arg):
+  #if arg.qualifier.startswith('R.'):
+  #  print('{0} might be a static file'.format(arg))
+  #  traceback.print_stack()
+  #  sys.exit(1)
   if (isinstance(arg, javalang.tree.MemberReference)):
     if (arg.qualifier == "" or arg.qualifier == None):
       varName = arg.member
@@ -286,12 +290,12 @@ def getLinesFromTree(fileTree, lineIndexList):
   for statementNumber, s in enumerate(statementNodes): 
     if statementNumber in lineIndexList:
       stringOfNode = nodeToCodeLine(s)
-      if stringOfNode:
-        if not stringOfNode[1] == ';':
-          lineList.append('{0};'.format(nodeToCodeLine(s)))
-      else:
-        print('statement result string was None: {0}'.format(s))
+      if stringOfNode.strip() == "":
+        print('error: line is blank')
         sys.exit(1)
+      if not stringOfNode[-1] == ';':
+        stringOfNode = '{0};'.format(stringOfNode)
+      lineList.append(stringOfNode)
   return lineList
 
 
@@ -482,40 +486,53 @@ def getParseInfo(fileToRead):
         methodParams = [ m for m in methodParams if not m==None ]
         #methodParams = map(getFullNameOfArg, s.expression.arguments)
         for p in methodParams:
-          if p[0].islower():
-            typeOfP = getTypeOfVar(variableTypeDict, p) 
-            if typeOfP == None:
-              #if the variable is a global variable, then don't worry about it, since
-              #global variables are not supported at the moment.
-              #Currently using the heuristic that variables that start and stop 
-              #with quotes or numbers are not global variables
-              if p[0] == "\"" and p[-1] == "\"" or p[0].isdigit() and p[-1].isdigit():
-                #I'm pretty sure all method params should have types other
-                #than global variables, so I'd have 
-                #to look into why this situation fails
-                print('error: type of {0} is None'.format(p))
-                print('file contents:\n {0}'.format(fileInput))
-                print('variable of interest: {0}'.format(p))
-                print('variable type dict: {0}'.format(variableTypeDict))
-                print('method call: {0}'.format(methodCall))
-                print(fileTree)
-                sys.exit(1)
-            if not typeOfP == "StaticFile":
-              if typeOfP in variableDependencyChains:
-                variableDependencyChains[typeOfP].append(statementNumber)
+          #can't remember everything this check was blocking, but it blocks the static
+          #files, which I currently don't want
+          #if p[0].islower():
+          typeOfP = getTypeOfVar(variableTypeDict, p) 
+          if typeOfP == None:
+            #if the variable is a global variable, then don't worry about it, since
+            #global variables are not supported at the moment.
+            #Currently using the heuristic that variables that start and stop 
+            #with quotes or numbers are not global variables
+            #
+            #Currently thinking that I don't care about constants declared in the code;
+            #may change my mind later
+            continue
+           # if p[0] == "\"" and p[-1] == "\"" or p[0].isdigit() and p[-1].isdigit():
+              #I'm pretty sure all method params should have types other
+              #than global variables, so I'd have 
+              #to look into why this situation fails
+           #   print('error: type of {0} is None'.format(p))
+           #   print('file contents:\n {0}'.format(fileInput))
+           #   print('variable of interest: {0}'.format(p))
+           #   print('variable type dict: {0}'.format(variableTypeDict))
+           #   print('method call: {0}'.format(methodCall))
+           #   print(fileTree)
+           #   sys.exit(1)
+          if typeOfP == "StaticFile":
+            #print('{0} is a static file'.format(p))
+            #sys.exit(1)
+            #add static variables to the variable dict so they are replaced later,
+            #but don't add them earlier so they are not included in the variable dependency
+            #chain - currently I don't think it matter if the static file calls are different
+            variableTypeDict[p] = "StaticFile"
+          else:
+            if typeOfP in variableDependencyChains:
+              variableDependencyChains[typeOfP].append(statementNumber)
+            else:
+              #this else should only execute for the first occurrence of a Literal
+              #all other types should already be added
+              if typeOfP == 'bool':
+                variableDependencyChains[typeOfP] = [statementNumber]
               else:
-                #this else should only execute for the first occurrence of a Literal
-                #all other types should already be added
-                if typeOfP == 'bool':
-                  variableDependencyChains[typeOfP] = [statementNumber]
-                else:
-                  #skipping global variables
-                  if typeOfP is not None:
-                    print('error: type {0} not found in dependency chain dict for variable {1}'.format(typeOfP, p))
-                    print('is type of bool: {0}'.format(isinstance(p, bool)))
-                    print('python type of bool: {0}'.format(type(p)))
-                    print('dependency chain dict: {0}'.format(variableDependencyChains))
-                    sys.exit(1)
+                #skipping global variables
+                if typeOfP is not None:
+                  print('error: type {0} not found in dependency chain dict for variable {1}'.format(typeOfP, p))
+                  print('is type of bool: {0}'.format(isinstance(p, bool)))
+                  print('python type of bool: {0}'.format(type(p)))
+                  print('dependency chain dict: {0}'.format(variableDependencyChains))
+                  sys.exit(1)
         return variableDependencyChains
 
       #we only care about statement expressions this time (when considering

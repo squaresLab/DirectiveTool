@@ -133,4 +133,13 @@ def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
     }
     return true;
   }
+
+   def getAPKLocation(args: Array[String]): String = {
+    //Scala doesn't seem to have the first argument default to the program name like Java
+    if (args.length > 0){
+      return args(0)
+    } else {
+      return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
+    }
+  }
 }

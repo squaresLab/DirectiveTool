@@ -9,17 +9,10 @@ import scala.collection.JavaConverters._
 object DetectMissingSetHasOptionsMenu {
 
   def main(args: Array[String]): Unit = {
-    def getAPKLocation(args: Array[String]): String = {
-      //Scala doesn't seem to have the first argument default to the program name like Java
-      if (args.length > 0){
-        return args(0)
-      } else {
-        return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
-      }
-    }
+
     println(s"number of command line arguments: ${args.length}")
     println(args)
-    val apkLocation = getAPKLocation(args)
+    val apkLocation = DetectionUtils.getAPKLocation(args)
     println(s"apk location variable: ${apkLocation}")
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(

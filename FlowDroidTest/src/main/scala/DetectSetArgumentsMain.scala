@@ -26,10 +26,11 @@ object DetectSetArgumentsMain {
 
 
   def main(args: Array[String]): Unit = {
-   System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
+    System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
+    val apkLocation = DetectionUtils.getAPKLocation(args)
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
-      "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk")
+      apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
     //if this is not set
@@ -84,9 +85,14 @@ object DetectSetArgumentsMain {
           var thisVariableName = ""
           var fragmentVariableName = ""
           for (stmt <- m.getActiveBody.getUnits.asScala) {
+            //Goal is to get the the fragment variable reference of the current class object
+            //The first line sets a variable reference to this, so save the variable reference
+            //that refers to this
             if (stmt.toString().contains(":= @this")) {
               thisVariableName = stmt.toString().split(" ")(0)
             }
+            //Using the variable reference that refers to this, save the variable reference
+            //that refers to this.fragment
             if (thisVariableName != "" && stmt.toString().contains(thisVariableName)) {
               if (stmt.toString().contains("android.app.Fragment")) {
                 fragmentVariableName = stmt.toString().split(" ")(0)
@@ -96,7 +102,11 @@ object DetectSetArgumentsMain {
               //this next check might be better if it checked if the fragmentVariableName was used in the
               //parameter list. But due to the typing constraints, I don't think the fragmentVariableName
               //can be anywhere else, so I'd have to see more examples to determine if I am right or not
+              //
+              //If the statement is the right method call and refers to the fragment reference,
+              //then return that the method was successfully found
               if (fragmentVariableName != "" && stmt.toString().contains(fragmentVariableName)) {
+                System.err.println(s"statement of interest: ${stmt}")
                 return true
               }
 

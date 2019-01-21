@@ -37,9 +37,10 @@ object DetectIncorrectGetActivityMain {
     */
 
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
+    val apkLocation = DetectionUtils.getAPKLocation(args)
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
-      "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk")
+      apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
     //if this is not set
