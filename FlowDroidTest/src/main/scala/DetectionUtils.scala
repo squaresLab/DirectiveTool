@@ -16,6 +16,19 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     }
   }
 
+  //May want to combine with the above method because they
+  //are very similar
+  def classIsSubClassOfActivity(c: SootClass): Boolean = {
+    if(c.toString() == "android.app.Activity"){
+      return true
+    } else {
+      if(c.hasSuperclass) {
+        return classIsSubClassOfActivity(c.getSuperclass)
+      } else {
+        return false
+      }
+    }
+  }
 
   //now that you have the extract Invoke statement method, you might want to
   //reduce this down to just calling getMethod on the return from the
@@ -23,8 +36,8 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
   def extractMethodCallInStatement(u: soot.Unit): Option[SootMethod] = {
     def handleStmt(stmt: soot.jimple.Stmt): Option[SootMethod] = {
       stmt match {
-        case assignmentStatment: JAssignStmt => {
-          assignmentStatment.rightBox.getValue match {
+        case assignmentStatement: JAssignStmt => {
+          assignmentStatement.rightBox.getValue match {
             case staticExpr: JStaticInvokeExpr => {
               return Some(staticExpr.getMethod)
             }
@@ -36,6 +49,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
               return Some(linkedBox.getMethod)
             }
             case _ => {
+              //println(s"is statement with class: ${assignmentStatement.rightBox.getValue}")
               return None}
           }
         }
@@ -59,7 +73,10 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
 
     u match {
       case s: soot.jimple.Stmt => return handleStmt(s)
-      case _ => return None
+      case _ => {
+        //println(s"unmatched statement: ${u.getClass}")
+        return None
+      }
     }
   }
 def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {

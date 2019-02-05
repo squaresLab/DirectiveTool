@@ -13,6 +13,10 @@ import soot.options.Options
 
 import scala.collection.JavaConverters._
 
+
+
+//I left this in an unfinished state. I'll come back to it later if I decide
+//I need it.
 object GeneralDetectionMethod {
   @throws[IOException]
   @throws[XmlPullParserException]
