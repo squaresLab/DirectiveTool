@@ -30,6 +30,21 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     }
   }
 
+  //May want to combine with the above method because they
+  //are very similar
+  def classIsSubClassOfAsyncTask(c: SootClass): Boolean = {
+    if(c.toString() == "android.os.AsyncTask"){
+      return true
+    } else {
+      if(c.hasSuperclass) {
+        return classIsSubClassOfAsyncTask(c.getSuperclass)
+      } else {
+        return false
+      }
+    }
+  }
+
+
   //now that you have the extract Invoke statement method, you might want to
   //reduce this down to just calling getMethod on the return from the
   //get invoke statement call
@@ -79,7 +94,8 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       }
     }
   }
-def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
+
+  def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
     def handleStmt(stmt: soot.jimple.Stmt): Option[InvokeExpr] = {
       stmt match {
         case assignmentStatment: JAssignStmt => {
@@ -137,18 +153,30 @@ def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
 
   def isCustomClassName(s:String): Boolean ={
     if (s.startsWith("java.lang")){
-      return false;
+      return false
     }
     else if (s.startsWith("android.app")){
-      return false;
+      return false
     }
     else if (s.startsWith("android.os")){
-      return false;
+      return false
     }
     else if (s.startsWith("android.widget")){
-      return false;
+      return false
     }
-    return true;
+    else if (s.startsWith("android.util")){
+      return false
+    }
+    else if (s.startsWith("android.content")){
+      return false
+    }
+    else if (s.startsWith("android.support")){
+      return false
+    }
+    else if (s.startsWith("org.xmlpull")){
+      return false
+    }
+    return true
   }
 
    def getAPKLocation(args: Array[String]): String = {
@@ -156,7 +184,8 @@ def extractInvokeStmtInStmt(u: soot.Unit): Option[InvokeExpr] = {
     if (args.length > 0){
       return args(0)
     } else {
-      return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
+      //return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
+      return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
     }
   }
 }
