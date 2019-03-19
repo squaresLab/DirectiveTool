@@ -155,7 +155,7 @@ object DetectIncorrectSetInitialSavedState {
       //(note) I think this is right.  Might need to check my logic later
       if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
       || (checkingClasses && chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
-        val errorString = "@@@@ Found a problem: setSavedInstanceState may be called when " +
+        val errorString = "@@@@ Found a problem: setInitialSavedState may be called when " +
           "the Fragment is attached to an Activity" +
           s": call sequence ${chain.controlChain}"
         println(errorString)

@@ -8,8 +8,9 @@ import soot.toolkits.scalar.ForwardFlowAnalysis
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-//TODO: test this
-class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, SetSelectorSetPackageAnalysis.AnalysisInfo](graph) {
+//TODO: check this analysis. I wasn't checking only intent variables earlier. Now I am but I havne't
+//tested the change yet.
+class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeSetSelectorSetPackage.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
   doAnalysis()
   //println("setting number of caught problems to 0")
@@ -29,46 +30,48 @@ class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysi
     * @param out
     * the returned flow
     **/
-  override protected def flowThrough(in: SetSelectorSetPackageAnalysis.AnalysisInfo, d: soot.Unit, out: SetSelectorSetPackageAnalysis.AnalysisInfo): Unit = {
+  override protected def flowThrough(in: AnalyzeSetSelectorSetPackage.AnalysisInfo, d: soot.Unit, out: AnalyzeSetSelectorSetPackage.AnalysisInfo): Unit = {
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
       //this could throw an error for Intents
-      possibleM.get.getDeclaringClass.getName.contains("Intent")
-      val methodName = possibleM.get.getName
-      //we know we can cast d to a Stmt because extractMethodCallInStatement did not return false
-      //d.asInstanceOf[soot.jimple.Stmt].
-      //  (soot.jimple.Stmt)d
-      //println(s"method to check ${methodName}")
-      for(ub <- d.getUseBoxes.asScala) {
-        ub match {
-          case vb: ValueBox =>
-            val valueName = vb.getValue.toString()
-            //println("found value box")
-            if (methodName.contains("setSelector")) {
-              //println("found setSelector")
-              val varInfoOption = out.getVar(valueName)
-              if (varInfoOption.isDefined) {
-                varInfoOption.get.hasSetSelector = true
-                checkForViolation(varInfoOption.get)
-                //println(s"var option info: hasSetSelector: ${varInfoOption.get.hasSetSelector}, hasSetPackage ${varInfoOption.get.hasSetPackage}")
-              }
-              else {
-                out.addVar(valueName, true, false)
-              }
+      if(possibleM.get.getDeclaringClass.getName.contains("Intent")) {
+        val methodName = possibleM.get.getName
+        //we know we can cast d to a Stmt because extractMethodCallInStatement did not return false
+        //d.asInstanceOf[soot.jimple.Stmt].
+        //  (soot.jimple.Stmt)d
+        //println(s"method to check ${methodName}")
+        for (ub <- d.getUseBoxes.asScala) {
+          ub match {
+            case vb: ValueBox =>
+              val valueName = vb.getValue.toString()
+              //println("found value box")
+              if (methodName.contains("setSelector") && !d.toString().endsWith("null)")) {
+                //println(s"found setSelector with ${valueName}: ${d.toString()}")
+                //println(s"${possibleM.get.}")
+                val varInfoOption = out.getVar(valueName)
+                if (varInfoOption.isDefined) {
+                  varInfoOption.get.hasSetSelector = true
+                  checkForViolation(varInfoOption.get)
+                  //println(s"var option info: hasSetSelector: ${varInfoOption.get.hasSetSelector}, hasSetPackage ${varInfoOption.get.hasSetPackage}")
+                }
+                else {
+                  out.addVar(valueName, true, false)
+                }
 
-            } else if (methodName.contains("setPackage")) {
-              //println("found setPackage")
-              val varInfoOption = out.getVar(valueName)
-              if (varInfoOption.isDefined) {
-                varInfoOption.get.hasSetPackage= true
-                checkForViolation(varInfoOption.get)
+              } else if (methodName.contains("setPackage") && !d.toString().endsWith("null)")) {
+                //println(s"found setPackage with ${valueName}: ${d.toString()}")
+                val varInfoOption = out.getVar(valueName)
+                if (varInfoOption.isDefined) {
+                  varInfoOption.get.hasSetPackage = true
+                  checkForViolation(varInfoOption.get)
+                }
+                else {
+                  out.addVar(valueName, false, true)
+                }
               }
-              else {
-                out.addVar(valueName, false, true)
-              }
-            }
-          case _ => ()
+            case _ => ()
+          }
         }
       }
     } else {
@@ -79,8 +82,8 @@ class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysi
   /**
     * Returns the flow object corresponding to the initial values for each graph node.
     */
-  override protected def newInitialFlow(): SetSelectorSetPackageAnalysis.AnalysisInfo = {
-    return new SetSelectorSetPackageAnalysis.AnalysisInfo();
+  override protected def newInitialFlow(): AnalyzeSetSelectorSetPackage.AnalysisInfo = {
+    return new AnalyzeSetSelectorSetPackage.AnalysisInfo();
   }
 
   /**
@@ -88,7 +91,7 @@ class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysi
     * behavior of this function depends on the implementation ( it may be necessary to check whether <code>in1</code> and
     * <code>in2</code> are equal or aliased ). Used by the doAnalysis method.
     */
-  override protected def merge(in1: SetSelectorSetPackageAnalysis.AnalysisInfo, in2: SetSelectorSetPackageAnalysis.AnalysisInfo, out: SetSelectorSetPackageAnalysis.AnalysisInfo): Unit = {
+  override protected def merge(in1: AnalyzeSetSelectorSetPackage.AnalysisInfo, in2: AnalyzeSetSelectorSetPackage.AnalysisInfo, out: AnalyzeSetSelectorSetPackage.AnalysisInfo): Unit = {
     out.clear()
     for (variable <- in1.varMap.keySet){
       if (in2.varMap.contains(variable)){
@@ -106,11 +109,11 @@ class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysi
   }
 
   /** Creates a copy of the <code>source</code> flow object in <code>dest</code>. */
-  override protected def copy(source: SetSelectorSetPackageAnalysis.AnalysisInfo, dest: SetSelectorSetPackageAnalysis.AnalysisInfo): Unit = {
+  override protected def copy(source: AnalyzeSetSelectorSetPackage.AnalysisInfo, dest: AnalyzeSetSelectorSetPackage.AnalysisInfo): Unit = {
     dest.varMap = source.varMap
   }
 
-  def checkForViolation(d: SetSelectorSetPackageAnalysis.DirectiveInfo): Boolean = {
+  def checkForViolation(d: AnalyzeSetSelectorSetPackage.DirectiveInfo): Boolean = {
     if (d== null){
       return false
     }
@@ -128,7 +131,7 @@ class SetSelectorSetPackageAnalysis(graph: UnitGraph) extends ForwardFlowAnalysi
   }
 }
 
-object SetSelectorSetPackageAnalysis {
+object AnalyzeSetSelectorSetPackage {
 
   class DirectiveInfo(var hasSetSelector: Boolean = false, var hasSetPackage: Boolean = false){
 

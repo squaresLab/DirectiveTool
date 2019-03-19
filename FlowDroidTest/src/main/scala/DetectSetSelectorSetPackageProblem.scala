@@ -92,7 +92,7 @@ object DetectSetSelectorSetPackageProblem {
           if(m.hasActiveBody && m.isConcrete) {
             if(!m.getName.contains("dummyMainMethod")) {
               println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
-              val s = new SetSelectorSetPackageAnalysis(new ExceptionalUnitGraph(m.getActiveBody))
+              val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
               println(s"caught problems: ${s.getCaughtProblems()}")
               problemCount += s.getCaughtProblems()
             }
