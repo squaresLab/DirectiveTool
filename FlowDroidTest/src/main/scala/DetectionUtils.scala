@@ -152,7 +152,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
   }
 
   def isCustomClassName(s:String): Boolean ={
-    if (s.startsWith("java.lang")){
+    if (s.startsWith("java.lang")) {
       return false
     }
     else if (s.startsWith("android.app")){
@@ -176,6 +176,9 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     else if (s.startsWith("org.xmlpull")){
       return false
     }
+    else if (s.startsWith("androidx")){
+      return false
+    }
     return true
   }
 
@@ -185,7 +188,11 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       return args(0)
     } else {
       //return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
-      return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/testFolder/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk"
+      return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
     }
   }
 }

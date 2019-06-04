@@ -59,6 +59,7 @@ object DetectMissingSetHasOptionsMenu {
               //println(stmt.getClass.toString() + ": "  + stmt)
               //1 is true in FlowDroid
               val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
+              //println(s"invoke call ${invokeCall.toString}")
               if(invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"
                 && DetectionUtils.isTrue(invokeCall.get.getArg(0))) {
                 containsHasSetOptionsMenu = true
@@ -70,20 +71,23 @@ object DetectMissingSetHasOptionsMenu {
       if(containsHasSetOptionsMenu && !containsOnCreateOptionsMenu){
         val errorString = "@@@@ Found a problem: onCreateOptionMenu must " +
           s"be overridden in ${cl.getName} to display the OptionsMenu"
-        problemCount = notifyOfProblem(problemCount, errorString)
+        problemCount = notifyOfProblem(problemCount, cl.getName, errorString)
 
       } else if (containsOnCreateOptionsMenu && !containsHasSetOptionsMenu){
         val errorString = "@@@@ Found a problem: setHasOptionsMenu(true) must " +
           s"be called in the onCreate method of ${cl.getName} to display the " +
           "OptionsMenu"
-        problemCount = notifyOfProblem(problemCount, errorString)
+        problemCount = notifyOfProblem(problemCount, cl.getName, errorString)
 
       }
     }
     println(s"total number of caught problems: ${problemCount}")
   }
 
-  def notifyOfProblem(problemCount: Int, errorString: String): Int = {
+  def notifyOfProblem(problemCount: Int, className: String, errorString: String): Int = {
+    println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
+    System.err.println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
+    println()
     println(errorString)
     System.out.flush()
     System.err.println(errorString)

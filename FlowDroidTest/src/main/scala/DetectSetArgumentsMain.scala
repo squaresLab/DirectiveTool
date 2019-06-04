@@ -150,7 +150,7 @@ object DetectSetArgumentsMain {
           println(s"parent class of m ${m.getDeclaringClass.toString}")
           for (stmt <- m.getActiveBody.getUnits.asScala) {
             if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
-              val errorString = "@@@@ Found a problem: onClick contains a call to " +
+              val errorString = "@@@@@ Found a problem: onClick contains a call to " +
                 "setArguments on a Fragment when the Fragment may already be initialized in " +
                 s"class ${m.getDeclaringClass.getName}"
               possibleErrorString += errorString + "\n"
@@ -278,7 +278,10 @@ object DetectSetArgumentsMain {
     }
     */
     if(tabsAreAdded && tabsAreHidden){
+      println("printing results")
+      System.err.println("printing results")
       System.err.print(possibleErrorString)
+      println(possibleErrorString)
       println(s"total number of problems: ${possibleProblemCount}")
     }
   }

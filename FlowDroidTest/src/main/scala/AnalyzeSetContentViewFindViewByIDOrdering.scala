@@ -35,6 +35,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     if(possibleM.isDefined){
       copy(in,out)
       val methodName = possibleM.get.getName
+      println(s"${methodName}")
       if (methodName.contains("setContentView")) {
         println("found setContentView")
         out.di.hasSetContentView = true

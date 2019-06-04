@@ -120,6 +120,10 @@ object DetectInvalidGetResources {
             for (stmt <- m.getActiveBody.getUnits.asScala) {
               println(stmt)
               if (stmt.toString().contains("android.content.res.Resources getResources()") && DetectionUtils.classIsSubClassOfFragment(cl.getOuterClass())) {
+                println("start of call chain")
+                //at the moment, the whole call chain isn't needed, just the failing method
+                println(s"${m.toString}   ${m.getDeclaringClass.toString}")
+                println("end of call chain")
                 println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")
                 System.out.flush()
                 System.err.println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")

@@ -275,6 +275,10 @@ def nodeToCodeLine(node):
     unsupportedAttributes = ["postfix_operators", "prefix_operators", "qualifier","selectors"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
     return '{0}.class'.format(nodeToCodeLine(node.type))
+  elif isinstance(node, javalang.tree.BasicType):
+    unsupportedAttributes = ["dimensions"]
+    testAttributesNotHandledAreBlank(node, unsupportedAttributes)
+    return str(node.name)
   else:
     print('error: unsupported node type: {0}'.format(type(node)))
     print('node: {0}'.format(node))
@@ -343,7 +347,14 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.ClassReference) or \
     isinstance(nodeToTest, javalang.tree.ReturnStatement)or \
     isinstance(nodeToTest, javalang.tree.BasicType) or \
-    isinstance(nodeToTest, javalang.tree.SuperMemberReference):
+    isinstance(nodeToTest, javalang.tree.SuperMemberReference) or \
+    isinstance(nodeToTest, javalang.tree.ForStatement) or \
+    isinstance(nodeToTest, javalang.tree.ForControl) or \
+    isinstance(nodeToTest, javalang.tree.VariableDeclaration) or \
+    isinstance(nodeToTest, javalang.tree.TryStatement) or \
+    isinstance(nodeToTest, javalang.tree.CatchClause) or \
+    isinstance(nodeToTest, javalang.tree.TernaryExpression) or \
+    isinstance(nodeToTest, javalang.tree.CatchClauseParameter):
     return False
   else:
     print('unsupported expression: {0}'.format(nodeToTest))

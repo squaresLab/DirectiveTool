@@ -153,8 +153,13 @@ object DetectIncorrectSetInitialSavedState {
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
       //(note) I think this is right.  Might need to check my logic later
-      if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
+      if (chain.controlChain.exists(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
       || (checkingClasses && chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
+        println("start of call chain")
+        for(chainItem <- chain.controlChain){
+          println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
+        }
+        println("end of call chain")
         val errorString = "@@@@ Found a problem: setInitialSavedState may be called when " +
           "the Fragment is attached to an Activity" +
           s": call sequence ${chain.controlChain}"

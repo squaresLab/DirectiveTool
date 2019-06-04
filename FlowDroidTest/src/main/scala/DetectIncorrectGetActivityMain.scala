@@ -10,7 +10,7 @@ import soot.options.Options
 
 import scala.collection.JavaConverters._
 import util.control.Breaks._
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.matching.Regex
 import RegexUtils._
 import soot.jimple.SpecialInvokeExpr
@@ -66,6 +66,7 @@ object DetectIncorrectGetActivityMain {
     var tabsAreHidden = false
     //var tabIsReferencedInHasSetArguments = false
     var possibleErrorString = ""
+    var errorLocations = ArrayBuffer()
     //create a simple be inefficient control flow graph for setArguments because
     //FlowDroid can't seem to handle anonymous inner classes in it's control flow
     //graph creation
@@ -162,6 +163,11 @@ object DetectIncorrectGetActivityMain {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
       if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
       && (!checkingClasses || !chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
+        println("start of call chain")
+        for(chainItem <- chain.controlChain){
+          println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
+        }
+        println("end of call chain")
         val errorString = "@@@@ Found a problem: getActivity may be called when " +
           "the Fragment is not attached to an Activity" +
           s": call sequence ${chain.controlChain}"

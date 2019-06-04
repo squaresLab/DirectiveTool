@@ -53,12 +53,12 @@ debugCounter = 0
 printingDebugInfo = False
 
 #checkerToRun='DetectMissingSetHasOptionsMenu'
-checkerToRun='DetectInvalidInflateCallMain'
-runFlowDroidCommand= '/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=59095:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.sbt/boot/scala-2.12.7/lib/scala-library.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/protobuf-java-2.5.0.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/cos.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/j2ee.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/.ivy2/cache/commons-io/commons-io/jars/commons-io-2.6.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.64.jar:/Users/zack/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.ivy2/cache/org.smali/util/jars/util-2.2.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-simple/jars/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.5.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar:/Users/zack/git/soot/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-cmd/target/scala-2.12/classes '+checkerToRun
+#checkerToRun='DetectInvalidInflateCallMain'
+#runFlowDroidCommand= '/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=59095:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.sbt/boot/scala-2.12.7/lib/scala-library.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/protobuf-java-2.5.0.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/cos.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/j2ee.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/.ivy2/cache/commons-io/commons-io/jars/commons-io-2.6.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.64.jar:/Users/zack/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.ivy2/cache/org.smali/util/jars/util-2.2.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-simple/jars/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.5.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar:/Users/zack/git/soot/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-cmd/target/scala-2.12/classes'
 
 #fileToChange = "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/src/main/java/com/example/android/lnotifications/HeadsUpNotificationFragment.java" 
-fileToChange = "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/src/main/java/com/example/android/lnotifications/VisibilityMetadataFragment.java" 
-originalFileToChange = "/Users/zack/git/DirectiveTool/testFolder/Application/src/main/java/com/example/android/lnotifications/VisibilityMetadataFragment.java" 
+#fileToChange = "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/src/main/java/com/example/android/lnotifications/VisibilityMetadataFragment.java" 
+#originalFileToChange = "/Users/zack/git/DirectiveTool/testFolder/Application/src/main/java/com/example/android/lnotifications/VisibilityMetadataFragment.java" 
 
 
 #I should consider putting the created files in there own directory so it
@@ -69,8 +69,8 @@ methodsToCompare = []
 #methodDeclarationStringToCompare = "public void onViewCreated" 
 #I can't think of a better variable name at the moment, might want to change
 #later since I'm currently not happy with it
-methodSpecification = "public View"
-methodDeclarationStringToCompare = "{0} onCreateView".format(methodSpecification)
+#methodSpecification = "public View"
+#methodDeclarationStringToCompare = "{0} onCreateView".format(methodSpecification)
 #set to False to use the diff comparison method - add lines that are different to
 #the current method
 #set to True to use the type name and method name line differences - add or remove
@@ -78,6 +78,12 @@ methodDeclarationStringToCompare = "{0} onCreateView".format(methodSpecification
 useAdvancedDiff = True
 
 doingExtraCheck = True
+
+tempDebuggingBool = False
+
+
+#need to make this a parameter later
+shouldCheckForFragment = False
 
 def saveLines(linesToSave, nestingCount, line): 
   linesToSave.append(line)
@@ -89,7 +95,21 @@ def saveLines(linesToSave, nestingCount, line):
       nestingCount = nestingCount - 1
   return (linesToSave, nestingCount)
 
-def extractOriginalMethodsOfInterest():
+def getFilesFullPath(projectDir, fileBaseName):
+  if "$" in fileBaseName:
+    fileBaseName = fileBaseName.split("$")[0]
+  if not fileBaseName.endswith('.java'):
+    fileBaseName='{0}.java'.format(fileBaseName)
+  print('file base name: {0}'.format(fileBaseName))
+  for dirpath, dirnames, filenames in os.walk(projectDir):
+    #print(filenames)
+    for filename in [f for f in filenames if f.endswith(".java")]:
+      #print('checking filename: {0}'.format(filename))
+      if filename == fileBaseName:
+        return os.path.join(dirpath, filename)  
+ 
+
+def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompare, fileToChange):
   #I was going to search all Java files in the original project, 
   #but then I remembered that the checker prints out the file 
   #name with the problem, so finding all methods isn't needed
@@ -108,7 +128,12 @@ def extractOriginalMethodsOfInterest():
         #Can't remember if I need to add the path seperator betweeen the
         #two variables or not
         #filesOfInterest.append(root+os.path.sep+file)
-  fileToExtractFrom = originalFileToChange
+  #fileToExtractFrom = originalFileToChange
+  print('file to change: {0}'.format(fileToChange))
+  print('project dir: {0}'.format(projectDir))
+  fileToExtractFrom = getFilesFullPath(projectDir, fileToChange)
+  print('file to extract from: {0}'.format(fileToExtractFrom))
+  #print('file to extract from: {0}'.format(fileToExtractFrom))
   with open(fileToExtractFrom,'r') as fin:
     nestingCountWasGreaterThanZero = False
     nestingCount = 0
@@ -145,7 +170,7 @@ def extractOriginalMethodsOfInterest():
             #fout.write('\n')
             linesToSave = []
 
-def handleDiff(changeSet):
+def handleDiff(changeSet, methodDeclarationStringToCompare):
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
@@ -169,20 +194,24 @@ def handleDiff(changeSet):
   return changeSet
 
 #TODO: make this file independent - don't hard code the file to change
-def addChangeToFile(change, method):
+def addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChange, projectDir):
   #need to go back later and remove the common paths in the two different path variables 
   fileContents = []
   #this stays true after the method is found
   #unlike the variable with the similar name below
   everFoundMethodOfInterest = False
-  with open(fileToChange,'r') as fin:
+  fullFileToChange = getFilesFullPath(projectDir, fileToChange)
+  with open(fullFileToChange,'r') as fin:
     fileContents = fin.read().splitlines()
   #this is only true right when the method is found
   foundMethodOfInterest = False
   nestingCount = 0
+  declarationItems = methodDeclarationStringToCompare.split(" ")
+  methodSpecificationItems = declarationItems[:-1]
+  methodSpecification = " ".join(methodSpecificationItems)
+  methodDeclaration = "{0} {1}".format(methodSpecification, method)
   for lineCount, line in enumerate(fileContents):
     #This public void declaration might be too specific
-    methodDeclaration = "{0} {1}".format(methodSpecification, method)
     if foundMethodOfInterest or nestingCount > 0:
       everFoundMethodOfInterest = True
       #use nesting count if they are both true
@@ -205,8 +234,8 @@ def addChangeToFile(change, method):
               print(fileContents)
               sys.exit(1)
             print('testing out new file ')
-            print(fileToChange)
-            with open(fileToChange,'w') as fout:
+            print(fullFileToChange)
+            with open(fullFileToChange,'w') as fout:
               for line in fileContents:
                 #\n's are needed here
                 fout.write(line)
@@ -287,9 +316,10 @@ def createNewCopyOfTestProgram():
   shutil.copytree("/Users/zack/git/DirectiveTool/testFolder/",path)
   return path
 
-def hasPassedExtraCheck():
+def hasPassedExtraCheck(runFlowDroidCommand, projectDir, fileToChange):
   extraCheckString = '.inflate('
-  with open(fileToChange,'r') as fin:
+  fullFileToChange = getFilesFullPath(projectDir, fileToChange)
+  with open(fullFileToChange,'r') as fin:
     fileContents = fin.read().splitlines()
   #this is only true right when the method is found
   foundMethodOfInterest = False
@@ -325,9 +355,11 @@ def hasPassedExtraCheck():
 
 #change and method are just needed for the final print statement
 #consider changing later
-def executeTestOfChangedApp(path):
+def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange):
+  global tempDebuggingBool
+  wasTested = False
   if doingExtraCheck:
-    if not hasPassedExtraCheck():
+    if not hasPassedExtraCheck(runFlowDroidCommand, projectDir, fileToChange):
       return False
   print("before build")
   currentDir = os.getcwd()
@@ -345,7 +377,16 @@ def executeTestOfChangedApp(path):
     #try out the next change
     print('command failed ({0}); run again in debug mode to get output'.format(commandList))
     os.chdir(currentDir)
+  #  if tempDebuggingBool:
+  #    tempDebuggingBool = False
+  #    print('set tempDebuggingBool to false due to failed compilation!!!!!!!!!!!!!!!!!!!!!!!!!!')
+  #    inputValue = input("press enter to continue")
     return False
+  if printingDebugInfo:
+    for line in commandOutput.stdout.decode('utf-8').splitlines():
+      print(line)
+    #print('checking file that compiled: {0}'.format(fileToChange))
+  #sys.exit(0)
   # I need to split by space but not on quoted parts of the string
   unquotedAndQuotedList = runFlowDroidCommand.split('"')
   commandList = []
@@ -355,16 +396,17 @@ def executeTestOfChangedApp(path):
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
+  commandList.append(checkerToRun)
   newAPKLocation = '/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk'
   commandList.append(newAPKLocation)
   try: 
-    print("current directory for command: {0}".format(os.getcwd()))
     os.chdir("/Users/zack/git/DirectiveTool/FlowDroidTest")
+    #print("current directory for command: {0}".format(os.getcwd()))
+    #print("running command: {0}".format(' '.join(commandList)))
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if printingDebugInfo:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
         print(line)
-
     #print(commandOutput)
     #print(commandOutput.stderr)
     #for line in commandOutput.stderr.decode('utf-8').splitlines():
@@ -373,34 +415,46 @@ def executeTestOfChangedApp(path):
       #print(line)
       if line.startswith('total number of caught problems:'):
         lineItems = line.split(' ')
+        wasTested = True
         if int(lineItems[-1]) == 0:
           commandSucceeded = True
   except: 
     pass
   os.chdir(currentDir)
+  #if wasTested and tempDebuggingBool:
+  #  print('found a change that ended in false and compiled')
+  #  print('number of caught problems: {0}'.format(lineItems[-1]))
+  #  inputValue = input("press enter to continue")
   if commandSucceeded: 
     #print("succeeded - change: {0}, method {1}".format(change, method))
     return True
+  else:
+  #  if tempDebuggingBool:
+  #    tempDebuggingBool = False
+  #    print('set tempDebuggingBool to false due to problems still existing!!!!!!!!!!!!!!!!!!!!!!!!!!')
+  #    inputValue = input("press enter to continue")
+    return False
+
  #add the change to the method call of the copied app
  #run the application and see if it still produces the problem
  #if the application does not produce the problem, then print the change
  #that fixed the issue and stop
 
-def testDiffChanges(changeSet):
+def testDiffChanges(runFlocDroidCommand, changeSet, checkerToRun, methodDeclarationStringToCompare, fileToChange, projectDir):
   #for all subsets of the changes
   for changeItem in itertools.chain.from_iterable(itertools.combinations(changeSet,n) for n in range(len(changeSet)+1)):
     print("starting directory: {0}".format(os.getcwd()))
     path = createNewCopyOfTestProgram()
     if len(changeItem) > 0:
       for (change, method) in changeItem:
-        addChangeToFile(change, method)
+        addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChange, projectDir)
         #essentially breaking the code here with the return - done for debugging
-        wasFixed = executeTestOfChangedApp(path)
+        wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange)
         if wasFixed:
           print("succeeded - change: added {0} to the end of method {1}".format(change, method))
           return
 
-def testAddingOrRemovingMethodCalls():
+def testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDir):
   wasFixed = False
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
@@ -447,219 +501,224 @@ def testAddingOrRemovingMethodCalls():
                     print('replace {0} with {1}'.format(item, var))
                     #sys.exit(1)
                     break
-            addChangeToFile(lineOfInterest, method)
+            addChangeToFile(lineOfInterest, method, methodDeclarationStringToCompare, fileToChange, projectDir)
             #essentially breaking the code here with the return - done for debugging
-        wasFixed = executeTestOfChangedApp(path)
+        wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange)
         if wasFixed:
           print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
           return True
     print('Unable to find fix')
     return False
 
-def deleteTypeDifferences(fileName, mismatchList, methodDeclaration):
-  for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):
-    path = createNewCopyOfTestProgram()
-    foundMethodOfInterest = False
-    newFileContents = []
-    nestingCount = 0
-    everFoundMethodOfInterest = False
-    if len(changeItemList) > 0:
-      deleteList = []
-      for i in changeItemList:
-        deleteList.append(i[2])
-      print(deleteList)
-      with open(fileToChange, 'r') as fin:
+#def deleteTypeDifferences(runFlowDroidCommand, fileName, mismatchList, methodDeclaration, projectDir, fileToChange):
+#  for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):
+#    path = createNewCopyOfTestProgram()
+#    foundMethodOfInterest = False
+#    newFileContents = []
+#    nestingCount = 0
+#    everFoundMethodOfInterest = False
+#    if len(changeItemList) > 0:
+#      deleteList = []
+#      for i in changeItemList:
+#        deleteList.append(i[2])
+#      print(deleteList)
+#      with open(fileToChange, 'r') as fin:
         #might not need this line count in this method; delete later if so
-        lineCountInMethodOfInterest = 0
-        incrementLineCountInMethodOfInterest = False
-        deleteCount = 0
-        for line in fin:
-          #print('line count in method of interest (top): {0}'.format(lineCountInMethodOfInterest))
-          #print(line)
-          #This public void declaration might be too specific
-          if foundMethodOfInterest or nestingCount > 0:
-            everFoundMethodOfInterest = True
-            #use nesting count if they are both true
-            if nestingCount > 0:
-              foundMethodOfInterest = False
-            for c in line:
-              if c == '{':
-                nestingCount = nestingCount + 1
-              elif c == '}':
-                nestingCount = nestingCount - 1
-                if nestingCount < 1:
-                  foundMethodOfInterest = False
-                  incrementLineCountInMethodOfInterest = False
-            if not(line.strip() == '{' or line.strip() == '}'):
-              incrementLineCountInMethodOfInterest = True
-          elif not everFoundMethodOfInterest and methodDeclaration in line:
-            foundMethodOfInterest = True         
-            for c in line:
-              if c == '{':
-                nestingCount = nestingCount + 1
-              elif c == '}': 
-                nestingCount = nestingCount - 1
-                if nestingCount < 1:
-                  foundMethodOfInterest = False
-                  incrementLineCountInMethodOfInterest = False
-          if incrementLineCountInMethodOfInterest:
-            if not lineCountInMethodOfInterest in deleteList:
-              newFileContents.append(line)
-            else:
-              print('deleting line: {0}'.format(line))
-              deleteCount = deleteCount  + 1
-              #print('line in delete list ({0} in {1})'.format(lineCountInMethodOfInterest, deleteList))
-            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
-            #print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
-          else:
-            newFileContents.append(line)
-      if len(newFileContents) < 3:
-        print('error: new file contents are too small (first)')
-        print(newFileContents)
+#        lineCountInMethodOfInterest = 0
+#        incrementLineCountInMethodOfInterest = False
+#        deleteCount = 0
+#        for line in fin:
+#          #print('line count in method of interest (top): {0}'.format(lineCountInMethodOfInterest))
+#          #print(line)
+#          #This public void declaration might be too specific
+#          if foundMethodOfInterest or nestingCount > 0:
+#            everFoundMethodOfInterest = True
+#            #use nesting count if they are both true
+#            if nestingCount > 0:
+#              foundMethodOfInterest = False
+#            for c in line:
+#              if c == '{':
+#                nestingCount = nestingCount + 1
+#              elif c == '}':
+#                nestingCount = nestingCount - 1
+#                if nestingCount < 1:
+#                  foundMethodOfInterest = False
+#                  incrementLineCountInMethodOfInterest = False
+#            if not(line.strip() == '{' or line.strip() == '}'):
+#              incrementLineCountInMethodOfInterest = True
+#          elif not everFoundMethodOfInterest and methodDeclaration in line:
+#            foundMethodOfInterest = True         
+#            for c in line:
+#              if c == '{':
+#                nestingCount = nestingCount + 1
+#              elif c == '}': 
+#                nestingCount = nestingCount - 1
+#                if nestingCount < 1:
+#                  foundMethodOfInterest = False
+#                  incrementLineCountInMethodOfInterest = False
+#          if incrementLineCountInMethodOfInterest:
+#            if not lineCountInMethodOfInterest in deleteList:
+#              newFileContents.append(line)
+#            else:
+#              print('deleting line: {0}'.format(line))
+#              deleteCount = deleteCount  + 1
+#              #print('line in delete list ({0} in {1})'.format(lineCountInMethodOfInterest, deleteList))
+#            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
+#            #print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
+#          else:
+#            newFileContents.append(line)
+#      if len(newFileContents) < 3:
+#        print('error: new file contents are too small (first)')
+#        print(newFileContents)
         #skipping for now
-        return
+#        return
         #sys.exit(1)
-      print('testing new file')
-      print(newFileContents)
-      print('deleted {0} lines'.format(deleteCount))
-      if deleteCount < 1:
-        print('error: no lines deleted')
-        print('list to delete: {0}'.format(deleteList))
-        print('final line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
-        print('file to change: {0}'.format(fileToChange))
-        print('method call of interest: {0}'.format(methodDeclaration))
-        sys.exit(1)
-      with open(fileToChange, 'w') as fout:
-        for line in newFileContents:
-          fout.write(line)
-    wasFixed = executeTestOfChangedApp(path)
-    if wasFixed:
-      return wasFixed
-  return False
-     
-def addTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict):
-  lineIndexList = list(map(lambda x: x[2], mismatchList))
-  print(lineIndexList)
-  #get the strings for the lines to add
-  lineList = determineMethodDifferences.getLinesFromTree(downloadedFileTree, lineIndexList)
-  #convert the variable names from variable names in the original code to a valid 
-  #object of the same type in the file to change
-  updatedLineList = []
-  savedFoundMatch = False
-  for l in lineList:
-    for v in downloadedVariableTypeDict:
-      if v in l:
-        foundMatch = False
-        vReplace = ""
-        vType = downloadedVariableTypeDict[v]
-        for newV in originalVariableTypeDict:
-          if vType == originalVariableTypeDict[newV]:
-            vReplace = newV
-            foundMatch = True
-            break
-        #TODO: this may replace unwanted sections of the code (will mistakenly change
-        #part of one name if it contains the method of interest - for example, if the
-        #variable is i, this will change all i's in the line, even for another 
+#      print('testing new file')
+#      print(newFileContents)
+#      print('deleted {0} lines'.format(deleteCount))
+#      if deleteCount < 1:
+#        print('error: no lines deleted')
+#        print('list to delete: {0}'.format(deleteList))
+#        print('final line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
+#        print('file to change: {0}'.format(fileToChange))
+#        print('method call of interest: {0}'.format(methodDeclaration))
+#        sys.exit(1)
+#      with open(fileToChange, 'w') as fout:
+#        for line in newFileContents:
+#          fout.write(line)
+#    wasFixed = executeTestOfChangedApp(path, checkerToRun, projectDir, fileToChange)
+#    if wasFixed:
+#      return wasFixed
+#  return False
+#     
+#def addTypeDifferences(runFlowDroidCommand, originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict):
+#  global tempDebuggingBool
+#  lineIndexList = list(map(lambda x: x[2], mismatchList))
+#  print(lineIndexList)
+#  #get the strings for the lines to add
+#  lineList = determineMethodDifferences.getLinesFromTree(downloadedFileTree, lineIndexList)
+#  #convert the variable names from variable names in the original code to a valid 
+#  #object of the same type in the file to change
+#  updatedLineList = []
+#  savedFoundMatch = False
+#  for l in lineList:
+#    for v in downloadedVariableTypeDict:
+#      if v in l:
+#        foundMatch = False
+#        vReplace = ""
+#        vType = downloadedVariableTypeDict[v]
+#        for newV in originalVariableTypeDict:
+##          if vType == originalVariableTypeDict[newV]:
+#            vReplace = newV
+#            foundMatch = True
+#            break
+#        #TODO: this may replace unwanted sections of the code (will mistakenly change
+#        #part of one name if it contains the method of interest - for example, if the
+#        #variable is i, this will change all i's in the line, even for another 
         #variable named min)
-        if foundMatch:
-          l = l.replace(v, vReplace)
-          print('replace {0} with {1}'.format(v, vReplace))
-          savedFoundMatch = True
-        else: 
-          print('did not find match for {0} <type: {1}> in {2}'.format(v, vType, originalVariableTypeDict))
-    updatedLineList.append(l)
-  lineList = updatedLineList
-  print(lineList)
-  #if savedFoundMatch:
-  #  sys.exit(0)
+#        if foundMatch:
+#          l = l.replace(v, vReplace)
+#          print('replace {0} with {1}'.format(v, vReplace))
+#          savedFoundMatch = True
+##        else: 
+#          print('did not find match for {0} <type: {1}> in {2}'.format(v, vType, originalVariableTypeDict))
+#    updatedLineList.append(l)
+#  lineList = updatedLineList
+#  print(lineList)
+#  #if savedFoundMatch:
+#  #  sys.exit(0)
   #create a tuple list of the line indexes and the strings
-  lineIndexStringPairs = list(zip(lineIndexList, lineList))
-  #can't get the length of lineIndexStringPairs - can't get the len of a zip object for some reason
-  for changeItemList in itertools.chain.from_iterable(itertools.combinations(lineIndexStringPairs,n) for n in range(len(lineList)+1)):
-    path = createNewCopyOfTestProgram()
-    if len(changeItemList) > 0:
-      newFileContents = []
-      tempLineIndexList = sorted(list(map(lambda x: x[0], changeItemList)))
-      tempStringList = list(map(lambda x: x[1], changeItemList))
-      lineStringMap = dict((x, y) for x, y in changeItemList) 
-      #if len(changeItemList) > 0:
+#  lineIndexStringPairs = list(zip(lineIndexList, lineList))
+#  #can't get the length of lineIndexStringPairs - can't get the len of a zip object for some reason
+#  for changeItemList in itertools.chain.from_iterable(itertools.combinations(lineIndexStringPairs,n) for n in range(len(lineList)+1)):
+#    path = createNewCopyOfTestProgram()
+#    if len(changeItemList) > 0:
+#      newFileContents = []
+#      tempLineIndexList = sorted(list(map(lambda x: x[0], changeItemList)))
+##      tempStringList = list(map(lambda x: x[1], changeItemList))
+#      lineStringMap = dict((x, y) for x, y in changeItemList) 
+#      #if len(changeItemList) > 0:
       #  addList = []
       #  for i in changeItemList:
       #    addList.append(i[3])
-      addedLineCount = 0
-      with open(fileToChange, 'r') as fin:
+#      addedLineCount = 0
+#      with open(fileToChange, 'r') as fin:
         #initializing the line count to negative one so that 0 starts on the 
         #first valid line in the method
-        lineCountInMethodOfInterest = -1
-        newFileContents = []
-        beforeEndOfMethodOfInterest = True
-        foundMethodOfInterest = False
-        everFoundMethodOfInterest = False
-        nestingCount = 0
-        fileContents = fin.read().splitlines()
-        lineCount = 0
-        for line in fileContents:
-          print(line)
-          incrementLineCountInMethodOfInterest = False
-          #This public void declaration might be too specific
-          if foundMethodOfInterest or nestingCount > 0:
-            everFoundMethodOfInterest = True
-            #use nesting count if they are both true
-            if nestingCount > 0:
-              foundMethodOfInterest = False
-            for c in line:
-              if c == '{':
-                nestingCount = nestingCount + 1
-              elif c == '}':
-                nestingCount = nestingCount - 1
-                if nestingCount < 1:
-                  foundMethodOfInterest = False
-            if not(line.strip() == '{' or line.strip() == '}'):
-              incrementLineCountInMethodOfInterest = True
-          elif not everFoundMethodOfInterest and methodDeclaration in line:
-            foundMethodOfInterest = True         
-            for c in line:
-              if c == '{':
-                nestingCount = nestingCount + 1
-              elif c == '}': 
-                nestingCount = nestingCount - 1
-          if nestingCount < 1 and everFoundMethodOfInterest and beforeEndOfMethodOfInterest:
-            beforeEndOfMethodOfInterest = False
-            for i in tempLineIndexList:
-              if i > lineCountInMethodOfInterest:
-                newFileContents.append(lineStringMap[i])
-                print('added line: {0}'.format(lineStringMap[i]))
-                addedLineCount = addedLineCount + 1
-          newFileContents.append(line)
-          if incrementLineCountInMethodOfInterest:
-            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
-            if lineCountInMethodOfInterest in tempLineIndexList:
-              newFileContents.append(lineStringMap[lineCountInMethodOfInterest])
-              print('added line: {0}'.format(lineStringMap[lineCountInMethodOfInterest]))
-              addedLineCount = addedLineCount + 1
-      if len(newFileContents) < 3:
-        print('error: new file contents are too small (second)')
-        print(newFileContents)
-      if addedLineCount < 1:
-        print('error: did not add any lines')
-        print(lineStringMap)
-        print(mismatchList)
-        print('method declaration to look for: {0}'.format(methodDeclaration))
-        print('ever found declaration of interest: {0}'.format(everFoundMethodOfInterest))
-        print('line count: {0}'.format(lineCountInMethodOfInterest))
-        print('file to change: {0}'.format(fileToChange))
-        sys.exit(1)
-      with open(fileToChange, 'w') as fout:
-        for line in newFileContents:
-          fout.write(line)
-          fout.write('\n')
-    wasFixed = executeTestOfChangedApp(path)
-    if wasFixed:
-      return wasFixed
-  return False
+#        lineCountInMethodOfInterest = -1
+#        newFileContents = []
+#        beforeEndOfMethodOfInterest = True
+#        foundMethodOfInterest = False
+##        everFoundMethodOfInterest = False
+#        nestingCount = 0
+#        fileContents = fin.read().splitlines()
+#        lineCount = 0
+##        for line in fileContents:
+#          print(line)
+#          incrementLineCountInMethodOfInterest = False
+##          #This public void declaration might be too specific
+#          if foundMethodOfInterest or nestingCount > 0:
+#            everFoundMethodOfInterest = True
+#            #use nesting count if they are both true
+#            if nestingCount > 0:
+##              foundMethodOfInterest = False
+#            for c in line:
+#              if c == '{':
+##                nestingCount = nestingCount + 1
+#              elif c == '}':
+#                nestingCount = nestingCount - 1
+#                if nestingCount < 1:
+#                  foundMethodOfInterest = False
+#            if not(line.strip() == '{' or line.strip() == '}'):
+#              incrementLineCountInMethodOfInterest = True
+#          elif not everFoundMethodOfInterest and methodDeclaration in line:
+#            foundMethodOfInterest = True         
+#            for c in line:
+##              if c == '{':
+#                nestingCount = nestingCount + 1
+#              elif c == '}': 
+#                nestingCount = nestingCount - 1
+#          if nestingCount < 1 and everFoundMethodOfInterest and beforeEndOfMethodOfInterest:
+#            beforeEndOfMethodOfInterest = False
+#            for i in tempLineIndexList:
+#              if i > lineCountInMethodOfInterest:
+#                newFileContents.append(lineStringMap[i])
+##                print('added line: {0}'.format(lineStringMap[i]))
+#                addedLineCount = addedLineCount + 1
+#          newFileContents.append(line)
+#          if incrementLineCountInMethodOfInterest:
+#            lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
+#            if lineCountInMethodOfInterest in tempLineIndexList:
+#              newFileContents.append(lineStringMap[lineCountInMethodOfInterest])
+#              print('added line: {0}'.format(lineStringMap[lineCountInMethodOfInterest]))
+#              if(lineStringMap[lineCountInMethodOfInterest].strip().endswith('false);')):
+#                tempDebuggingBool = True
+#                print('set tempDebuggingBool to true !!!!!!!!!!!!!!!!!!!!!!!!!!')
+#              addedLineCount = addedLineCount + 1
+#      if len(newFileContents) < 3:
+#        print('error: new file contents are too small (second)')
+#        print(newFileContents)
+#      if addedLineCount < 1:
+#        print('error: did not add any lines')
+#        print(lineStringMap)
+#        print(mismatchList)
+#        print('method declaration to look for: {0}'.format(methodDeclaration))
+#        print('ever found declaration of interest: {0}'.format(everFoundMethodOfInterest))
+#        print('line count: {0}'.format(lineCountInMethodOfInterest))
+#        print('file to change: {0}'.format(fileToChange))
+#        sys.exit(1)
+#      with open(fileToChange, 'w') as fout:
+#        for line in newFileContents:
+#          fout.write(line)
+#          fout.write('\n')
+#    wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange)
+#    if wasFixed:
+#      return wasFixed
+#  return False
+#
 
-
-def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict):
+def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun):
+  global tempDebuggingBool
   foundFixOfInterest = False
   linesToAddIndexList = []
   linesToAddIndexSet = set()
@@ -727,7 +786,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
       addedLineList = []
       deletedLineList = []
       indexOfMethodStart = -1
-      with open(fileToChange, 'r') as fin:
+      fullFileToChange = getFilesFullPath(projectDir, fileToChange)
+      with open(fullFileToChange, 'r') as fin:
         #initializing the line count to negative one so that 0 starts on the 
         #first valid line in the method
         lineCountInMethodOfInterest = -1
@@ -792,6 +852,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                 print('added line: {0}'.format(addedLine))
                 addedLineCount = addedLineCount + 1
                 addedLineList.append(addedLine)
+                if(addedLine.strip().endswith('false);')):
+                  tempDebuggingBool = True
+                  print('set tempDebuggingBool to true !!!!!!!!!!!!!!!!!!!!!!!!!!')
             #needed to make sure the return statement is at the end of a method
             #for methods that return values
             if not methodDeclarationStringToCompare.split(' ')[1] == 'void':
@@ -853,6 +916,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                 print('added line 2: {0}'.format(addedLine))
                 addedLineCount = addedLineCount + 1
                 addedLineList.append(addedLine)
+                if(addedLine.strip().endswith('false);')):
+                  tempDebuggingBool = True
+                  print('set tempDebuggingBool to true !!!!!!!!!!!!!!!!!!!!!!!!!!')
           else: 
             newFileContents.append(line)
       if len(newFileContents) < 3:
@@ -880,11 +946,11 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
       #    break
       #if addedInflate and deletedInflate:
       #  foundFixOfInterest = True
-      with open(fileToChange, 'w') as fout:
+      with open(fullFileToChange, 'w') as fout:
         for line in newFileContents:
           fout.write(line)
           fout.write('\n')
-    wasFixed = executeTestOfChangedApp(path)
+    wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange)
     #if foundFixOfInterest:
     #  print('was fixed: {0}'.format(wasFixed))
     #  global printingDebugInfo
@@ -899,7 +965,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
 #pretty sure I need to combine the ability to add and remove lines so I can 
 #support changing lines
 
-def testTypeDifferences():
+def testTypeDifferences(checkerToRun):
 #  print('in test type differences')
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
@@ -917,29 +983,41 @@ def testTypeDifferences():
       print('type mismatches is 0; returning False')
       return False
     else:
-      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict)
+      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun)
 
-def handleAndTestAdvancedDiff():
-  isSolved = testAddingOrRemovingMethodCalls()
+def handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir):
+  isSolved = testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDir)
   #commented out previous line and next line is for testing
   #isSolved = False
   if not isSolved:
-    isSolved = testTypeDifferences()
+    isSolved = testTypeDifferences(checkerToRun)
   return isSolved
 
-def main():
-  extractOriginalMethodsOfInterest()
+def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclarationStringToCompare, projectDir, fileToChange, termsOfInterest):
+  extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompare, fileToChange)
   pageNumber = 1
   notDone = True
   changeSet = set()
   while notDone: 
-    saveFileName = 'savedGitHubSearches/savedSearch{0}.json'.format(pageNumber)
+    saveFileName = '{0}savedGitHubSearches/savedSearch{1}.json'.format(savedDataDirectory, pageNumber)
     if os.path.isfile(saveFileName):
       with open(saveFileName,'r') as fin:
         searchResult = json.loads(fin.read())
     else:
       #command = 'curl -n https://api.github.com/search/code?q=onCreate+Fragment+onCreateOptionsMenu+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
-      command = 'curl -n https://api.github.com/search/code?q=onCreateView+Fragment+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      #command = 'curl -n https://api.github.com/search/code?q=onCreateView+Fragment+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      #need to figure out how to determine if I should use the word Fragment in the search
+      methodDeclarationItems = methodDeclarationStringToCompare.split(' ')
+      keywords = [methodDeclarationItems[-1]]
+      keywords = keywords + termsOfInterest
+      #this if isn't needed at the moment, but it might be used in later versions of the code
+      if len(keywords) < 2:
+        keyWordString = keywords[0]
+      else:
+        keyWordString = "+".join(keywords)
+      command = 'curl -n https://api.github.com/search/code?q={0}+in:file+language:java?page={1}&per_page=100&sort=stars&order=desc'.format(keyWordString, pageNumber)
+      #print(command)
+      #sys.exit(0)
       commandList = command.split(" ")
       commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE).stdout.decode('utf-8') 
       searchResult = json.loads(commandOutput)
@@ -990,17 +1068,20 @@ def main():
           rawLinkString = "https://github.com/" + rawLink['href']
           with urllib.request.urlopen(rawLinkString) as finalResults:
             programOfInterest = finalResults.read().decode('utf-8', errors="ignore")
-            lookingForFragment = True
-            lineIndex = 0 
-            if printingSearchUpdates:
-              print('looking through:\n{0}'.format(programOfInterest))
-            linesInProgram = programOfInterest.splitlines()
-            while lookingForFragment and lineIndex < len(linesInProgram):
-              line = linesInProgram[lineIndex]
-              if ' Fragment ' in line:
-                lookingForFragment = False
-                containsFragment = True
-              lineIndex = lineIndex + 1
+            if shouldCheckForFragment:
+              lookingForFragment = True
+              lineIndex = 0 
+              if printingSearchUpdates:
+                print('looking through:\n{0}'.format(programOfInterest))
+              linesInProgram = programOfInterest.splitlines()
+              while lookingForFragment and lineIndex < len(linesInProgram):
+                line = linesInProgram[lineIndex]
+                if ' Fragment ' in line:
+                  lookingForFragment = False
+                  containsFragment = True
+                lineIndex = lineIndex + 1
+            else:
+              lookingForFragment = False
             foundMethodOfInterest = False
             everFoundMethodOfInterest = False
             if not lookingForFragment: 
@@ -1047,14 +1128,16 @@ def main():
                     createdFiles = True
                   linesToSave = []
               if createdFiles:
+                #print('reading program from: {0}'.format(rawLinkString))
+                #input('stopping to check found file')
                 if useAdvancedDiff:
-                  hasSucceeded = handleAndTestAdvancedDiff()
+                  hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir)
                   if hasSucceeded:
                     print('found a successful repair!')
                     notDone = False
                 else:
-                  changeSet = handleDiff(changeSet)
-                  testDiffChanges(changeSet)
+                  changeSet = handleDiff(changeSet, methodDeclarationStringToCompare)
+                  testDiffChanges(changeSet, checkerToRun, methodDeclarationStringToCompare)
                   notDone = False
             else:
               if printingSearchUpdates:
@@ -1083,4 +1166,19 @@ def main():
 #handleAndTestAdvancedDiff()
 
 if __name__ == "__main__":
-  main()
+  runFlowDroidCommand = sys.argv[1]
+  #print("$$$$$$$$$$$$$$$$${0}".format(runFlowDroidCommand))
+  #print('number of arguments: {0}'.format(len(sys.argv)))
+  #print('second argument: {0}'.format(sys.argv[2]))
+  #sys.exit(0)
+  checkerToRun = sys.argv[2]
+  savedDataDirectory = sys.argv[3]
+  methodDeclarationStringToCompare = sys.argv[4]
+  projectDir = sys.argv[5]
+  fileToChange = sys.argv[6]
+  termsOfInterestInput = sys.argv[7]
+  if termsOfInterestInput == "None":
+    termsOfInterest = []
+  else: 
+    termsOfInterest = termsOfInterestInput.split(' ')
+  main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclarationStringToCompare, projectDir, fileToChange, termsOfInterest)
