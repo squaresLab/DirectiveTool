@@ -59,8 +59,8 @@ currentCheckerNumber=9
        methodDeclarationStringToCompare="public View onCreateView"
        termsOfInterest="None";;
     #works! But I need to add a heuristic later to make the repair more sensical;
-    #partially done, currently try to move the method to a method in the class 
-    #with the problem 
+    #partially done, currently moving the method to a method in the class 
+    #with the problem; but could add lifecycle guided information to the repair
     2) gitBranch=FAULT_013_SO_6215239
        checker=DetectIncorrectGetActivityMain
        appName=Application
@@ -116,8 +116,8 @@ currentCheckerNumber=9
        methodOfInterest2=setContentView
        #This repair type should be multiple, so I'll need to adjust this later
        repairType=Method;;
-    #set selector set package problem can't be fixed with move method
-    #repairs at the moment
+    #works; but currently deletes the first out of the two methods that is found;
+    #a better fix would be to remove the setPackage in all cases
     #removed the public part so I can also get the methods labeled as protected
     9) gitBranch=setPackageSetSelectorProblem
        checker=DetectSetSelectorSetPackageProblem
@@ -219,7 +219,7 @@ currentCheckerNumber=9
     #echo "^$runCheckerString"
     #echo /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $temporaryTestDir $fileToChange "$termsOfInterest"
     #exit 0
-    /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $temporaryTestDir $fileToChange "$termsOfInterest"
+    /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $temporaryTestDir $fileToChange $appLocationForRepair "$termsOfInterest"
   fi
   if [ $? -eq 0 ] 
   then

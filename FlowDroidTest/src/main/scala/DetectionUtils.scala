@@ -191,8 +191,8 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/testFolder/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk"
-      return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
-      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
+      return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
     }
   }
 }

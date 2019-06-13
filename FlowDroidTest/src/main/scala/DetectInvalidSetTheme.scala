@@ -145,11 +145,11 @@ object DetectInvalidSetTheme {
                 val methodInStatementOption = DetectionUtils.extractMethodCallInStatement(stmt)
                 methodInStatementOption match {
                   case Some(methodInStatement) =>
-                    // 0 is how soot stores the final false parameter
                     if (methodInStatement.getName == "setTheme") {
                       println("found set theme")
                       hasSetThemeInMethodOtherThanOnCreate = true
                       methodSetThemeIsCalledIn = m.getName()
+                      //this may only work if the mtehods in the file are declared after onCreate
                       if (hasSetContentView) {
                         println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
                         System.out.flush()
