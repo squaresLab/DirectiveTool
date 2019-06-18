@@ -1007,7 +1007,7 @@ def testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLo
       print('type mismatches is 0; returning False')
       return False
     else:
-      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, newAPKLocation)
+      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
 
 def handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation):
   isSolved = testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)

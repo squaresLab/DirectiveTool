@@ -125,7 +125,7 @@ object DetectInvalidSetTheme {
                         if (hasSetThemeInMethodOtherThanOnCreate) {
                           println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
                           System.out.flush()
-                          System.err.println("@@@@@ Found a problem:set theme is called after setContentView in" + methodSetThemeIsCalledIn)
+                          System.err.println("@@@@@ Found a problem: set theme is called after setContentView in" + methodSetThemeIsCalledIn)
                           System.err.flush();
                           problemCount = problemCount + 1
                         }

@@ -100,6 +100,10 @@ object DetectInvalidInflateCallMain {
                 if (stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")) {
                   // 0 is how soot stores the final false parameter
                   if (!stmt.toString().endsWith("0)")) {
+                    println("start of call chain")
+                    //at the moment, the whole call chain isn't needed, just the failing method
+                    println(s"${m.toString}   ${m.getDeclaringClass.toString}")
+                    println("end of call chain")
                     println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
                     System.out.flush()
                     System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
