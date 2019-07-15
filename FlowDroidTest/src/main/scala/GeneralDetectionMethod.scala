@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 object GeneralDetectionMethod {
   @throws[IOException]
   @throws[XmlPullParserException]
-  def detectionTemplate(args: Array[String]): Unit = { // Initialize Soot
+  def executeDetectionTemplate(args: Array[String], detectionFunction: (SootClass) => Int ): Unit = { // Initialize Soot
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
@@ -43,7 +43,8 @@ object GeneralDetectionMethod {
     val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      if (DetectionUtils.classIsSubClassOfFragment((cl))) {
+      problemCount = problemCount + detectionFunction(cl)
+      /*if (DetectionUtils.classIsSubClassOfFragment((cl))) {
         for (m: SootMethod <- cl.getMethods().asScala) {
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName.contains("onCreateView")) {
@@ -64,6 +65,7 @@ object GeneralDetectionMethod {
           }
         }
       }
+      */
     }
     println(s"total number of caught problems: ${problemCount}")
 

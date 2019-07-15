@@ -44,6 +44,18 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     }
   }
 
+  def classIsSubClass(c: SootClass, possibleParentClassName: String): Boolean = {
+    if (possibleParentClassName == "Activity" || possibleParentClassName == "android.app.Activity"){
+      classIsSubClassOfActivity(c)
+    } else if (possibleParentClassName == "Fragment" || possibleParentClassName == "android.app.Fragment"){
+      classIsSubClassOfFragment(c)
+    } else if (possibleParentClassName == "AsyncTask" || possibleParentClassName == "android.os.AsyncTask"){
+      classIsSubClassOfAsyncTask(c)
+    } else {
+      throw new RuntimeException(s"unexpected parent class ${c} and possibleParentClassName ${possibleParentClassName}. Please create a handler for it")
+    }
+  }
+
 
   //now that you have the extract Invoke statement method, you might want to
   //reduce this down to just calling getMethod on the return from the

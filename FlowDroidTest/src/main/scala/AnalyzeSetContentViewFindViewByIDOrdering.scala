@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 //TODO: made a change and need to test this again
-class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo](graph) {
+class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeMethodOrdering.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
   doAnalysis()
   //println("setting number of caught problems to 0")
@@ -30,7 +30,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * @param out
     * the returned flow
     **/
-  override protected def flowThrough(in: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo): Unit = {
+  override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
@@ -38,9 +38,9 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
       println(s"${methodName}")
       if (methodName.contains("setContentView")) {
         println("found setContentView")
-        out.di.hasSetContentView = true
+        out.di.hasMethod1 = true
       } else if (methodName.contains("findViewById")) {
-        out.di.hasFindViewByIdOrdering = true
+        out.di.hasMethod2 = true
         println("found findViewById")
         checkForViolation(out)
       }
@@ -52,8 +52,8 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
   /**
     * Returns the flow object corresponding to the initial values for each graph node.
     */
-  override protected def newInitialFlow(): AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo = {
-    return new AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo();
+  override protected def newInitialFlow(): AnalyzeMethodOrdering.AnalysisInfo = {
+    return new AnalyzeMethodOrdering.AnalysisInfo();
   }
 
   /**
@@ -61,17 +61,17 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * behavior of this function depends on the implementation ( it may be necessary to check whether <code>in1</code> and
     * <code>in2</code> are equal or aliased ). Used by the doAnalysis method.
     */
-  override protected def merge(in1: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo, in2: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo, out: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo): Unit = {
+  override protected def merge(in1: AnalyzeMethodOrdering.AnalysisInfo, in2: AnalyzeMethodOrdering.AnalysisInfo, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
   }
 
   /** Creates a copy of the <code>source</code> flow object in <code>dest</code>. */
-  override protected def copy(source: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo, dest: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo): Unit = {
-    dest.di.hasFindViewByIdOrdering = source.di.hasFindViewByIdOrdering
-    dest.di.hasSetContentView = source.di.hasSetContentView
+  override protected def copy(source: AnalyzeMethodOrdering.AnalysisInfo, dest: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
+    dest.di.hasMethod2 = source.di.hasMethod2
+    dest.di.hasMethod1 = source.di.hasMethod1
   }
 
-  def checkForViolation(a: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo): Boolean = {
-    if (a.di.hasFindViewByIdOrdering && !a.di.hasSetContentView){
+  def checkForViolation(a: AnalyzeMethodOrdering.AnalysisInfo): Boolean = {
+    if (a.di.hasMethod2 && !a.di.hasMethod1){
       numberOfCaughtProblems += 1
       return true
     }
@@ -94,8 +94,8 @@ object AnalyzeSetContentViewFindViewByIDOrdering{
     //has the path already called hasSetContentView or hasFindViewByIdOrdering
     val di: DirectiveInfo = new DirectiveInfo()
 
-    def meet(other: AnalyzeSetContentViewFindViewByIDOrdering.AnalysisInfo): Unit = {
-      return new DirectiveInfo(di.hasSetContentView && other.di.hasSetContentView, di.hasFindViewByIdOrdering && other.di.hasFindViewByIdOrdering)
+    def meet(other: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
+      return new DirectiveInfo(di.hasSetContentView && other.di.hasMethod1, di.hasFindViewByIdOrdering && other.di.hasMethod2)
     }
   }
   //I've decided I don't need a flow set for this case
