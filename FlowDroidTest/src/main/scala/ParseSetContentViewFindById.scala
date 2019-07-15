@@ -3,10 +3,11 @@ import soot.toolkits.graph.ExceptionalUnitGraph
 
 import scala.collection.JavaConverters._
 
-object ParseSetContentViewFindByID {
+object ParseSetContentViewFindById {
 
   def main(args: Array[String]): Unit = {
-    val statementToParse: String =  "and(subClass(\"Activity\"), methodToCheck(\"onCreate\").requireCallOrder(\"setContentView\", \"findViewByID\"))"
+    //TODO: figure out how to make this code work with spaces in the statement or without
+    val statementToParse: String =  "and(subClass(\"Activity\"), methodToCheck(\"onCreate\").requireCallOrder(\"setContentView\", \"findViewById\"))"
     /* I am writing this quickly, might want to refactor later
      */
     def parseStatement(parsingObj: ParseCodeObj): ParseCodeObj = {
@@ -63,8 +64,9 @@ object ParseSetContentViewFindByID {
           val commaLoc = methodModifier.indexOf(',')
           val method1 = methodModifier.substring("requireCallOrder(".length() + 1, commaLoc - 1)
           val modifierEndLoc = methodModifier.indexOf(')')
-          val method2 = methodModifier.substring(commaLoc + 2, modifierEndLoc - 1)
-          println(s"method 2 ${method2}")
+          val method2 = methodModifier.substring(commaLoc + 3, modifierEndLoc - 1)
+          println(s"method 1: ${method1}")
+          println(s"method 2: ${method2}")
           //while I can make this work, I'm not sure how a person creating the method is supposed to know that the method variable will be called m
           def performAnalysisWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
             def performAnalysis (m: SootMethod): Int = {

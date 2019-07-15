@@ -23,15 +23,18 @@ class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, me
     * the returned flow
     **/
   override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
+    println(d)
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
       val methodName = possibleM.get.getName
       println(s"${methodName}")
+      println(s"|${method1Name}|")
+      println(s"|${method2Name}|")
       if (methodName.contains(s"$method1Name")) {
         println(s"found $method1Name")
         out.di.hasMethod1 = true
-      } else if (methodName.contains(s"method2Name")) {
+      } else if (methodName.contains(s"$method2Name")) {
         out.di.hasMethod2 = true
         println(s"found $method2Name")
         checkForViolation(out)
