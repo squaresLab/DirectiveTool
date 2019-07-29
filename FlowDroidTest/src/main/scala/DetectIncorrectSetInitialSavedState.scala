@@ -9,13 +9,6 @@ import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 
 import scala.collection.JavaConverters._
 
-/*
-What would I need to check for this directive?:
-- Tabs are changed in onTabSelected
-- Fragment is hidden in onTabUnselected
-- (wait, this would always be wrong because the tab is instantiated, nevermind on this) Tab is not the first tab (remove this check because I can't figure out how to make it app specfic)
-- Tab is referenced in setArguments
-*/
 
 object DetectIncorrectSetInitialSavedState {
   def main(args: Array[String]): Unit = {

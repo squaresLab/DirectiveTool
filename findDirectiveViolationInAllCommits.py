@@ -29,8 +29,85 @@ savedImportantFiles = {}
 
 #consider later passing this through the program instead of using it as a global variable
 buggyFileCount = 0
+errorCountForRepoDict = {}
 
-def tryEncoding(fin, fileName, commitName, repoNumber, commitNumber, outputFile, repoName):
+def tryEncodingSetSelectorSetPackage(fin, fileName, commitName, repoNumber, commitNumber, outputFile, repoName):
+  fileContainsActivity = False 
+  fileContainsSetSelector = False
+  fileContainsSetPackage = False
+  #current problem is that you start counting the nesting count again on the 
+  #next method. Need to stop when onCreate finishes
+  for line in fin:
+    if not fileContainsActivity and 'android.app.Activity' in line:
+      fileContainsActivity = True
+    elif not fileContainsSetSelector and 'setSelector' in line:
+      fileContainsSetSelector = True
+    elif not fileContainsSetPackage and 'setPackage' in line:
+      fileContainsSetPackage = True
+  if fileContainsActivity and fileContainsSetPackage and fileContainsSetSelector:
+    print('error in file: {0} in commit {1}'.format(fileName, commitName))
+    outputFile.write('error in file: {0} in commit {1}'.format(fileName, commitName))
+    outputFile.write('\n')
+    print('repo name: {0}'.format(repoName))
+    outputFile.write('repo name: {0}'.format(repoName))
+    outputFile.write('\n')
+    print('stopped on repo number: {0}, commit number: {1}'.format(repoNumber, commitNumber))
+    outputFile.write('stopped on repo number: {0}, commit number: {1}'.format(repoNumber, commitNumber))
+    outputFile.write('\n')
+    outputFile.write('---------------------------------\n')
+    global buggyFileCount
+    buggyFileCount = buggyFileCount + 1
+    #having trouble figuring out why the sys.exit is being caught
+    #os._exit(1)
+    #sys.exit(0)
+    #sys.exit(0)
+    return True
+  return False
+
+def tryEncodingGetResources(fin, fileName, commitName, repoNumber, commitNumber, outputFile, repoName):
+  fileContainsFragment = False 
+  fileContainsAsyncTask = False
+  fileContainsGetResources = False
+  #current problem is that you start counting the nesting count again on the 
+  #next method. Need to stop when onCreate finishes
+  for line in fin:
+    if not fileContainsFragment and 'android.app.Fragment' in line:
+      fileContainsFragment = True
+    elif not fileContainsAsyncTask and 'AsyncTask' in line:
+      fileContainsAsyncTask = True
+    elif not fileContainsGetResources and 'getResources' in line:
+      fileContainsGetResources = True
+  if fileContainsFragment and fileContainsAsyncTask and fileContainsGetResources:
+    print('error in file: {0} in commit {1}'.format(fileName, commitName))
+    outputFile.write('error in file: {0} in commit {1}'.format(fileName, commitName))
+    outputFile.write('\n')
+    print('repo name: {0}'.format(repoName))
+    outputFile.write('repo name: {0}'.format(repoName))
+    outputFile.write('\n')
+    print('stopped on repo number: {0}, commit number: {1}'.format(repoNumber, commitNumber))
+    outputFile.write('stopped on repo number: {0}, commit number: {1}'.format(repoNumber, commitNumber))
+    outputFile.write('\n')
+    outputFile.write('---------------------------------\n')
+    global buggyFileCount
+    commandList = ['open','-a', "Sublime Text", fileName]
+    #print(commandList)
+    if repoName in errorCountForRepoDict and errorCountForRepoDict[repoName] < 5:
+      commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode('utf-8') 
+      inputResult = input('press enter to see the next file')
+      errorCountForRepoDict[repoName] = errorCountForRepoDict[repoName] + 1
+    elif repoName not in errorCountForRepoDict:
+      commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode('utf-8') 
+      inputResult = input('press enter to see the next file')
+      errorCountForRepoDict[repoName] = 1
+    buggyFileCount = buggyFileCount + 1
+    #having trouble figuring out why the sys.exit is being caught
+    #os._exit(1)
+    #sys.exit(0)
+    #sys.exit(0)
+    return True
+  return False
+
+def tryEncodingOnCreate(fin, fileName, commitName, repoNumber, commitNumber, outputFile, repoName):
   fileContainsFragment = False 
   fileContainsSetHasOptionsMenu = False
   fileContainsOnCreateOptionsMenu = False
@@ -104,53 +181,54 @@ def tryEncoding(fin, fileName, commitName, repoNumber, commitNumber, outputFile,
 #currently, this method calls all the different encoding types I can think of
 #and then uses tryEncoding to perform the actual buggy check on the file
 def isFileBuggy(fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName):
-  hasEncoding = False
-  hasntFinished = True
-  currentEncodingIndex = 0
-  encodingsToCheck = ['utf-8','utf-16','ASCII']
-  checkedBom = False
-  currentEncoding = ""
-  while hasntFinished:
-    try:
-      #print('opening {0}'.format(fileOfInterest))
-      if hasEncoding: 
-        #print('testing encoding: {0}'.format(currentEncoding))
-        with open(fileOfInterest,'r', encoding = currentEncoding) as fin:
-          result = tryEncoding(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
-      else:
-        with open(fileOfInterest,'r') as fin:
-          result = tryEncoding(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
-      hasntFinished = False
-    except SystemExit: 
-    #later remove the double sys.exit call, but leaving for now because it is 
-    #is the fastest fix
-      sys.exit(1)
-    #if the file wasn't created on this commit, don't worry about it
-    #except Exception as e:
-    #print(e)
-    #pass
-    except (UnicodeDecodeError, UnicodeError) as u:
-      if hasEncoding:
-        currentEncodingIndex = currentEncodingIndex + 1
-      else:
-        hasEncoding = True
-      if currentEncodingIndex < len(encodingsToCheck):
-        currentEncoding = encodingsToCheck[currentEncodingIndex]
-      else:
-        if not checkedBom and len(check_bom(open(fileOfInterest,'rb').read(100))) > 0:
-          currentEncoding = check_bom(open(fileOfInterest,'rb').read(100))[0]
-          checkedBom = True
+  if not os.path.islink(fileOfInterest):
+    hasEncoding = False
+    hasntFinished = True
+    currentEncodingIndex = 0
+    encodingsToCheck = ['utf-8','utf-16','ASCII']
+    checkedBom = False
+    currentEncoding = ""
+    while hasntFinished:
+      try:
+        #print('opening {0}'.format(fileOfInterest))
+        if hasEncoding: 
+          #print('testing encoding: {0}'.format(currentEncoding))
+          with open(fileOfInterest,'r', encoding = currentEncoding) as fin:
+            result = tryEncodingSetSelectorSetPackage(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
         else:
-          try:
-            with open(fileOfInterest,'r', encoding = 'utf-8', errors='ignore') as fin:
-              #print('checking utf-8 encoding ignoring errors')
-              result = tryEncoding(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
-              hasntFinished = False
-          except:
-            print('Error: checked all encodings and none worked')
-            sys.exit(1)
-  #print('finished checking encodings')
-  return result
+          with open(fileOfInterest,'r') as fin:
+            result = tryEncodingSetSelectorSetPackage(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
+        hasntFinished = False
+      except SystemExit: 
+      #later remove the double sys.exit call, but leaving for now because it is 
+      #is the fastest fix
+        sys.exit(1)
+      #if the file wasn't created on this commit, don't worry about it
+      #except Exception as e:
+      #print(e)
+      #pass
+      except (UnicodeDecodeError, UnicodeError) as u:
+        if hasEncoding:
+          currentEncodingIndex = currentEncodingIndex + 1
+        else:
+          hasEncoding = True
+        if currentEncodingIndex < len(encodingsToCheck):
+          currentEncoding = encodingsToCheck[currentEncodingIndex]
+        else:
+          if not checkedBom and len(check_bom(open(fileOfInterest,'rb').read(100))) > 0:
+            currentEncoding = check_bom(open(fileOfInterest,'rb').read(100))[0]
+            checkedBom = True
+          else:
+            try:
+              with open(fileOfInterest,'r', encoding = 'utf-8', errors='ignore') as fin:
+                #print('checking utf-8 encoding ignoring errors')
+                result = tryEncodingSetSelectorSetPackage(fin, fileOfInterest, commitName, repoNumber, commitNumber, outputFile, repoName)
+                hasntFinished = False
+            except:
+              print('Error: checked all encodings and none worked')
+              sys.exit(1)
+    #print('finished checking encodings')
+    return result
 
         
 
@@ -166,7 +244,8 @@ def checkRepoForImportantFiles(repoLocation, commitName, repoNumber, commitNumbe
       for f in files:
         #I am finding too many.copied of the official Android fragment file
         #which doesn't follow these rules
-        if f.endswith('.java') and not f == 'Fragment.java':
+        #if f.endswith('.java') and not f == 'Fragment.java':
+        if f.endswith('.java') and not f == 'Activity.java':
           isFileBuggy(root+os.path.sep+f, commitName, repoNumber, commitNumber, outputFile, repoName)
 
 def checkCommits(repoLocation, repoNumber, outputFile, repoName):
@@ -233,7 +312,10 @@ with open('optionsMenuSearchResults.txt','w') as outputFile:
     #often the error doesn't appear until I try to get the 'items' out of the return result
     #so I am wrapping the whole expression in a try block for now
     try:
-      command = 'curl -n https://api.github.com/search/code?q=onCreate+Fragment+onCreateOptionsMenu+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      #command = 'curl -n https://api.github.com/search/code?q=onCreate+Fragment+onCreateOptionsMenu+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      #command = 'curl -n https://api.github.com/search/code?q=AsyncTask+Fragment+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      command = 'curl -n https://api.github.com/search/code?q=Activity+setSelector+setPackage+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
+      print('trying command: {0}'.format(command))
       commandList = command.split(" ")
       commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode('utf-8') 
       searchResult = json.loads(commandOutput)
@@ -259,6 +341,8 @@ with open('optionsMenuSearchResults.txt','w') as outputFile:
             sys.exit(1)
     except KeyError as k:
       print(k)
+      print(searchResult)
+      input('press enter to skip this error')
       print('failed to download page {0}'.format(pageNumber))
       print('skipping to the next page')
 os.chdir(originalDir)
