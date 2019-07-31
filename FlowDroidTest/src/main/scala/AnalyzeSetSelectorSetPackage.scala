@@ -12,6 +12,8 @@ import scala.collection.mutable
 //tested the change yet.
 class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeSetSelectorSetPackage.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
+  //The analysis seems to get stuck on multiple case statements in a function, so ending the analysis early in that case
+  val endTime = System.currentTimeMillis + 60 * 1000 // 60 seconds * 1000 ms/sec
   doAnalysis()
   //println("setting number of caught problems to 0")
   /**
@@ -31,6 +33,10 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
     * the returned flow
     **/
   override protected def flowThrough(in: AnalyzeSetSelectorSetPackage.AnalysisInfo, d: soot.Unit, out: AnalyzeSetSelectorSetPackage.AnalysisInfo): Unit = {
+    if(System.currentTimeMillis() > endTime){
+      throw new RuntimeException("analysis timed out")
+    }
+    println("in flow through")
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)

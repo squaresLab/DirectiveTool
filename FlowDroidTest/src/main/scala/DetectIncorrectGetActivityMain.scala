@@ -108,43 +108,50 @@ object DetectIncorrectGetActivityMain {
         //work on other checkers
         if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
           for (m: SootMethod <- cl.getMethods().asScala) {
-            for (stmt <- m.getActiveBody.getUnits.asScala) {
-              //println("in second for")
-              if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
-                extractMethodCallInStatement(stmt) match {
-                  case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
-                  case None => ()
-                }
-                stillChanging = true
-              }
-              for (chainToCheck <- callChains) {
-                //println("in third for")
-                /*
-                def checkForClassMatch(callClass: String, stmt: String, checkingForExactClasses: Boolean = true): Boolean = {
-                  //turn off (i.e. set to false) if you want to just match by method name
-                  //actually not that easy. I am still checking repeats with class and
-                  //method name. Would have to figure out how to easily remove those class
-                  // checks as well
-                  if (!checkingForExactClasses) {
-                    return true
+            try {
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
+                //println("in second for")
+                if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
+                  extractMethodCallInStatement(stmt) match {
+                    case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
+                    case None => ()
                   }
-                  else {
-                    return stmt.contains(callClass)
-                  }
-                }
-
-                //the contains callClass check does not match on call for super classes (fails on dynamic dispatch)
-                */
-                //remove the true later; added for debugging
-
-                //If we find the method we are interested in. Add it to the call chain
-                val possibleMethod = extractMethodCallInStatement(stmt)
-                if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall) {
-                  val newChain = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
-                  newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(newChain))
-                  chainToCheck.wasExtended = true
                   stillChanging = true
                 }
+                for (chainToCheck <- callChains) {
+                  //println("in third for")
+                  /*
+                  def checkForClassMatch(callClass: String, stmt: String, checkingForExactClasses: Boolean = true): Boolean = {
+                    //turn off (i.e. set to false) if you want to just match by method name
+                    //actually not that easy. I am still checking repeats with class and
+                    //method name. Would have to figure out how to easily remove those class
+                    // checks as well
+                    if (!checkingForExactClasses) {
+                      return true
+                    }
+                    else {
+                      return stmt.contains(callClass)
+                    }
+                  }
+
+                  //the contains callClass check does not match on call for super classes (fails on dynamic dispatch)
+                  */
+                  //remove the true later; added for debugging
+
+                  //If we find the method we are interested in. Add it to the call chain
+                  val possibleMethod = extractMethodCallInStatement(stmt)
+                  if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall) {
+                    val newChain = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
+                    newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(newChain))
+                    chainToCheck.wasExtended = true
+                    stillChanging = true
+                  }
+                }
+              }
+            } catch {
+               case r: RuntimeException => {
+                 println(s"error with method ${m.getName} - skipping")
+                 //skip method with problem
               }
             }
           }

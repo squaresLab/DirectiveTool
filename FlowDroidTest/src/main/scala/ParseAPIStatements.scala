@@ -9,12 +9,19 @@ object ParseAPIStatements {
     //TODO: figure out how to make this code work with spaces in the statement or without
 
     //Done:
-    //val statementToParse: String =  "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").requireCallOrder(\"setContentView\", \"findViewById\")"
+    //val statementToParse: String =  "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstMustOccurBeforeSecond(\"setContentView\", \"findViewById\")"
     //val statementToParse: String = "checkSubclassOf(\"AsyncTask\").checkClassesWithOuterClassThatSubclassOf(\"Fragment\").absent(\"getResources\")"
-    val statementToParse: String = "exclusiveOrInstance(\"setPackage\", \"setSelector\")"
+    //val statementToParse: String = "exclusiveOrInstance(\"setPackage\", \"setSelector\")"
+    //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").secondCannotOccurBeforeFirst(\"setContentView\", \"setTheme\"))"
 
     //Not done:
+    //maybe change and to multipleCheckCountFirst
     //val statementToParse: String  = "and(and(method(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
+
+    //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
+    //one occurs without the first. Might want to change name to firstMustBeBeforeSecond.
+    //I also don't know if not in the specification language makes sense; you can't invert and int return
+    val statementToParse: String = "checkSubclassOf(\"Fragment\").or(if(methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true);\")) then defined(\"onCreateOptionsMenu\"), if (checkSubClass(Fragment), defined(“onCreateOptionsMenu”))) then (methodToCheck(“onCreate”).contains(“setHasOptionsMenu(true))"
 
     val methodShorthandToFullDeclaration: Map[String, String] = Map("getResources" -> "android.content.res.Resources getResources()")
 
@@ -47,6 +54,24 @@ object ParseAPIStatements {
         val updatedParsingObj = parseStatement(partiallyUpdatedParsingObj)
         return updatedParsingObj
       }
+      else if (parsingObj.stringToParse.startsWith("or(")){
+        parsingObj.stringToParse = parsingObj.stringToParse.substring("or(".length())
+        val firstPartOfOr = parseStatement(parsingObj)
+        if (!firstPartOfOr.stringToParse.startsWith(",")){
+          throw new RuntimeException("first part of or did not parse to the correct point")
+        }
+        //creating a new parsing obj for the second part of the or
+        firstPartOfOr.stringToParse = firstPartOfOr.stringToParse.substring(1)
+        val startOfSecondParsingObj = new ParseCodeObj(firstPartOfOr.stringToParse, None)
+        val secondParsingResult = parseStatement(startOfSecondParsingObj)
+        //TODO: figure out how to combine the two code results
+        return secondParsingResult
+      }
+/*      else if (parsingObj.stringToParse.startsWith("if(")){
+
+      }
+      
+ */
       else if (parsingObj.stringToParse.startsWith("checkSubclassOf(")) {
         val endString = "\")."
         val endLoc = parsingObj.stringToParse.indexOf(endString)
@@ -101,29 +126,81 @@ object ParseAPIStatements {
         println(s"method of interest: ${methodOfInterest}")
         println(s"method modifier: ${methodModifier}")
         println("this is a test statement")
-        if (methodModifier.startsWith("requireCallOrder(")) {
+        //this option throws an error if second happens before first occurs
+        if (methodModifier.startsWith("firstMustOccurBeforeSecond(")) {
           val commaLoc = methodModifier.indexOf(',')
-          val method1 = methodModifier.substring("requireCallOrder(".length() + 1, commaLoc - 1)
+          val method1 = methodModifier.substring("firstMustOccurBeforeSecond(".length() + 1, commaLoc - 1)
           val modifierEndLoc = methodModifier.indexOf(')')
           val method2 = methodModifier.substring(commaLoc + 3, modifierEndLoc - 1)
           println(s"method 1: ${method1}")
           println(s"method 2: ${method2}")
-          //while I can make this work, I'm not sure how a person creating the method is supposed to know that the method variable will be called m
+
           def performAnalysisWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
-            def performAnalysis (m: SootMethod): Int = {
+            def performAnalysis(m: SootMethod): Int = {
               val s = new GeneralTwoMethodOrderingAnalysis(new ExceptionalUnitGraph(m.getActiveBody), method1, method2)
               return s.getCaughtProblems()
             }
+
             return performAnalysis
           }
           //parsingObj.addToCodeResult(s"val s = new GeneralTwoMethodOderingAnalysis(new ExceptionalUnitGraph(m.getActiveBody, $method1, $method2))\nproblemCount += s.getCaughtProblems()", "")
-          parsingObj.codeResult = Some(performAnalysisWrapper(method1,method2))
+          parsingObj.codeResult = Some(performAnalysisWrapper(method1, method2))
           parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
-          println(s"statement at end of require call order: ${parsingObj.stringToParse}")
+          println(s"statement at end of first must occur before second: ${parsingObj.stringToParse}")
+        }
+          //this one throws an error only if second happens and then first happens (second by itself is fine)
+        else if(methodModifier.startsWith("secondCannotOccurBeforeFirst(")){
+          val commaLoc = methodModifier.indexOf(',')
+          val method1 = methodModifier.substring("secondCannotOccurBeforeFirst(".length() + 1, commaLoc - 1)
+          val modifierEndLoc = methodModifier.indexOf(')')
+          val method2 = methodModifier.substring(commaLoc + 3, modifierEndLoc - 1)
+          println(s"method 1: ${method1}")
+          println(s"method 2: ${method2}")
+          def cannotOccurBeforeWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
+            def cannotOccurBefore (m: SootMethod): Int = {
+              var problemCount: Int = 0
+              //var foundMethod1: Boolean = false
+              var foundMethod2: Boolean = false
+              //TODO: I don't think this check pays attention to different paths; update later
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
+                println(stmt)
+                val methodInStatementOption = DetectionUtils.extractMethodCallInStatement(stmt)
+                methodInStatementOption match {
+                  case Some(methodInStatement) =>
+                    if (methodInStatement.getName == analysisMethod1) {
+                      println(s"found ${analysisMethod1}")
+                      if (foundMethod2) {
+                        println(s"@@@@@ Found a problem: ${analysisMethod1} is called after ${analysisMethod2} in " + m.getDeclaringClass.getName)
+                        System.out.flush()
+                        System.err.println(s"@@@@@ Found a problem: ${analysisMethod1} is called after ${analysisMethod2} in" + m.getDeclaringClass.getName)
+                        System.err.flush();
+                        problemCount = problemCount + 1
+                      }
+                    }
+                    else if (methodInStatement.getName == analysisMethod2) {
+                      foundMethod2 = true
+                    }
+                  case None =>
+                    ()
+                }
+              }
+              return problemCount
+            }
+            return cannotOccurBefore
+          }
+          parsingObj.codeResult = Some(cannotOccurBeforeWrapper(method1, method2))
+          parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
+          println(s"statement at end of first must occur before second: ${parsingObj.stringToParse}")
         }
         else if(methodModifier.startsWith("contains(")){
-          val modifierEndLoc = methodModifier.indexOf(")")
-          val methodToCheckFor = methodModifier.substring("requireCallOrder(".length() + 1, modifierEndLoc - 1)
+          /*val modifierEndLoc = methodModifier.indexOf(")")
+          val methodToCheckFor = methodModifier.substring("contains(".length() + 1, modifierEndLoc - 1)
+          def methodContainsWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
+            def methodContains(m:SootMethod): Int = {
+
+            }
+          }*/
+
         }
         //parsingObj.addToCodeResult("for (m: SootMethod <- cl.getMethods().asScala) {\nif(m.hasActiveBody && m.isConcrete) {\nif(m.getName.equals(\""+methodOfInterest+"\")) {", "}\n}\n}")
         def filterMethodWrapper(innerFunc: SootMethod => Int, methodOfInterest: String): SootClass => Int = {

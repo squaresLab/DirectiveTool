@@ -65,7 +65,7 @@ object DetectInvalidInflateCallMain {
     }
 
    println("printing cfg")
-    for( entry <- Scene.v().getReachableMethods.listener().asScala){
+/*    for( entry <- Scene.v().getReachableMethods.listener().asScala){
       entry match {
         case m: SootMethod =>
           if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
@@ -80,7 +80,7 @@ object DetectInvalidInflateCallMain {
       }
     }
     println("printing bodies")
-
+*/
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
       if (DetectionUtils.classIsSubClassOfFragment((cl))) {

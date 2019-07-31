@@ -92,12 +92,19 @@ object DetectSetSelectorSetPackageProblem {
           if(m.hasActiveBody && m.isConcrete) {
             if(!m.getName.contains("dummyMainMethod")) {
               println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
-              val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
-              if (s.getCaughtProblems() > 0){
-                println(s"@@@@@ problem in class ${cl.getName()}")
+              try {
+                val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
+                if (s.getCaughtProblems() > 0){
+                  println(s"@@@@@ problem in class ${cl.getName()}")
+                }
+                println(s"caught problems: ${s.getCaughtProblems()}")
+                problemCount += s.getCaughtProblems()
+              } catch {
+                case r:RuntimeException => {
+                   println("caught analysis timing out")
+                }
               }
-              println(s"caught problems: ${s.getCaughtProblems()}")
-              problemCount += s.getCaughtProblems()
+
             }
           }
         }

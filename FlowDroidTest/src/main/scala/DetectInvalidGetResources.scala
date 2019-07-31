@@ -67,7 +67,7 @@ object DetectInvalidGetResources {
     }
 
     println("printing cfg")
-    for (entry <- Scene.v().getReachableMethods.listener().asScala) {
+/*    for (entry <- Scene.v().getReachableMethods.listener().asScala) {
       entry match {
         case m: SootMethod =>
           if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
@@ -81,6 +81,8 @@ object DetectInvalidGetResources {
           ()
       }
     }
+
+ */
 
 /*    println("classes of interest")
     for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
