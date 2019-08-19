@@ -12,7 +12,7 @@ object ParseAPIStatements {
     //val statementToParse: String =  "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstMustOccurBeforeSecond(\"setContentView\", \"findViewById\")"
     //val statementToParse: String = "checkSubclassOf(\"AsyncTask\").checkClassesWithOuterClassThatSubclassOf(\"Fragment\").absent(\"getResources\")"
     //val statementToParse: String = "exclusiveOrInstance(\"setPackage\", \"setSelector\")"
-    //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").secondCannotOccurBeforeFirst(\"setContentView\", \"setTheme\"))"
+    //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
@@ -21,7 +21,12 @@ object ParseAPIStatements {
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
     //one occurs without the first. Might want to change name to firstMustBeBeforeSecond.
     //I also don't know if not in the specification language makes sense; you can't invert and int return
-    val statementToParse: String = "checkSubclassOf(\"Fragment\").or(if(methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true);\")) then defined(\"onCreateOptionsMenu\"), if (checkSubClass(Fragment), defined(“onCreateOptionsMenu”))) then (methodToCheck(“onCreate”).contains(“setHasOptionsMenu(true))"
+    //val statementToParse: String = "checkSubclassOf(\"Fragment\").or(if(methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true);\")) then defined(\"onCreateOptionsMenu\"), if (checkSubClass(Fragment), defined(“onCreateOptionsMenu”))) then (methodToCheck(“onCreate”).contains(“setHasOptionsMenu(true))"
+
+
+    //new statements to test
+    //for the statement below, need to add something about the first paramter being the same and null doesn't count
+    val statementToParse: String = "if(methodToCheck(\"onResume\").contains(\"Context.registerReceiver\").firstParameterMustMatch() then (methodToCheck(\"onPause\").contains(\"Context.unregisterReceiver\").firstParameterMustMatch())"
 
     val methodShorthandToFullDeclaration: Map[String, String] = Map("getResources" -> "android.content.res.Resources getResources()")
 

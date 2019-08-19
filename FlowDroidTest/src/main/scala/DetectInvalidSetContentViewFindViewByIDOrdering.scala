@@ -97,7 +97,7 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
             if(m.getName.equals("onCreate")) {
               println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
               val s = new AnalyzeSetContentViewFindViewByIDOrdering(new ExceptionalUnitGraph(m.getActiveBody))
-              println(s"caught problems: ${s.getCaughtProblems()}")
+              println(s"caught problems: ${s.getCaughtProblems()} in ${cl.getName()}")
               problemCount += s.getCaughtProblems()
 
             }

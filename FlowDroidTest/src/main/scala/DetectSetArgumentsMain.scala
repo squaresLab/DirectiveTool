@@ -277,12 +277,11 @@ object DetectSetArgumentsMain {
       }
     }
     */
-    if(tabsAreAdded && tabsAreHidden){
-      println("printing results")
-      System.err.println("printing results")
-      System.err.print(possibleErrorString)
-      println(possibleErrorString)
-      println(s"total number of problems: ${possibleProblemCount}")
-    }
+    //if(tabsAreAdded && tabsAreHidden){
+    println("printing results")
+    System.err.println("printing results")
+    System.err.print(possibleErrorString)
+    println(possibleErrorString)
+    println(s"total number of problems: ${possibleProblemCount}")
   }
 }
