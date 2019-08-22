@@ -83,7 +83,8 @@ object DetectInvalidInflateCallMain {
 */
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
-      if (DetectionUtils.classIsSubClassOfFragment((cl))) {
+      if (DetectionUtils.classIsSubClassOfFragment(cl) && !DetectionUtils.classIsSubClassOfDialogFragment(cl)) {
+        println(s"****${cl.getName()} is subclass of Fragment")
         for (m: SootMethod <- cl.getMethods().asScala) {
           //println(s"method: ${m.getName}")
           if (cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView") {
@@ -104,9 +105,9 @@ object DetectInvalidInflateCallMain {
                     //at the moment, the whole call chain isn't needed, just the failing method
                     println(s"${m.toString}   ${m.getDeclaringClass.toString}")
                     println("end of call chain")
-                    println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
+                    println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)
                     System.out.flush()
-                    System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName)
+                    System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)
                     System.err.flush();
                     problemCount = problemCount + 1
                   }

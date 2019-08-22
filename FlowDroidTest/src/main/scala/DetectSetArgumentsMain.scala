@@ -59,7 +59,7 @@ object DetectSetArgumentsMain {
       //println(s"class: ${cl.getName}")
       for (m: SootMethod <- cl.getMethods().asScala) {
         //println(s"method: ${m.getName}")
-        if (m.isConcrete && m.hasActiveBody) {
+        /*if (m.isConcrete && m.hasActiveBody) {
           println("new method")
           println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
           for (stmt <- m.getActiveBody.getUnits.asScala) {
@@ -67,98 +67,102 @@ object DetectSetArgumentsMain {
             println(stmt)
             //determine the class of the first tab and make sure that class is not added twice
           }
-        }
+        }*/
 
-        def superClassIsActionBarTabListener(c: SootClass): Boolean = {
-          if (c.getName().contains("TabListener")){
-            return true
-          }
-          else if (c.hasSuperclass) {
-            return superClassIsActionBarTabListener(c.getSuperclass)
-          }
-          else {
-            return false
-          }
-        }
+        if(m.hasActiveBody) {
 
-        def checkStatement(statementToLookFor: Regex, m: SootMethod): Boolean = {
-          var thisVariableName = ""
-          var fragmentVariableName = ""
-          for (stmt <- m.getActiveBody.getUnits.asScala) {
-            //Goal is to get the the fragment variable reference of the current class object
-            //The first line sets a variable reference to this, so save the variable reference
-            //that refers to this
-            if (stmt.toString().contains(":= @this")) {
-              thisVariableName = stmt.toString().split(" ")(0)
+          def superClassIsActionBarTabListener(c: SootClass): Boolean = {
+            if (c.getName().contains("TabListener")) {
+              return true
             }
-            //Using the variable reference that refers to this, save the variable reference
-            //that refers to this.fragment
-            if (thisVariableName != "" && stmt.toString().contains(thisVariableName)) {
-              if (stmt.toString().contains("android.app.Fragment")) {
-                fragmentVariableName = stmt.toString().split(" ")(0)
-              }
-            }
-            if (statementToLookFor matches stmt.toString()) {
-              //this next check might be better if it checked if the fragmentVariableName was used in the
-              //parameter list. But due to the typing constraints, I don't think the fragmentVariableName
-              //can be anywhere else, so I'd have to see more examples to determine if I am right or not
-              //
-              //If the statement is the right method call and refers to the fragment reference,
-              //then return that the method was successfully found
-              if (fragmentVariableName != "" && stmt.toString().contains(fragmentVariableName)) {
-                System.err.println(s"statement of interest: ${stmt}")
-                return true
-              }
-
-            }
-          }
-          return false
-        }
-
-        if (m.getName == "onTabSelected" && superClassIsActionBarTabListener(m.getDeclaringClass)) {
-          tabsAreAdded = checkStatement("""virtualinvoke .*android\.app\.FragmentTransaction add.*""".r, m)
-        }
-        if (m.getName == "onTabUnselected" && superClassIsActionBarTabListener(m.getDeclaringClass)) {
-          tabsAreHidden = checkStatement("""virtualinvoke .*android\.app\.FragmentTransaction hide.*""".r, m)
-        }
-
-        /*You don't check if the super class is a fragment
-          for the method onClick because the
-          on click listener is an inner class whose super class is not
-          a Fragment
-         */
-        def superClassIsFragment(c: SootClass): Boolean = {
-          println(s"class name ${c.getName()}")
-          if (c.getName.contains("android.app.Fragment")) {
-            return true
-          }
-          else {
-            if (c.hasSuperclass) {
-              return superClassIsFragment(c.getSuperclass)
+            else if (c.hasSuperclass) {
+              return superClassIsActionBarTabListener(c.getSuperclass)
             }
             else {
               return false
             }
           }
-        }
-        if (m.getName().contains("onClick")){
-          println("for debugging")
-          superClassIsFragment(m.getDeclaringClass)
-        }
-        println("")
-        if (m.getName.contains("onClick")) {
-          println(s"parent class of m ${m.getDeclaringClass.toString}")
-          for (stmt <- m.getActiveBody.getUnits.asScala) {
-            if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
-              val errorString = "@@@@@ Found a problem: onClick contains a call to " +
-                "setArguments on a Fragment when the Fragment may already be initialized in " +
-                s"class ${m.getDeclaringClass.getName}"
-              possibleErrorString += errorString + "\n"
-              //println(errorString)
-              //System.out.flush()
-              //System.err.println(errorString)
-              //System.err.flush()
-              possibleProblemCount += 1
+
+          def checkStatement(statementToLookFor: Regex, m: SootMethod): Boolean = {
+            var thisVariableName = ""
+            var fragmentVariableName = ""
+            for (stmt <- m.getActiveBody.getUnits.asScala) {
+              //Goal is to get the the fragment variable reference of the current class object
+              //The first line sets a variable reference to this, so save the variable reference
+              //that refers to this
+              if (stmt.toString().contains(":= @this")) {
+                thisVariableName = stmt.toString().split(" ")(0)
+              }
+              //Using the variable reference that refers to this, save the variable reference
+              //that refers to this.fragment
+              if (thisVariableName != "" && stmt.toString().contains(thisVariableName)) {
+                if (stmt.toString().contains("android.app.Fragment")) {
+                  fragmentVariableName = stmt.toString().split(" ")(0)
+                }
+              }
+              if (statementToLookFor matches stmt.toString()) {
+                //this next check might be better if it checked if the fragmentVariableName was used in the
+                //parameter list. But due to the typing constraints, I don't think the fragmentVariableName
+                //can be anywhere else, so I'd have to see more examples to determine if I am right or not
+                //
+                //If the statement is the right method call and refers to the fragment reference,
+                //then return that the method was successfully found
+                if (fragmentVariableName != "" && stmt.toString().contains(fragmentVariableName)) {
+                  System.err.println(s"statement of interest: ${stmt}")
+                  return true
+                }
+
+              }
+            }
+            return false
+          }
+
+          if (m.getName == "onTabSelected" && superClassIsActionBarTabListener(m.getDeclaringClass)) {
+            tabsAreAdded = checkStatement("""virtualinvoke .*android\.app\.FragmentTransaction add.*""".r, m)
+          }
+          if (m.getName == "onTabUnselected" && superClassIsActionBarTabListener(m.getDeclaringClass)) {
+            tabsAreHidden = checkStatement("""virtualinvoke .*android\.app\.FragmentTransaction hide.*""".r, m)
+          }
+
+          /*You don't check if the super class is a fragment
+          for the method onClick because the
+          on click listener is an inner class whose super class is not
+          a Fragment
+         */
+          def superClassIsFragment(c: SootClass): Boolean = {
+            println(s"class name ${c.getName()}")
+            if (c.getName.contains("android.app.Fragment")) {
+              return true
+            }
+            else {
+              if (c.hasSuperclass) {
+                return superClassIsFragment(c.getSuperclass)
+              }
+              else {
+                return false
+              }
+            }
+          }
+
+          if (m.getName().contains("onClick")) {
+            println("for debugging")
+            superClassIsFragment(m.getDeclaringClass)
+          }
+          println("")
+          if (m.getName.contains("onClick")) {
+            println(s"parent class of m ${m.getDeclaringClass.toString}")
+            for (stmt <- m.getActiveBody.getUnits.asScala) {
+              if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
+                val errorString = "@@@@@ Found a problem: onClick contains a call to " +
+                  "setArguments on a Fragment when the Fragment may already be initialized in " +
+                  s"class ${m.getDeclaringClass.getName}"
+                possibleErrorString += errorString + "\n"
+                //println(errorString)
+                //System.out.flush()
+                //System.err.println(errorString)
+                //System.err.flush()
+                possibleProblemCount += 1
+              }
             }
           }
         }

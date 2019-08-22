@@ -31,6 +31,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * the returned flow
     **/
   override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
+    println(s"in has method1: ${in.di.hasMethod1}, in has method2: ${in.di.hasMethod2}")
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
@@ -62,6 +63,8 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * <code>in2</code> are equal or aliased ). Used by the doAnalysis method.
     */
   override protected def merge(in1: AnalyzeMethodOrdering.AnalysisInfo, in2: AnalyzeMethodOrdering.AnalysisInfo, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
+    out.di.hasMethod1 = in1.di.hasMethod1 && in1.di.hasMethod1
+    out.di.hasMethod2 = in2.di.hasMethod2 && in2.di.hasMethod2
   }
 
   /** Creates a copy of the <code>source</code> flow object in <code>dest</code>. */
@@ -73,6 +76,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
   def checkForViolation(a: AnalyzeMethodOrdering.AnalysisInfo): Boolean = {
     if (a.di.hasMethod2 && !a.di.hasMethod1){
       numberOfCaughtProblems += 1
+      println("found a problem")
       return true
     }
     else {
@@ -84,6 +88,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     return numberOfCaughtProblems
   }
 }
+/*
 
 object AnalyzeSetContentViewFindViewByIDOrdering{
 
@@ -223,4 +228,5 @@ object AnalyzeSetContentViewFindViewByIDOrdering{
   }
   */
 
-}
+*/
+//}

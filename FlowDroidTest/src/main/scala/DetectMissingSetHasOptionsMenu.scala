@@ -51,7 +51,7 @@ object DetectMissingSetHasOptionsMenu {
       if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")
         && DetectionUtils.classIsSubClassOfFragment(cl) && !cl.isAbstract()) {
         for (m: SootMethod <- cl.getMethods().asScala) {
-          if(m.getName == "onCreateOptionsMenu") {
+          if(m.getName() == "onCreateOptionsMenu" || m.getName() == "onPrepareOptionsMenu") {
             containsOnCreateOptionsMenu = true
           } else if (m.getName == "onCreate" || m.getName == "onCreateView" || m.getName == "onActivityCreated" ||
             m.getName == "onStart"){

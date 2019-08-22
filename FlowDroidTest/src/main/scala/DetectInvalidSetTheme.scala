@@ -9,6 +9,8 @@ import soot.jimple.infoflow.android.SetupApplication
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG
 import soot.jimple.toolkits.ide.icfg.OnTheFlyJimpleBasedICFG
 import soot.options.Options
+import soot.toolkits.graph.ExceptionalUnitGraph
+
 import scala.collection.JavaConverters._
 
 object DetectInvalidSetTheme {
@@ -101,7 +103,23 @@ object DetectInvalidSetTheme {
             if (m.getName == "onCreate") {
               println("found onCreate")
               println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
-              for (stmt <- m.getActiveBody.getUnits.asScala) {
+              if(m.hasActiveBody && m.isConcrete) {
+                if(!m.getName.contains("dummyMainMethod")) {
+                  println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
+                  try {
+                    val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
+                    if (s.getCaughtProblems() > 0) {
+                      println(s"@@@@@ problem in class ${cl.getName()}")
+                    }
+                    println(s"caught problems: ${s.getCaughtProblems()}")
+                    problemCount += s.getCaughtProblems()
+                  } catch {
+                    case r: RuntimeException => {
+                      println("caught analysis timing out")
+                    }
+                  }
+                }
+              /*for (stmt <- m.getActiveBody.getUnits.asScala) {
                 println(stmt)
                 val methodInStatementOption = DetectionUtils.extractMethodCallInStatement(stmt)
                 methodInStatementOption match {
@@ -113,7 +131,7 @@ object DetectInvalidSetTheme {
                         if (hasSetContentView){
                           println("@@@@@ Found a problem: set theme is called after setContentView in " + m.getDeclaringClass.getName)
                           System.out.flush()
-                          System.err.println("@@@@@ Found a problem:  set theme is called after setContentView in" + m.getDeclaringClass.getName)
+                          System.err.println("@@@@@ Found a problem:  set theme is called after setContentView in " + m.getDeclaringClass.getName)
                           System.err.flush();
                           problemCount = problemCount + 1
                         }
@@ -125,7 +143,7 @@ object DetectInvalidSetTheme {
                         if (hasSetThemeInMethodOtherThanOnCreate) {
                           println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
                           System.out.flush()
-                          System.err.println("@@@@@ Found a problem: set theme is called after setContentView in" + methodSetThemeIsCalledIn)
+                          System.err.println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
                           System.err.flush();
                           problemCount = problemCount + 1
                         }
@@ -137,7 +155,11 @@ object DetectInvalidSetTheme {
                     ()
                   //  print(s"error for line: ${stmt.toString()}")
                 }
+
+               */
               }
+
+
               println("")
             }
             else {

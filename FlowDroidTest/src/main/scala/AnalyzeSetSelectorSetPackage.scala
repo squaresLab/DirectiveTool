@@ -36,7 +36,7 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
     if(System.currentTimeMillis() > endTime){
       throw new RuntimeException("analysis timed out")
     }
-    println("in flow through")
+    //println("in flow through")
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
@@ -116,7 +116,7 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
 
   /** Creates a copy of the <code>source</code> flow object in <code>dest</code>. */
   override protected def copy(source: AnalyzeSetSelectorSetPackage.AnalysisInfo, dest: AnalyzeSetSelectorSetPackage.AnalysisInfo): Unit = {
-    dest.varMap = source.varMap
+    dest.varMap = source.varMap.clone()
   }
 
   def checkForViolation(d: AnalyzeSetSelectorSetPackage.DirectiveInfo): Boolean = {
@@ -158,6 +158,32 @@ object AnalyzeSetSelectorSetPackage {
 
     def clear(): Unit = {
       varMap = new mutable.HashMap[String,DirectiveInfo]()
+    }
+
+    override def equals(obj: Any): Boolean = {
+      obj match {
+        case ai: AnalysisInfo => {
+          if(this.varMap.size != ai.varMap.size){
+            return false
+          }
+          else {
+            for ((varName,di) <- ai.varMap){
+              if(!varMap.contains(varName)){
+                return false
+              } else {
+                if(ai.varMap(varName).hasSetSelector != varMap(varName).hasSetSelector){
+                  return false
+                }
+                if(ai.varMap(varName).hasSetPackage != varMap(varName).hasSetPackage){
+                  return false
+                }
+              }
+            }
+            return true
+          }
+        }
+        case _ => return false
+      }
     }
 
 

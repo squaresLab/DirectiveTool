@@ -91,6 +91,8 @@ object DetectSetSelectorSetPackageProblem {
         for (m: SootMethod <- cl.getMethods().asScala) {
           if(m.hasActiveBody && m.isConcrete) {
             if(!m.getName.contains("dummyMainMethod")) {
+              //consider adding a check to see if setPackage or setSelector is even in the
+              //method instead of running dataflow analysis on all methods
               println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
               try {
                 val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))

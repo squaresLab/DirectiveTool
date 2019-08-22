@@ -5,7 +5,19 @@ import soot.{SootClass, SootMethod, Value}
 object DetectionUtils {
 
 def classIsSubClassOfFragment(c: SootClass): Boolean = {
-    if(c.toString() == "android.app.Fragment"){
+    if(c.toString() == "android.app.Fragment" || c.toString() == "android.support.v4.app.Fragment"){
+      return true
+    } else {
+      if(c.hasSuperclass) {
+        return classIsSubClassOfFragment(c.getSuperclass)
+      } else {
+        return false
+      }
+    }
+  }
+
+  def classIsSubClassOfDialogFragment(c: SootClass): Boolean = {
+    if(c.toString() == "android.app.DialogFragment" || c.toString() == "android.support.v4.app.DialogFragment"){
       return true
     } else {
       if(c.hasSuperclass) {
@@ -199,7 +211,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     if (args.length > 0){
       return args(0)
     } else {
-      return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
+      //return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/git/DirectiveTool/testFolder/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
@@ -207,6 +219,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
       //return   "/Users/zack/git/DirectiveTool/org.xapek.andiodine_6.apk"
      // return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
+      return "/Users/zack/git/DirectiveTool/apkWithError.apk"
     }
   }
 }
