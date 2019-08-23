@@ -35,15 +35,27 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
-      val methodName = possibleM.get.getName
-      println(s"${methodName}")
-      if (methodName.contains("setContentView")) {
-        println("found setContentView")
-        out.di.hasMethod1 = true
-      } else if (methodName.contains("findViewById")) {
-        out.di.hasMethod2 = true
-        println("found findViewById")
-        checkForViolation(out)
+      var instanceName = ""
+      for (ub <- d.getUseBoxes.asScala) {
+        ub match {
+          case vb: ValueBox =>
+            instanceName = vb.getValue.toString()
+          case _ => ()
+        }
+      }
+      //avoid cases where findViewById is not called on the main view being instantiated
+      if(instanceName == "") {
+
+        val methodName = possibleM.get.getName
+        println(s"${methodName}")
+        if (methodName.contains("setContentView")) {
+          println("found setContentView")
+          out.di.hasMethod1 = true
+        } else if (methodName.contains("findViewById")) {
+          out.di.hasMethod2 = true
+          println("found findViewById")
+          checkForViolation(out)
+        }
       }
     } else {
       copy(in,out)
@@ -63,8 +75,8 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * <code>in2</code> are equal or aliased ). Used by the doAnalysis method.
     */
   override protected def merge(in1: AnalyzeMethodOrdering.AnalysisInfo, in2: AnalyzeMethodOrdering.AnalysisInfo, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
-    out.di.hasMethod1 = in1.di.hasMethod1 && in1.di.hasMethod1
-    out.di.hasMethod2 = in2.di.hasMethod2 && in2.di.hasMethod2
+    out.di.hasMethod1 = in1.di.hasMethod1 && in2.di.hasMethod1
+    out.di.hasMethod2 = in1.di.hasMethod2 && in2.di.hasMethod2
   }
 
   /** Creates a copy of the <code>source</code> flow object in <code>dest</code>. */

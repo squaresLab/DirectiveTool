@@ -121,7 +121,8 @@ object DetectInvalidGetResources {
             println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
             for (stmt <- m.getActiveBody.getUnits.asScala) {
               println(stmt)
-              if (stmt.toString().contains("android.content.res.Resources getResources()") && DetectionUtils.classIsSubClassOfFragment(cl.getOuterClass())) {
+              //getOuterClassUnsafe returns null if no outer class exists while getOuterClass throws an exception
+              if (stmt.toString().contains("android.content.res.Resources getResources()") && cl.getOuterClassUnsafe() != null && DetectionUtils.classIsSubClassOfFragment(cl.getOuterClass())) {
                 println("start of call chain")
                 //at the moment, the whole call chain isn't needed, just the failing method
                 println(s"${m.toString}   ${m.getDeclaringClass.toString}")
