@@ -1,3 +1,5 @@
+package analysis
+
 import java.util
 
 import soot.{SootMethod, ValueBox}
@@ -13,7 +15,7 @@ import scala.collection.mutable
 class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeSetSelectorSetPackage.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
   //The analysis seems to get stuck on multiple case statements in a function, so ending the analysis early in that case
-  val endTime = System.currentTimeMillis + 60 * 1000 // 60 seconds * 1000 ms/sec
+  val endTime = System.currentTimeMillis + 300 * 1000 // 60 seconds * 1000 ms/sec
   doAnalysis()
   //println("setting number of caught problems to 0")
   /**

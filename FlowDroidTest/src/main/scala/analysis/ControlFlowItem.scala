@@ -1,3 +1,5 @@
+package analysis
+
 import soot.SootMethod
 
 class ControlFlowItem(val methodCall: SootMethod, isCheckingClasses: Boolean = true) {

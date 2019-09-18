@@ -1,3 +1,5 @@
+package analysis
+
 import java.io.IOException
 
 import org.xmlpull.v1.XmlPullParserException
@@ -17,10 +19,14 @@ object DetectInvalidSetTheme {
   @throws[IOException]
   @throws[XmlPullParserException]
   def main(args: Array[String]): Unit = { // Initialize Soot
+    runAnalysis(args)
+  }
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
   System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
   val apkLocation = DetectionUtils.getAPKLocation(args)
   val analyzer = new SetupApplication(
-    "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+    DetectionUtils.getAndroidJarLocation(args),
     apkLocation)
   //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
   //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -39,7 +45,7 @@ object DetectInvalidSetTheme {
   analyzer.constructCallgraph()
   val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
-    for (edge <- Scene.v().getCallGraph.iterator().asScala){
+    /*for (edge <- Scene.v().getCallGraph.iterator().asScala){
       println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
         uBox.getUnit() match {
@@ -52,7 +58,7 @@ object DetectInvalidSetTheme {
       println(s"target: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getTgt.method.getName}")
       println("")
     }
-
+*/
    /*println("printing cfg")
     for( entry <- Scene.v().getReachableMethods.listener().asScala){
       entry match {
@@ -69,10 +75,10 @@ object DetectInvalidSetTheme {
       }
     }
     */
-    println("printing bodies")
+    //println("printing bodies")
 
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
+      /*if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
         var c: SootClass = cl;
 
         println(c.getName)
@@ -80,7 +86,7 @@ object DetectInvalidSetTheme {
           c = c.getSuperclass
           println(c.getName)
         }
-      }
+      }*/
       //println(s"class: ${cl.getName}")
       if (DetectionUtils.classIsSubClassOfActivity((cl))) {
         //may not need both of these variables; delete any unneeded
@@ -94,24 +100,25 @@ object DetectInvalidSetTheme {
           var hasSetThemeInOnCreate = false
           var hasSetContentViewInOnCreate = false
           //println(s"method: ${m.getName}")
-          if (cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView") {
+          /*if (cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView") {
             println("here")
             println(s"is concrete: ${m.isConcrete}")
             println(s"has active body: ${m.hasActiveBody}")
-          }
+          }*/
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName == "onCreate") {
-              println("found onCreate")
-              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
+              //println("found onCreate")
+              //println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
               if(m.hasActiveBody && m.isConcrete) {
                 if(!m.getName.contains("dummyMainMethod")) {
-                  println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
+                  //println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
                   try {
                     val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
-                    if (s.getCaughtProblems() > 0) {
+                    /*if (s.getCaughtProblems() > 0) {
                       println(s"@@@@@ problem in class ${cl.getName()}")
                     }
                     println(s"caught problems: ${s.getCaughtProblems()}")
+                     */
                     problemCount += s.getCaughtProblems()
                   } catch {
                     case r: RuntimeException => {
@@ -160,7 +167,7 @@ object DetectInvalidSetTheme {
               }
 
 
-              println("")
+              //println("")
             }
             else {
               for (stmt <- m.getActiveBody.getUnits.asScala) {
@@ -168,7 +175,7 @@ object DetectInvalidSetTheme {
                 methodInStatementOption match {
                   case Some(methodInStatement) =>
                     if (methodInStatement.getName == "setTheme") {
-                      println("found set theme")
+                      //println("found set theme")
                       hasSetThemeInMethodOtherThanOnCreate = true
                       methodSetThemeIsCalledIn = m.getName()
                       //this may only work if the mtehods in the file are declared after onCreate
@@ -190,6 +197,9 @@ object DetectInvalidSetTheme {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
 
     //println(s"main method of scene: ${Scene.v().getMainMethod}")
 

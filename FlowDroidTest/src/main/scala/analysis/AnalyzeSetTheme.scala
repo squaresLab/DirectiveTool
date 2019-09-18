@@ -1,8 +1,10 @@
+package analysis
+
 import soot.toolkits.graph.UnitGraph
 import soot.toolkits.scalar.ForwardFlowAnalysis
 
 //TODO: made a change and need to test this again
-class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, method2Name: String) extends ForwardFlowAnalysis[soot.Unit, AnalyzeMethodOrdering.AnalysisInfo](graph) {
+class AnalyzeSetTheme(graph: UnitGraph, method1Name: String, method2Name: String) extends ForwardFlowAnalysis[soot.Unit, AnalyzeMethodOrdering.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
   doAnalysis()
   //println("setting number of caught problems to 0")
@@ -23,7 +25,6 @@ class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, me
     * the returned flow
     **/
   override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
-    println(d)
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
       copy(in,out)
@@ -31,13 +32,20 @@ class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, me
       println(s"${methodName}")
       println(s"|${method1Name}|")
       println(s"|${method2Name}|")
+      //I just need something to tell check for violation which method was just found
+      //there is probably a better way to do this but I'm doing the quick option at the moment
+      //actually I don't think I need this - just needed to move checkForViolation
+      //var foundMethod1 = false
+      var foundMethod2 = false
       if (methodName.contains(s"$method1Name")) {
         println(s"found $method1Name")
         out.di.hasMethod1 = true
+        checkForViolation(out)
+       // foundMethod1 = true
       } else if (methodName.contains(s"$method2Name")) {
         out.di.hasMethod2 = true
         println(s"found $method2Name")
-        checkForViolation(out)
+        //foundMethod2 = true
       }
     } else {
       copy(in,out)
@@ -69,8 +77,10 @@ class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, me
     dest.di.hasMethod1 = source.di.hasMethod1
   }
 
+  //only difference from general two method ordering analysis is this method and where it is called -
+  // you should combine the code clones later
   def checkForViolation(a: AnalyzeMethodOrdering.AnalysisInfo): Boolean = {
-    if (a.di.hasMethod2 && !a.di.hasMethod1){
+    if (a.di.hasMethod2){
       numberOfCaughtProblems += 1
       return true
     }
@@ -84,7 +94,7 @@ class GeneralTwoMethodOrderingAnalysis(graph: UnitGraph, method1Name: String, me
   }
 }
 
-
+/*
 object AnalyzeMethodOrdering{
 
   class DirectiveInfo (var hasMethod1: Boolean = false, var hasMethod2: Boolean = false){
@@ -99,3 +109,5 @@ object AnalyzeMethodOrdering{
     }
   }
 }
+
+ */

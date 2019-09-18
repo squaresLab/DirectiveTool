@@ -1,3 +1,5 @@
+package analysis
+
 import scala.util.matching.Regex
 
 object RegexUtils {

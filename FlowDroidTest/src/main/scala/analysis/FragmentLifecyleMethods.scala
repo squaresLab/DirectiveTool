@@ -1,3 +1,5 @@
+package analysis
+
 object FragmentLifecyleMethods {
 
   //can't decide how general to make this. I'll make this

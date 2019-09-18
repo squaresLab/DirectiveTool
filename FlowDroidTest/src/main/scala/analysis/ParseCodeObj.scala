@@ -1,3 +1,4 @@
+package analysis
 
 class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int]) {
 

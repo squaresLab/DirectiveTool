@@ -1,33 +1,21 @@
-import java.io.{FileOutputStream, PrintStream}
+package analysis
 
-import com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator
-import soot.{PhaseOptions, Scene, SootClass, SootMethod}
+import soot.jimple.SpecialInvokeExpr
 import soot.jimple.infoflow.InfoflowConfiguration
 import soot.jimple.infoflow.InfoflowConfiguration.{CallgraphAlgorithm, ImplicitFlowMode}
 import soot.jimple.infoflow.android.InfoflowAndroidConfiguration.CallbackAnalyzer
 import soot.jimple.infoflow.android.SetupApplication
+import soot.jimple.internal._
 import soot.options.Options
+import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 
 import scala.collection.JavaConverters._
-import util.control.Breaks._
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.util.matching.Regex
-import RegexUtils._
-import soot.jimple.SpecialInvokeExpr
-import soot.jimple.internal._
-import soot.jimple.toolkits.callgraph.Edge
 
-/*
-What would I need to check for this directive?:
-- Tabs are changed in onTabSelected
-- Fragment is hidden in onTabUnselected
-- (wait, this would always be wrong because the tab is instantiated, nevermind on this) Tab is not the first tab (remove this check because I can't figure out how to make it app specfic)
-- Tab is referenced in setArguments
-*/
 
-object DetectIncorrectGetActivityMain {
+object DetectIncorrectSetInitialSavedState {
   def main(args: Array[String]): Unit = {
-
+    runAnalysis(args)
+  }
   /*  System.setOut(new PrintStream(new FileOutputStream(java.io.FileDescriptor.out)) {
       override def print(s: String): Unit = {
         super.print(s)
@@ -35,11 +23,13 @@ object DetectIncorrectGetActivityMain {
       }
     })
     */
-
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
+
     val apkLocation = DetectionUtils.getAPKLocation(args)
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -66,7 +56,6 @@ object DetectIncorrectGetActivityMain {
     var tabsAreHidden = false
     //var tabIsReferencedInHasSetArguments = false
     var possibleErrorString = ""
-    var errorLocations = ArrayBuffer()
     //create a simple be inefficient control flow graph for setArguments because
     //FlowDroid can't seem to handle anonymous inner classes in it's control flow
     //graph creation
@@ -76,10 +65,10 @@ object DetectIncorrectGetActivityMain {
     def getControlChainAlreadyPresent[X](currentChains: List[List[ControlFlowItem]], newChain: List[ControlFlowItem], isCheckingClassName: Boolean = true): Option[List[ControlFlowItem]] = {
       for (listItem <- currentChains) {
         if (listItem == newChain) {
-          println("match")
+          //println("match")
           return Some(listItem)
         } else {
-          println("no match")
+          //println("no match")
         }
       }
       return None
@@ -93,7 +82,7 @@ object DetectIncorrectGetActivityMain {
     //so a list is better than a hash map in that case
     //Also, I might want to later add a class to the getActivityCall, so I can keep track
     //of which class is calling getActivity to make the checker better
-    val methodNameToCheckFor = "getActivity"
+    val methodNameToCheckFor = "setInitialSavedState"
     var callChains: List[ControlFlowChain] = List()
     val checkingClasses = true
     //not sure how to write this functionally; might want to figure out later to clean this
@@ -121,21 +110,21 @@ object DetectIncorrectGetActivityMain {
                 for (chainToCheck <- callChains) {
                   //println("in third for")
                   /*
-                  def checkForClassMatch(callClass: String, stmt: String, checkingForExactClasses: Boolean = true): Boolean = {
-                    //turn off (i.e. set to false) if you want to just match by method name
-                    //actually not that easy. I am still checking repeats with class and
-                    //method name. Would have to figure out how to easily remove those class
-                    // checks as well
-                    if (!checkingForExactClasses) {
-                      return true
-                    }
-                    else {
-                      return stmt.contains(callClass)
-                    }
+                def checkForClassMatch(callClass: String, stmt: String, checkingForExactClasses: Boolean = true): Boolean = {
+                  //turn off (i.e. set to false) if you want to just match by method name
+                  //actually not that easy. I am still checking repeats with class and
+                  //method name. Would have to figure out how to easily remove those class
+                  // checks as well
+                  if (!checkingForExactClasses) {
+                    return true
                   }
+                  else {
+                    return stmt.contains(callClass)
+                  }
+                }
 
-                  //the contains callClass check does not match on call for super classes (fails on dynamic dispatch)
-                  */
+                //the contains callClass check does not match on call for super classes (fails on dynamic dispatch)
+                */
                   //remove the true later; added for debugging
 
                   //If we find the method we are interested in. Add it to the call chain
@@ -148,10 +137,11 @@ object DetectIncorrectGetActivityMain {
                   }
                 }
               }
-            } catch {
-               case r: RuntimeException => {
-                 println(s"error with method ${m.getName} - skipping")
-                 //skip method with problem
+            }
+            catch {
+              case r: RuntimeException => {
+                //println(s"error with method ${m.getName} - skipping")
+                //skip method with problem
               }
             }
           }
@@ -168,15 +158,16 @@ object DetectIncorrectGetActivityMain {
     }*/
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
-      && (!checkingClasses || !chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
+      //(note) I think this is right.  Might need to check my logic later
+      if (chain.controlChain.exists(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
+      || (checkingClasses && chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
         println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")
-        val errorString = "@@@@ Found a problem: getActivity may be called when " +
-          "the Fragment is not attached to an Activity" +
+        val errorString = "@@@@ Found a problem: setInitialSavedState may be called when " +
+          "the Fragment is attached to an Activity" +
           s": call sequence ${chain.controlChain}"
         println(errorString)
         System.out.flush()
@@ -186,6 +177,9 @@ object DetectIncorrectGetActivityMain {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
   }
 
   def classIsSubClassOfFragment(c: SootClass): Boolean = {

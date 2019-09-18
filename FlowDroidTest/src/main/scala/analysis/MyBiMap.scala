@@ -1,3 +1,4 @@
+package analysis
 //Taken from https://stackoverflow.com/questions/9850786/is-there-such-a-thing-as-bidirectional-maps-in-scala
 /*object BiMap {
   private[BiMap] trait MethodDistinctor

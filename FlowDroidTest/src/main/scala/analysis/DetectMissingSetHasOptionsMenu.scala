@@ -1,3 +1,5 @@
+package analysis
+
 import soot.jimple.infoflow.InfoflowConfiguration
 import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 import soot.jimple.infoflow.InfoflowConfiguration.{CallgraphAlgorithm, ImplicitFlowMode}
@@ -9,14 +11,17 @@ import scala.collection.JavaConverters._
 object DetectMissingSetHasOptionsMenu {
 
   def main(args: Array[String]): Unit = {
-
+    runAnalysis(args)
+  }
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
     println(s"number of command line arguments: ${args.length}")
     println(args)
     val apkLocation = DetectionUtils.getAPKLocation(args)
     println(s"apk location variable: ${apkLocation}")
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation
       )
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
@@ -82,6 +87,10 @@ object DetectMissingSetHasOptionsMenu {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
+
   }
 
   def notifyOfProblem(problemCount: Int, className: String, errorString: String): Int = {

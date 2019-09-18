@@ -1,3 +1,5 @@
+package analysis
+
 import java.io.IOException
 
 import org.xmlpull.v1.XmlPullParserException
@@ -17,10 +19,15 @@ object DetectSetSelectorSetPackageProblem {
   @throws[IOException]
   @throws[XmlPullParserException]
   def main(args: Array[String]): Unit = { // Initialize Soot
+    runAnalysis(args)
+  }
+
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
   System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
   val apkLocation = DetectionUtils.getAPKLocation(args)
   val analyzer = new SetupApplication(
-    "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+    DetectionUtils.getAndroidJarLocation(args),
     apkLocation)
   //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
   //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -39,7 +46,7 @@ object DetectSetSelectorSetPackageProblem {
   analyzer.constructCallgraph()
   val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
-    for (edge <- Scene.v().getCallGraph.iterator().asScala){
+  /*  for (edge <- Scene.v().getCallGraph.iterator().asScala){
       println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
         uBox.getUnit() match {
@@ -52,7 +59,7 @@ object DetectSetSelectorSetPackageProblem {
       println(s"target: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getTgt.method.getName}")
       println("")
     }
-
+  */
    /*println("printing cfg")
     for( entry <- Scene.v().getReachableMethods.listener().asScala){
       entry match {
@@ -69,10 +76,10 @@ object DetectSetSelectorSetPackageProblem {
       }
     }
     */
-    println("running analysis")
+    //println("running analysis")
 
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
+      /*if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
         var c: SootClass = cl;
 
         println(c.getName)
@@ -80,7 +87,7 @@ object DetectSetSelectorSetPackageProblem {
           c = c.getSuperclass
           println(c.getName)
         }
-      }
+      }*/
       //println(s"class: ${cl.getName}")
       //may not need both of these variables; delete any unneeded
       //ones late if so
@@ -93,7 +100,7 @@ object DetectSetSelectorSetPackageProblem {
             if(!m.getName.contains("dummyMainMethod")) {
               //consider adding a check to see if setPackage or setSelector is even in the
               //method instead of running dataflow analysis on all methods
-              println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
+              //println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
               try {
                 val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
                 if (s.getCaughtProblems() > 0){
@@ -103,7 +110,7 @@ object DetectSetSelectorSetPackageProblem {
                 problemCount += s.getCaughtProblems()
               } catch {
                 case r:RuntimeException => {
-                   println("caught analysis timing out")
+                   //println("caught analysis timing out")
                 }
               }
 
@@ -113,7 +120,9 @@ object DetectSetSelectorSetPackageProblem {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
-
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
     //println(s"main method of scene: ${Scene.v().getMainMethod}")
 
     // Iterate over the callgraph

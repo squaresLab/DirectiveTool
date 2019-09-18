@@ -1,3 +1,6 @@
+package analysis
+
+import analysis.AnalyzeExclusiveCallsOnAVariableType
 import soot.toolkits.graph.ExceptionalUnitGraph
 import soot.{SootClass, SootMethod}
 

@@ -1,3 +1,5 @@
+package analysis
+
 import java.io.IOException
 
 import org.xmlpull.v1.XmlPullParserException
@@ -17,11 +19,15 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
   @throws[IOException]
   @throws[XmlPullParserException]
   def main(args: Array[String]): Unit = { // Initialize Soot
+    runAnalysis(args)
+  }
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val apkLocation = DetectionUtils.getAPKLocation(args)
     println(s"the apk location: ${apkLocation}")
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -40,7 +46,7 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
     analyzer.constructCallgraph()
     val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
-    for (edge <- Scene.v().getCallGraph.iterator().asScala){
+    /*for (edge <- Scene.v().getCallGraph.iterator().asScala){
       println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
         uBox.getUnit() match {
@@ -53,6 +59,7 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
       println(s"target: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getTgt.method.getName}")
       println("")
     }
+     */
 
     /*println("printing cfg")
      for( entry <- Scene.v().getReachableMethods.listener().asScala){
@@ -70,10 +77,10 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
        }
      }
      */
-    println("running analysis")
+    //println("running analysis")
 
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
+      /*if (cl.getName == "com.example.android.lnotifications.LNotificationActivity") {
         var c: SootClass = cl;
 
         println(c.getName)
@@ -82,18 +89,19 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
           println(c.getName)
         }
       }
+       */
       //println(s"class: ${cl.getName}")
       //may not need both of these variables; delete any unneeded
       //ones late if so
       var hasSetContentView = false
       var hasSetThemeInMethodOtherThanOnCreate = false
       var methodSetThemeIsCalledIn = ""
-      if(DetectionUtils.classIsSubClassOfActivity(cl)){
+      if(DetectionUtils.isCustomClassName(cl.getName()) && DetectionUtils.classIsSubClassOfActivity(cl)){
         //don't think I need the check below since I added the check above but I'll leave it
         //here in case I am wrong
       //if(DetectionUtils.isCustomClassName(cl.getName())) {
         for (m: SootMethod <- cl.getMethods().asScala) {
-          if(m.hasActiveBody && m.isConcrete) {
+          if(m.hasActiveBody && m.isConcrete ) {
             if(m.getName.equals("onCreate")) {
               println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
               val s = new AnalyzeSetContentViewFindViewByIDOrdering(new ExceptionalUnitGraph(m.getActiveBody))
@@ -106,6 +114,9 @@ object DetectInvalidSetContentViewFindViewByIDOrdering {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
 
     //println(s"main method of scene: ${Scene.v().getMainMethod}")
 

@@ -1,3 +1,5 @@
+package analysis
+
 import soot.{SootClass, SootMethod}
 import soot.toolkits.graph.ExceptionalUnitGraph
 

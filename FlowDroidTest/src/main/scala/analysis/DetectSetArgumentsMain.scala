@@ -1,3 +1,5 @@
+package analysis
+
 import java.io.{FileOutputStream, PrintStream}
 
 import com.sun.org.apache.xalan.internal.xsltc.dom.MatchingIterator
@@ -26,10 +28,14 @@ object DetectSetArgumentsMain {
 
 
   def main(args: Array[String]): Unit = {
+    runAnalysis(args)
+  }
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val apkLocation = DetectionUtils.getAPKLocation(args)
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -130,7 +136,7 @@ object DetectSetArgumentsMain {
           a Fragment
          */
           def superClassIsFragment(c: SootClass): Boolean = {
-            println(s"class name ${c.getName()}")
+            //println(s"class name ${c.getName()}")
             if (c.getName.contains("android.app.Fragment")) {
               return true
             }
@@ -144,13 +150,15 @@ object DetectSetArgumentsMain {
             }
           }
 
-          if (m.getName().contains("onClick")) {
+          /*if (m.getName().contains("onClick")) {
             println("for debugging")
             superClassIsFragment(m.getDeclaringClass)
           }
           println("")
+
+           */
           if (m.getName.contains("onClick")) {
-            println(s"parent class of m ${m.getDeclaringClass.toString}")
+            //println(s"parent class of m ${m.getDeclaringClass.toString}")
             for (stmt <- m.getActiveBody.getUnits.asScala) {
               if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
                 val errorString = "@@@@@ Found a problem: onClick contains a call to " +
@@ -287,5 +295,8 @@ object DetectSetArgumentsMain {
     System.err.print(possibleErrorString)
     println(possibleErrorString)
     println(s"total number of problems: ${possibleProblemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
   }
 }

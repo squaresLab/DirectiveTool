@@ -1,3 +1,5 @@
+package analysis
+
 import soot.jimple.{IntConstant, InvokeExpr, SpecialInvokeExpr}
 import soot.jimple.internal._
 import soot.{SootClass, SootMethod, Value}
@@ -21,7 +23,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       return true
     } else {
       if(c.hasSuperclass) {
-        return classIsSubClassOfFragment(c.getSuperclass)
+        return classIsSubClassOfDialogFragment(c.getSuperclass)
       } else {
         return false
       }
@@ -206,6 +208,14 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     return true
   }
 
+  def getAndroidJarLocation(args: Array[String]): String = {
+    if (args.length > 1){
+      return args(1)
+    } else {
+      return "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar"
+    }
+  }
+
    def getAPKLocation(args: Array[String]): String = {
     //Scala doesn't seem to have the first argument default to the program name like Java
     if (args.length > 0){
@@ -219,8 +229,13 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
       //return   "/Users/zack/git/DirectiveTool/org.xapek.andiodine_6.apk"
-     // return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
-      return "/Users/zack/git/DirectiveTool/apkWithError.apk"
+      //return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
+      //return "/Users/zack/git/DirectiveTool/apkWithError.apk"
+      //return "/Users/zack/Desktop/singleTestCountApps/DetectSetArgumentsMain.apk"
+      //return "/Users/zack/Desktop/singleTestCountApps/DetectSetArgumentsMain.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.etesync.syncadapter_83.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/nightlock.peppercarrot_7.apk"
+      return "/Users/zack/git/DirectiveTool/appsFromFDroid/org.secuso.privacyfriendlytodolist_4.apk"
     }
   }
 }

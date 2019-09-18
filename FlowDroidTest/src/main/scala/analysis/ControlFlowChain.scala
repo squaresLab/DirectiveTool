@@ -1,3 +1,5 @@
+package analysis
+
 class ControlFlowChain(val controlChain: List[ControlFlowItem], var wasExtended : Boolean = false) {
 
   def canEqual(a: Any) = a.isInstanceOf[ControlFlowChain]
@@ -36,5 +38,14 @@ class ControlFlowChain(val controlChain: List[ControlFlowItem], var wasExtended 
       result = prime * result + item.hashCode
     }
     return result
+  }
+
+  def stringContains(newItem: ControlFlowItem): Boolean = {
+    for(item <- controlChain){
+      if (item.toString.equals(newItem.toString)){
+        return true
+      }
+    }
+    return false
   }
 }

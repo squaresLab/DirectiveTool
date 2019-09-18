@@ -1,3 +1,5 @@
+package analysis
+
 import java.io.IOException
 
 import org.xmlpull.v1.XmlPullParserException
@@ -18,11 +20,16 @@ object DetectInvalidGetResources {
   @throws[IOException]
   @throws[XmlPullParserException]
   def main(args: Array[String]): Unit = { // Initialize Soot
+    runAnalysis(args)
+  }
+
+  def runAnalysis(args: Array[String]): Unit = {
+    val startTime = System.nanoTime()
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     //Scene.v().addBasicClass(android.util.Log, BODIES)
     val apkLocation = DetectionUtils.getAPKLocation(args)
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -39,19 +46,22 @@ object DetectInvalidGetResources {
     analyzer.getConfig.setImplicitFlowMode(ImplicitFlowMode.AllImplicitFlows)
     analyzer.getConfig().setCallgraphAlgorithm(CallgraphAlgorithm.VTA)
     analyzer.constructCallgraph()
-    println("")
+    /*println("")
     println("scene classes")
     for (m <- Scene.v().getClasses(2).asScala) {
       if (m.toString.startsWith("com"))
         println(m.toString)
     }
-    println("")
+     */
+    /*println("")
     println("entry points")
     for (m <- Scene.v().getEntryPoints.asScala) {
       println(m)
     }
+    */
     val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
+    /*
     for (edge <- Scene.v().getCallGraph.iterator().asScala) {
       println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
       for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala) {
@@ -66,7 +76,9 @@ object DetectInvalidGetResources {
       println("")
     }
 
-    println("printing cfg")
+     */
+
+   // println("printing cfg")
 /*    for (entry <- Scene.v().getReachableMethods.listener().asScala) {
       entry match {
         case m: SootMethod =>
@@ -114,16 +126,16 @@ object DetectInvalidGetResources {
             println(s"is concrete: ${m.isConcrete}")
             println(s"has active body: ${m.hasActiveBody}")
           }*/
-          println(s"looking at method : ${m}, is concrete: ${m.isConcrete()}, and active body: ${m.hasActiveBody}")
+          //println(s"looking at method : ${m}, is concrete: ${m.isConcrete()}, and active body: ${m.hasActiveBody}")
           if (m.isConcrete && m.hasActiveBody) {
             //if (m.getName.contains("onCreateView")) {
-            println("new method")
-            println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
+            //println("new method")
+            //println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
             for (stmt <- m.getActiveBody.getUnits.asScala) {
-              println(stmt)
+              //println(stmt)
               //getOuterClassUnsafe returns null if no outer class exists while getOuterClass throws an exception
               if (stmt.toString().contains("android.content.res.Resources getResources()") && cl.getOuterClassUnsafe() != null && DetectionUtils.classIsSubClassOfFragment(cl.getOuterClass())) {
-                println("start of call chain")
+                //println("start of call chain")
                 //at the moment, the whole call chain isn't needed, just the failing method
                 println(s"${m.toString}   ${m.getDeclaringClass.toString}")
                 println("end of call chain")
@@ -139,5 +151,8 @@ object DetectInvalidGetResources {
       }
     }
     println(s"total number of caught problems: ${problemCount}")
+    val totalTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${totalTime}")
+    println(s"total time (in seconds): ${totalTime/1000000000}")
   }
 }

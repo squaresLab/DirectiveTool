@@ -1,3 +1,5 @@
+package analysis
+
 import soot.ValueBox
 import soot.toolkits.graph.UnitGraph
 import soot.toolkits.scalar.ForwardFlowAnalysis

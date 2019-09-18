@@ -1,3 +1,5 @@
+package analysis
+
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
 import java.util
@@ -13,18 +15,17 @@ import soot.options.Options
 
 import scala.collection.JavaConverters._
 
-//not completed
-//Decided it might be too hard to incorporate static files.
-//However, the first problem is that R.layout.whatever gets
-//changed to an integer in FlowDroid and I'm not sure who to
-//what file that integer corresponds to
 
-object DetectInvalidGetView {
+
+//I left this in an unfinished state. I'll come back to it later if I decide
+//I need it.
+object GeneralDetectionMethod {
   @throws[IOException]
   @throws[XmlPullParserException]
-  def main(args: Array[String]): Unit = { // Initialize Soot
+  def executeDetectionTemplate(args: Array[String], detectionFunction: (SootClass) => Int ): Unit = { // Initialize Soot
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val apkLocation = DetectionUtils.getAPKLocation(args)
+    println(s"the apk location: ${apkLocation}")
     val analyzer = new SetupApplication(
       "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
       apkLocation)
@@ -43,82 +44,15 @@ object DetectInvalidGetView {
     analyzer.getConfig.setImplicitFlowMode(ImplicitFlowMode.AllImplicitFlows)
     analyzer.getConfig().setCallgraphAlgorithm(CallgraphAlgorithm.VTA)
     analyzer.constructCallgraph()
-    println("")
-    println("scene classes")
-    for (m <- Scene.v().getClasses(2).asScala){
-      if (m.toString.startsWith("com"))
-        println(m.toString)
-    }
-    println("")
-    println("entry points")
-    for (m <- Scene.v().getEntryPoints.asScala){
-      println(m)
-    }
     val cfg = new InfoflowCFG(new OnTheFlyJimpleBasedICFG(Scene.v().getEntryPoints()));
     var problemCount = 0
-    for (edge <- Scene.v().getCallGraph.iterator().asScala){
-      println(s"source: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getSrc.method.getName}")
-      for (uBox <- edge.getSrc.method().retrieveActiveBody().getAllUnitBoxes.asScala){
-        uBox.getUnit() match {
-          case stmt: Stmt =>
-            println(stmt.toString())
-          case x =>
-            println(x.toString())
-        }
-      }
-      println(s"target: + ${edge.getSrc.method().getDeclaringClass.getName} ${edge.getTgt.method.getName}")
-      println("")
-    }
-
-    println("printing cfg")
-    for( entry <- Scene.v().getReachableMethods.listener().asScala){
-      entry match {
-        case m: SootMethod =>
-          if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
-            println(s"calls for ${m}")
-            for (call <- cfg.getCallsFromWithin(m).asScala) {
-              println(call)
-            }
-            println("")
-          }
-        case _ =>
-          ()
-      }
-    }
-    println("printing bodies")
-
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      if(DetectionUtils.isCustomClassName(cl.getName)){
-        for (m: SootMethod <- cl.getMethods().asScala) {
-          if (m.isConcrete && m.hasActiveBody) {
-            if (m.getName.contains("onCreate")) {
-              println("new method")
-              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
-              for (stmt <- m.getActiveBody.getUnits.asScala) {
-                println(stmt)
-              }
-
-
-            }
-          }
-        }
-      }
-    }
-      //println(s"class: ${cl.getName}")
+      problemCount = problemCount + detectionFunction(cl)
       /*if (DetectionUtils.classIsSubClassOfFragment((cl))) {
         for (m: SootMethod <- cl.getMethods().asScala) {
-          //println(s"method: ${m.getName}")
-          if (cl.getName == "com.example.android.lnotifications.OtherMetadataFragment" && m.getName == "onCreateView") {
-            println("here")
-            println(s"is concrete: ${m.isConcrete}")
-            println(s"has active body: ${m.hasActiveBody}")
-          }
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName.contains("onCreateView")) {
-              println("new method")
-              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
               for (stmt <- m.getActiveBody.getUnits.asScala) {
-                println(stmt)
                 if (stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")) {
                   // 0 is how soot stores the final false parameter
                   if (!stmt.toString().endsWith("0)")) {
@@ -135,8 +69,8 @@ object DetectInvalidGetView {
           }
         }
       }
+      */
     }
-    */
     println(s"total number of caught problems: ${problemCount}")
 
     //println(s"main method of scene: ${Scene.v().getMainMethod}")

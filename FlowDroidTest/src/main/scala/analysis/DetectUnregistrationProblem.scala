@@ -1,3 +1,5 @@
+package analysis
+
 import soot.jimple.infoflow.InfoflowConfiguration
 import soot.{PhaseOptions, Scene, SootClass, SootMethod}
 import soot.jimple.infoflow.InfoflowConfiguration.{CallgraphAlgorithm, ImplicitFlowMode}
