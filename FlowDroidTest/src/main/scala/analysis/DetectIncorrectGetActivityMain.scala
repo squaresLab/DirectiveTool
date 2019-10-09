@@ -42,6 +42,7 @@ object DetectIncorrectGetActivityMain {
 
   def runAnalysis(args: Array[String]): Unit = {
     val startTime = System.nanoTime()
+    //val endTime = System.currentTimeMillis + 300 * 1000
     val endTime = System.currentTimeMillis + 300 * 1000
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val apkLocation = DetectionUtils.getAPKLocation(args)
@@ -67,6 +68,9 @@ object DetectIncorrectGetActivityMain {
     //are not, so currently using the fast analyzer
     analyzer.getConfig.getCallbackConfig.setCallbackAnalyzer(CallbackAnalyzer.Fast)
     analyzer.constructCallgraph()
+    val flowDroidTime = System.nanoTime() - startTime
+    println(s"total time (in nanoseconds): ${flowDroidTime}")
+    println(s"total time (in seconds): ${flowDroidTime/1000000000}")
     var problemCount = 0
     var possibleProblemCount = 0
     var tabsAreAdded = false
@@ -160,6 +164,8 @@ object DetectIncorrectGetActivityMain {
                       chainToCheck.wasExtended = true
                       stillChanging = true
                     }
+                    println(s"new call chain length: ${newCallChains.length}")
+                    println(s"old call chain length: ${previousControlFlowChainLength}")
                     println("start of call chain")
                     for(chainItem <- resultingChain.controlChain){
                       println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
@@ -210,6 +216,9 @@ object DetectIncorrectGetActivityMain {
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
     println(s"total time (in seconds): ${totalTime/1000000000}")
+    val timeAfterFlowDroid = totalTime - flowDroidTime
+    println(s"time minus flowdroid (in nanoseconds): ${timeAfterFlowDroid}")
+    println(s"time minus flowdroid (in seconds): ${timeAfterFlowDroid/1000000000}")
   }
 
   def classIsSubClassOfFragment(c: SootClass): Boolean = {

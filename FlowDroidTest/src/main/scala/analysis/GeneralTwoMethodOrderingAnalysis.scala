@@ -99,5 +99,17 @@ object AnalyzeMethodOrdering{
     def meet(other: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
       return new DirectiveInfo(di.hasMethod1 && other.di.hasMethod1, di.hasMethod2 && other.di.hasMethod2)
     }
+
+    override def equals(obj: Any): Boolean = {
+      obj match {
+        case a: AnalysisInfo => {
+          if(a.di.hasMethod1 == this.di.hasMethod1 && a.di.hasMethod2 == this.di.hasMethod2){
+            return true
+          } else {
+            return false
+          }
+        }
+      }
+    }
   }
 }

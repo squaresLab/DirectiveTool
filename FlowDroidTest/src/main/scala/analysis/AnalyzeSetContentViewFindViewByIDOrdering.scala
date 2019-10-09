@@ -15,6 +15,7 @@ import scala.collection.mutable
 class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Unit, AnalyzeMethodOrdering.AnalysisInfo](graph) {
   var numberOfCaughtProblems = 0
   val endTime = System.currentTimeMillis + 300 * 1000
+  var debugInfoMap:mutable.Map[FlowThroughItem,Boolean] = mutable.Map[FlowThroughItem,Boolean]()
   doAnalysis()
   //println("setting number of caught problems to 0")
   /**
@@ -34,7 +35,12 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     * the returned flow
     **/
   override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
-    //println(s"in has method1: ${in.di.hasMethod1}, in has method2: ${in.di.hasMethod2}")
+    //println(s"line ${d.toString()} in has method1: ${in.di.hasMethod1}, in has method2: ${in.di.hasMethod2}")
+    val newFlowThroughItem = new FlowThroughItem(d.toString(),in.di.hasMethod1,in.di.hasMethod2)
+    if (! (debugInfoMap contains newFlowThroughItem )){
+      val ft:FlowThroughItem = new FlowThroughItem(d.toString(), in.di.hasMethod1, in.di.hasMethod2)
+      debugInfoMap.+=((ft,true))
+    }
     if(System.currentTimeMillis() > endTime){
       throw new RuntimeException("analysis timed out")
     }
@@ -57,9 +63,9 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
         println(s"${methodName}")
         if (methodName.contains("setContentView")) {
           //println("found setContentView")
-          out.di.hasMethod1 = true
+          //out.di.hasMethod1 = true
         } else if (methodName.contains("findViewById")) {
-          out.di.hasMethod2 = true
+          //out.di.hasMethod2 = true
           //println("found findViewById")
           checkForViolation(out)
         }

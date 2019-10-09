@@ -235,7 +235,12 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/Desktop/singleTestCountApps/DetectSetArgumentsMain.apk"
       //return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.etesync.syncadapter_83.apk"
       //return "/Users/zack/git/DirectiveTool/appsFromFDroid/nightlock.peppercarrot_7.apk"
-      return "/Users/zack/git/DirectiveTool/appsFromFDroid/org.secuso.privacyfriendlytodolist_4.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/org.secuso.privacyfriendlytodolist_4.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/io.github.trytonvanmeer.libretrivia_2.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/nodomain.freeyourgadget.tpmsmonitor_1.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.itds.sms.ping_6.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.eventyay.organizer_16.apk"
+      return "/Users/zack/git/DirectiveTool/appsFromFDroid/org.totschnig.myexpenses_377.apk"
     }
   }
 }
