@@ -107,10 +107,15 @@ object DetectInvalidSetTheme {
           }*/
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName == "onCreate") {
-              //println("found onCreate")
+              println("found onCreate")
+              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
+                println(stmt)
+              }
+              println("")
               //println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
               if(m.hasActiveBody && m.isConcrete) {
-                if(!m.getName.contains("dummyMainMethod")) {
+                if (!m.getName.contains("dummyMainMethod")) {
                   //println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
                   try {
                     val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
@@ -126,7 +131,8 @@ object DetectInvalidSetTheme {
                     }
                   }
                 }
-              /*for (stmt <- m.getActiveBody.getUnits.asScala) {
+              }
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
                 println(stmt)
                 val methodInStatementOption = DetectionUtils.extractMethodCallInStatement(stmt)
                 methodInStatementOption match {
@@ -163,7 +169,7 @@ object DetectInvalidSetTheme {
                   //  print(s"error for line: ${stmt.toString()}")
                 }
 
-               */
+
               }
 
 
@@ -175,7 +181,7 @@ object DetectInvalidSetTheme {
                 methodInStatementOption match {
                   case Some(methodInStatement) =>
                     if (methodInStatement.getName == "setTheme") {
-                      //println("found set theme")
+                      println("found set theme")
                       hasSetThemeInMethodOtherThanOnCreate = true
                       methodSetThemeIsCalledIn = m.getName()
                       //this may only work if the mtehods in the file are declared after onCreate

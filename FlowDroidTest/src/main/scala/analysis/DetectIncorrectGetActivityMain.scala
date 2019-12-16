@@ -19,6 +19,8 @@ import soot.jimple.SpecialInvokeExpr
 import soot.jimple.internal._
 import soot.jimple.toolkits.callgraph.Edge
 
+import scala.collection.mutable
+
 /*
 What would I need to check for this directive?:
 - Tabs are changed in onTabSelected
@@ -70,7 +72,7 @@ object DetectIncorrectGetActivityMain {
     analyzer.constructCallgraph()
     val flowDroidTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${flowDroidTime}")
-    println(s"total time (in seconds): ${flowDroidTime/1000000000}")
+    println(s"total time (in seconds): ${flowDroidTime / 1000000000}")
     var problemCount = 0
     var possibleProblemCount = 0
     var tabsAreAdded = false
@@ -107,101 +109,143 @@ object DetectIncorrectGetActivityMain {
     val methodNameToCheckFor = "getActivity"
     var callChains: List[ControlFlowChain] = List()
     val checkingClasses = true
+    var startingMethod: Option[SootMethod] = None
+    val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
     //not sure how to write this functionally; might want to figure out later to clean this
     //up but I'm going to implement the quick way first
-    while (stillChanging) {
-      if(System.currentTimeMillis() > endTime){
-        throw new RuntimeException("analysis timed out")
-      }
-      stillChanging = false
-      //unsure about this variable type at this point
-      var newCallChains: List[ControlFlowChain] = List()
-      for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-        //println("in class loop")
-        //no idea why I need this xmlpull check. These for loops through the classes and methods seem to
-        //work on other checkers
-        if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
-          for (m: SootMethod <- cl.getMethods().asScala) {
-            try {
-              for (stmt <- m.getActiveBody.getUnits.asScala) {
-                //println("in second for")
-                if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
-                  extractMethodCallInStatement(stmt) match {
-                    case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
-                    case None => ()
-                  }
-                  stillChanging = true
-                }
-                for (chainToCheck <- callChains) {
-                  //println("in third for")
-                  /*
-                  def checkForClassMatch(callClass: String, stmt: String, checkingForExactClasses: Boolean = true): Boolean = {
-                    //turn off (i.e. set to false) if you want to just match by method name
-                    //actually not that easy. I am still checking repeats with class and
-                    //method name. Would have to figure out how to easily remove those class
-                    // checks as well
-                    if (!checkingForExactClasses) {
-                      return true
-                    }
-                    else {
-                      return stmt.contains(callClass)
+    //unsure about this variable type at this point
+    var newCallChains: List[ControlFlowChain] = List()
+    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+      //no idea why I need this xmlpull check. These for loops through the classes and methods seem to
+      //work on other checkers
+      if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
+        for (m: SootMethod <- cl.getMethods().asScala) {
+          val listBuffer: ListBuffer[SootMethod] = ListBuffer[SootMethod]()
+          try {
+            for (stmt <- m.getActiveBody.getUnits.asScala) {
+              extractMethodCallInStatement(stmt) match {
+                case Some(call) => {
+                  if(startingMethod.isEmpty){
+                    if(call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)){
+
+                      startingMethod = Some(call)
                     }
                   }
-
-                  //the contains callClass check does not match on call for super classes (fails on dynamic dispatch)
-                  */
-                  //remove the true later; added for debugging
-
-                  //If we find the method we are interested in. Add it to the call chain
-                  val possibleMethod = extractMethodCallInStatement(stmt)
-                  if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall &&
-                        ! chainToCheck.stringContains(new ControlFlowItem(m, checkingClasses))) {
-                    val newChain: List[ControlFlowItem] = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
-                    val resultingChain = new ControlFlowChain(newChain)
-                    val previousControlFlowChainLength = newCallChains.length
-                    newCallChains = addControlFlowChain(newCallChains, resultingChain)
-                    if (newCallChains.length > previousControlFlowChainLength) {
-                      chainToCheck.wasExtended = true
-                      stillChanging = true
+                  if (calledByList.contains(call.toString())) {
+                    if (!calledByList(call.toString()).contains(m)) {
+                      calledByList(call.toString()) += m
                     }
-                    println(s"new call chain length: ${newCallChains.length}")
-                    println(s"old call chain length: ${previousControlFlowChainLength}")
-                    println("start of call chain")
-                    for(chainItem <- resultingChain.controlChain){
-                      println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
-                    }
-
-                    println("end of call chain")}
+                  } else {
+                    calledByList += (call.toString() -> ListBuffer[SootMethod](m))
+                  }
                 }
-              }
-            } catch {
-               case r: RuntimeException => {
-                 //removing print statement to see if it speeds up the checker
-                 //println(s"error with method ${m.getName} - skipping")
-                 //skip method with problem
+                case None => ()
               }
             }
           }
+          catch {
+            case r: RuntimeException => {
+              //removing print statement to see if it speeds up the checker
+              //println(s"error with method ${m.getName} - skipping")
+              //skip method with problem
+            }
+          }
         }
+      }
+    }
+    /*println(s"called by list size: ${calledByList.size}")
+    for (call <- calledByList) {
+      print(s"${call}, ")
+    }
+    println("")
+     */
+
+    def createCallChainsDepthFirst(calledByList: mutable.Map[String, ListBuffer[SootMethod]],
+                                   currentCallChains: ListBuffer[ControlFlowChain],
+                                   currentChain: List[ControlFlowItem], methodName: String): Unit = {
+      //println(currentChain)
+      var foundMatch = false
+      for (c <- calledByList) {
+        if (c._1.toString().contains(methodName)) {
+          foundMatch = true
+          //println(s"found ${methodName} in calledByList")
+          val callList: scala.collection.mutable.ListBuffer[soot.SootMethod] = c._2
+          for (m <- callList) {
+            if (!currentChain.exists(_.isMethodEquals(m))) {
+              createCallChainsDepthFirst(calledByList.clone(), currentCallChains,
+                currentChain.::(new ControlFlowItem(m, checkingClasses)),
+                m.toString())
+            }
+          }
+        }
+      }
+      if (! foundMatch) {
+        //currentCallChains = addControlFlowChain(currentCallChains.toList,new ControlFlowChain(currentChain))
+        val newChain = new ControlFlowChain(currentChain)
+        if (!currentCallChains.contains(newChain)) {
+          //println(s"adding chain: ${newChain.controlChain}")
+          currentCallChains += newChain
+        }
+      }
+    }
+    val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
+    if(startingMethod.isDefined) {
+      createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor)
+    }
+    callChains = fullCallChains.toList
+        //remove the true later; added for debugging
+
+        //If we find the method we are interested in. Add it to the call chain
+        /*val possibleMethod = extractMethodCallInStatement(stmt)
+        if (!possibleMethod.isEmpty && possibleMethod.get == chainToCheck.controlChain.head.methodCall &&
+              ! chainToCheck.stringContains(new ControlFlowItem(m, checkingClasses))) {
+          val newChain: List[ControlFlowItem] = (new ControlFlowItem(m, checkingClasses) +: chainToCheck.controlChain)
+          val resultingChain = new ControlFlowChain(newChain)
+          val previousControlFlowChainLength = newCallChains.length
+          newCallChains = addControlFlowChain(newCallChains, resultingChain)
+          if (newCallChains.length > previousControlFlowChainLength) {
+            chainToCheck.wasExtended = true
+            stillChanging = true
+          }
+          println(s"new call chain length: ${newCallChains.length}")
+          println(s"old call chain length: ${previousControlFlowChainLength}")
+          println("start of call chain")
+          for(chainItem <- resultingChain.controlChain){
+            println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
+          }
+
+          println("end of call chain")}
+      }
+
       }
       val savedCallChains = callChains.filter(x => !x.wasExtended)
       newCallChains = newCallChains ++ callChains.filter(x => !x.wasExtended)
       callChains = newCallChains
       stillOnFirstPass = false
     }
+
+         */
 /*    println("call chains")
     for (callChain <- callChains) {
       println(s"${callChain.controlChain}")
     }*/
     for (chain <- callChains) {
+      //println("checking call chain")
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
+      //println(s"${chain.controlChain}")
+      /*println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+      println(s"${!checkingClasses}")
+      println(s"${!chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+
+       */
+      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
       && (!checkingClasses || !chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
-        println("start of call chain")
+        //println("caught problem")
+        /*println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
-        println("end of call chain")
+        println("end of call chain")*/
         val errorString = "@@@@ Found a problem: getActivity may be called when " +
           "the Fragment is not attached to an Activity" +
           s": call sequence ${chain.controlChain}"

@@ -159,7 +159,7 @@ object DetectIncorrectSetInitialSavedState {
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
       //(note) I think this is right.  Might need to check my logic later
-      if (chain.controlChain.exists(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall.getName))
+      if (chain.controlChain.exists(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
       || (checkingClasses && chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
         println("start of call chain")
         for(chainItem <- chain.controlChain){

@@ -60,14 +60,16 @@ object DetectMissingSetHasOptionsMenu {
             containsOnCreateOptionsMenu = true
           } else if (m.getName == "onCreate" || m.getName == "onCreateView" || m.getName == "onActivityCreated" ||
             m.getName == "onStart"){
-            for (stmt <- m.getActiveBody.getUnits.asScala) {
-              //println(stmt.getClass.toString() + ": "  + stmt)
-              //1 is true in FlowDroid
-              val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
-              //println(s"invoke call ${invokeCall.toString}")
-              if(invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"
-                && DetectionUtils.isTrue(invokeCall.get.getArg(0))) {
-                containsHasSetOptionsMenu = true
+            if(m.hasActiveBody) {
+              for (stmt <- m.getActiveBody.getUnits.asScala) {
+                //println(stmt.getClass.toString() + ": "  + stmt)
+                //1 is true in FlowDroid
+                val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
+                //println(s"invoke call ${invokeCall.toString}")
+                if (invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"
+                  && DetectionUtils.isTrue(invokeCall.get.getArg(0))) {
+                  containsHasSetOptionsMenu = true
+                }
               }
             }
           }
