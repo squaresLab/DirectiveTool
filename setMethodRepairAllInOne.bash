@@ -47,10 +47,12 @@ cd $previousDir
 
 function showDiff
 {
+echo "in show diff"
 testFolder=$1
 testDir=$2
 temporaryTestFolder=${testFolder/testFolder/temporaryTestOfChange}
-cp -r $testDir $temporaryTestFolder
+#rm -rf $temporaryTestFolder
+#cp -r $testDir $temporaryTestFolder
 cd $temporaryTestFolder
 fileCount=0
 while read file 
@@ -70,6 +72,7 @@ while read file
   done <<EOF
 $(git diff --name-only)
 EOF
+echo "end of show diff"
 }
 
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
@@ -188,12 +191,13 @@ currentCheckerNumber=8
   #initialTestFile=$testDir/initialTest.txt
   outputFile=$testDir/testResults.txt
   echo "$checker $appLocation"
-  runChecker ${runCheckerCommand[@]} $checker $appLocation $outputFile
+  runChecker ${runCheckerCommand[@]} "analysis.$checker" $appLocation $outputFile
   #currently matching the line 'total number of caught problems: #'
   #might need to change if other totals are printed
-  problemCount=$(awk '$1 ~ /^total/ {print $NF}' $outputFile)
+  #problemCount=$(awk '$1 ~ /^total number/ {print $NF}' $outputFile)
+  problemCount=$(awk '/^total number/ {print $NF}' $outputFile)
   classWithProblem=$(awk '$1 ~ /^@@@@@/ {print $NF}' $outputFile)
-  echo "initial problem count: $problemCount"
+  echo "initial problem count: |$problemCount|"
   #loop until the problem has been removed
   runCheckerString="${runCheckerCommand[@]}"
   if [ -z $problemCount ]
@@ -223,8 +227,10 @@ currentCheckerNumber=8
   then    
     if [ -z ${additionalInfo+x} ]
     then
+      echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1"
       /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1
     else
+      echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1 $additionalInfo"
       /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1 $additionalInfo
     fi
     skippedTwoMethod=false
@@ -233,7 +239,10 @@ currentCheckerNumber=8
   fi
   if [ $skippedTwoMethod = true ] || [ $? -ne 0 ] 
   then
+    echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2"
     /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2
+    echo "stopping after change method order"
+    #read stoppingHere
   #else
     if [ $? -ne 0 ]
     then 

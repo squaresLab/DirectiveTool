@@ -1,0 +1,58 @@
+Manifest-Version: 1.0
+Main-Class: analysis.JarMain
+Class-Path: asm-debug-all-5.2.jar guava-18.0.jar heros-1.0.1-20181001.11
+ 1040-3.jar powermock-module-junit4-1.6.1.jar jsr305-3.0.2.jar powermock
+ -module-junit4-common-1.6.1-sources.jar slf4j-api-1.7.5.jar trove4j-3.0
+ .3.jar powermock-module-junit4-legacy-1.6.1-sources.jar eclipse-filebuf
+ fers-3.3.0-v20070606-0010.jar asm-debug-all-5.2.jar powermock-module-te
+ stng-1.6.1-sources.jar org.eclipse.ui.editors-3.3.2.jar slf4j-api-1.7.5
+ .jar ca.mcgill.sable.soot.feature_2.5.2.jar xmlpull-1.1.3.4d_b4_min.jar
+  commons-logging-1.1.1.jar org.eclipse.swt.cocoa.macosx.x86_64-4.3.jar 
+ eclipse-jdt-ui-3.3.0-v20070607-0010.jar util-2.2.2.jar ant-1.10.1.jar c
+ ommons-cli-1.4.jar scala-reflect-2.12.7.jar scala-library-2.12.7.jar sc
+ ala-reflect-2.12.7-sources.jar scala-library-2.12.7-sources.jar axml-2.
+ 0.0-20180418.135652-4.jar powermock-api-mockito-1.6.1.jar axmlprinter-2
+ 016-07-27.jar httpcore-4.0.1.jar jcommander-1.64.jar powermock-module-j
+ unit4-1.6.1-sources.jar xpp3-1.1.4c.jar powermock-module-junit4-legacy-
+ 1.6.1.jar eclipse-workbench-3.3.0-I20070608-1100.jar org.eclipse.ui-3.5
+ .0.I20090604-2000.jar objenesis-2.1.jar org.eclipse.ui.ide-3.5.0.I20090
+ 525-2000.jar powermock-reflect-1.6.1.jar soot-infoflow-android-2.7-2018
+ 1220.122318-13.jar org.eclipse.ui.views-3.3.0-20081006.jar axmlprinter-
+ 1.0.jar powermock-module-junit3-1.6.1-sources.jar jasmin-2.5.0-20171106
+ .170234-163.jar eclipse-jdt-core-3.3.0-v_771.jar commons-io-2.6.jar soo
+ t-infoflow-summaries-2.7-20181220.122320-13.jar guava-25.1-jre.jar slf4
+ j-simple-1.7.5.jar dexlib2-2.2.5.jar protobuf-java-2.5.0.jar org.eclips
+ e.gef_3.5.0.jar jcommander-1.64.jar jasmin-3.0.1-20190408.112338-1.jar 
+ powermock-api-support-1.6.1-sources.jar powermock-api-support-1.6.1.jar
+  jsr305-1.3.9.jar org.eclipse.jface-3.5.0.I20090525-2000.jar bsh-2.0b4.
+ jar powermock-classloading-base-1.6.1.jar org.eclipse.core.commands-3.6
+ .0.jar xmlParserAPIs-2.6.2.jar jsr305-1.3.9.jar org.eclipse.core.resour
+ ces-3.6.0.v20100526-0737.jar org.eclipse.core.expressions-3.4.200.v2010
+ 0505.jar org.eclipse.core.runtime-3.6.0.v20100505.jar org.eclipse.core.
+ contenttype-3.4.100.v20100505-1235.jar org.eclipse.equinox.preferences-
+ 3.3.0.v20100503.jar org.eclipse.equinox.app-1.3.0.v20100512.jar org.ecl
+ ipse.osgi.services-3.2.100.v20100503.jar org.eclipse.osgi-3.6.0.v201005
+ 17.jar servlet-api-2.5.jar org.osgi.foundation-1.2.0.jar org.eclipse.co
+ re.filesystem-1.3.0.v20100526-0737.jar org.eclipse.equinox.registry-3.5
+ .0.v20100503.jar org.eclipse.core.jobs-3.5.0.v20100515.jar org.eclipse.
+ equinox.common-3.6.0.v20100503.jar axml-2.0.jar json-20080701.jar eclip
+ se-draw2d-3.2.100-v20070529.jar commons-io-2.6.jar trove4j-3.0.3.jar an
+ droid.jar eclipse-jface-text3.3.jar powermock-core-1.6.1-sources.jar er
+ ror_prone_annotations-2.1.3.jar powermock-core-1.6.1.jar powermock-modu
+ le-junit3-1.6.1.jar ant-launcher-1.10.1.jar eclipse.ui-texteditor-3.3.1
+ .1.jar j2objc-annotations-1.1.jar powermock-module-testng-common-1.6.1.
+ jar org.eclipse-text3.3.jar org.eclipse.ui.console-3.8.100.jar android-
+ 4.1.1.4.jar polyglot-2006.jar scala-library.jar powermock-module-testng
+ -1.6.1.jar soot-infoflow-2.7-20181220.122317-13.jar content.jar artifac
+ ts.jar java_cup-0.9.2.jar httpclient-4.0.1.jar guava-18.0.jar powermock
+ -api-mockito-1.6.1-sources.jar powermock-reflect-1.6.1-sources.jar util
+ -2.2.2.jar powermock-module-junit4-common-1.6.1.jar slf4j-simple-1.7.5.
+ jar xmlParserAPIs-2.6.2.jar commons-cli-1.4.jar functionaljava-4.2.jar 
+ cos.jar j2ee.jar junit.jar org.hamcrest.core_1.3.0.jar animal-sniffer-a
+ nnotations-1.14.jar dexlib2-2.2.5.jar junit.jar org.hamcrest.core_1.3.0
+ .jar protobuf-java-2.5.0.jar trove4j-3.0.3.jar opengl-api-gl1.1-android
+ -2.1_r1.jar checker-qual-2.0.0.jar slf4j-simple-1.7.5.jar slf4j-api-1.7
+ .5.jar org.eclipse.ui.workbench.texteditor-3.3.2.jar commons-io-2.6.jar
+  xmlpull-1.1.3.4d_b4_min.jar commons-codec-1.3.jar powermock-classloadi
+ ng-base-1.6.1-sources.jar javassist-3.18.2-GA.jar
+

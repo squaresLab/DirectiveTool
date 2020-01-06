@@ -18,6 +18,7 @@ import re
 #checkerToRun='DetectIncorrectGetActivityMain'
 #runFlowDroidCommand= '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=59095:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.sbt/boot/scala-2.12.7/lib/scala-library.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/git/FlowDroid/soot-infoflow-android/lib/protobuf-java-2.5.0.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/cos.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/j2ee.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/junit.jar:/Users/zack/git/FlowDroid/soot-infoflow/lib/org.hamcrest.core_1.3.0.jar:/Users/zack/.ivy2/cache/commons-io/commons-io/jars/commons-io-2.6.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/com.beust/jcommander/jars/jcommander-1.64.jar:/Users/zack/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.ivy2/cache/org.smali/util/jars/util-2.2.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-simple/jars/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/org.slf4j/slf4j-api/jars/slf4j-api-1.7.5.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar:/Users/zack/git/soot/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-cmd/target/scala-2.12/classes'
 #originalSourceFolder = "/Users/zack/git/DirectiveTool/testFolder/" 
+#Eventually, I may want to move these hard-coded paths to parameters
 edittingFolder = "/Users/zack/git/DirectiveTool/temporaryTestOfChange"
 checkerRootDir = "/Users/zack/git/DirectiveTool/FlowDroidTest"
 #newAPKLocation = '/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk'
@@ -102,6 +103,11 @@ class CallChainItem:
 def getNonComments(line, inBlockComments):
   #return the part of the string that is the not the comment
   #and if the code is currently in a block comment
+
+  #first return a blank for a single line comment - this is done hueristically
+  #and may not work in all cases
+  if line.strip().startswith('//'):
+    return ('', inBlockComments)
   if inBlockComments: 
     if '*/' in line:
       inBlockComments = False
@@ -176,7 +182,7 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
         methodToMove = linesInFile[lineToMove]
         del linesInFile[lineToMove]
         linesInFile.insert(moveLocation, methodToMove)
-        print('moved {0} to line {1}'.format(methodToMove, moveLocation))
+        print('moved {0} to line {1} '.format(methodToMove, moveLocation))
         foundChangeInFile = True
         break
     #for debugging
@@ -188,12 +194,13 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
     with open(fileToTest, 'w') as fout:
       for line in linesInFile:
         print(line, end="", file=fout)
+    #input('press enter to continue')
   return foundChangeInFile
 
 #This can probably be combined with the method call executeTestOfChangedApp but
 #I'm unsure how at the moment and eventually decided it wasn't worth thinking 
 #about any more
-def executeTestOfChangedAppAndGetCallChains(path, checkerToRun, apkLocation):
+def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerToRun, apkLocation):
   #TODO: figure out a reasonable return value for the number of problems in 
   #this case
   print('in execute test and get call chains')
@@ -307,6 +314,7 @@ def executeTestOfChangedApp(path, checkerToRun, apkLocation):
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
+  checkerToRun = 'analysis.{0}'.format(checkerToRun)
   commandList.append(checkerToRun)
   commandList.append(apkLocation)
   try: 
@@ -341,7 +349,7 @@ def executeTestOfChangedApp(path, checkerToRun, apkLocation):
  #that fixed the issue and stop
 
 
-def tryMoveBefore(projectDir, method1, method2, testedFiles, checkerToRun, apkLocation): 
+def tryMoveBefore(projectDir, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
   print('in try move before')
   for dirpath, dirnames, filenames in os.walk(projectDir):
     for filename in [f for f in filenames if f.endswith(".java")]:
@@ -360,12 +368,12 @@ def tryMoveBefore(projectDir, method1, method2, testedFiles, checkerToRun, apkLo
             #print('testing file: {0} failed'.format(fileToTest))
             #sys.exit(0)
             print('failed to fix with move before')
-            createNewCopyOfTestProgram()
+            createNewCopyOfTestProgram(originalSourceFolder)
   #print('ending early')
   #sys.exit(0)
   return False
 
-def tryMoveAfter(projectDir, method1, method2, testedFiles, checkerToRun, apkLocation): 
+def tryMoveAfter(projectDir, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
   print('in try move after')
   for dirpath, dirnames, filenames in os.walk(projectDir):
     for filename in [f for f in filenames if f.endswith(".java")]:
@@ -380,11 +388,11 @@ def tryMoveAfter(projectDir, method1, method2, testedFiles, checkerToRun, apkLoc
             return True
           else:
             print('failed to fix with move after')
-            createNewCopyOfTestProgram()
+            createNewCopyOfTestProgram(originalSourceFolder)
   return False
 
 
-def createNewCopyOfTestProgram():
+def createNewCopyOfTestProgram(originalSourceFolder):
   #create a new directory if necessary
   #path is the location of the program to copy from
   if os.path.exists(edittingFolder):
@@ -440,24 +448,24 @@ def extractMethodInformation(sourceFile):
 
 
 
-def performMethodOrderRepair(checkerName, checkerCommand, apkLocation, methodOfInterest1, methodOfInterest2):
+def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, apkLocation, methodOfInterest1, methodOfInterest2):
   #get code to edit
   #run directive check on it
   #either determine methods in the check or get them from a manual source
   #move the back method to before the originally first method
   #run the checker again
   #if that doesn't work, move the originally first method after the second method
-  testFolder = createNewCopyOfTestProgram()
+  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   testedFiles = {}
   print('trying move before')
-  isFixed = tryMoveBefore(testFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+  isFixed = tryMoveBefore(testFolder, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
   #try moving the back method before the original first method
   #check isFaulty again
   if not isFixed:
-    testFolder = createNewCopyOfTestProgram()
+    testFolder = createNewCopyOfTestProgram(originalSourceFolder)
     testedFiles = {}
     print('trying move after')
-    tryMoveAfter(testFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+    tryMoveAfter(testFolder, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
     isFixed = executeTestOfChangedApp(edittingFolder, checkerName, apkLocation)
   #if isFaulty is true, then revert and move the first method behind the 
   #original last method
@@ -468,9 +476,9 @@ def performMethodOrderRepair(checkerName, checkerCommand, apkLocation, methodOfI
     print('the problem was not fixed but the repair ended')
     return False
 
-def testMoveMethod():
-    moveBackMethodBeforePreviousMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
-    moveFrontMethodAfterBackMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
+#def testMoveMethod():
+#    moveBackMethodBeforePreviousMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
+#    moveFrontMethodAfterBackMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
 
 def getFileAndMethodWithProblem(callChains, projectDir):
   for chainItem in callChains[0]:
@@ -586,8 +594,8 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
 
  
 
-def moveMethodToObjectInstantiation(projectDir, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
-  createNewCopyOfTestProgram()
+def moveMethodToObjectInstantiation(projectDir, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
+  createNewCopyOfTestProgram(originalSourceFolder)
   fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
@@ -618,7 +626,7 @@ def moveMethodToObjectInstantiation(projectDir, methodToMove, moveLocationObjLis
   
 
 
-def performMoveCallRepair(checkerName, checkerCommand, apkLocation, methodOfInterest1, requiresAddingReference):
+def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apkLocation, methodOfInterest1, requiresAddingReference):
   #first I need to decide how much information the method repair has - should I 
   #implement a random method test? Or should I try to use information about the 
   #lifecycle. I also need to decide if I am only moving the method or the 
@@ -640,7 +648,7 @@ def performMoveCallRepair(checkerName, checkerCommand, apkLocation, methodOfInte
   #class of the object.
   
   methodObjList = []
-  testFolder = createNewCopyOfTestProgram()
+  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   unquotedAndQuotedList = runGetMethodLocations.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
@@ -672,14 +680,21 @@ def performMoveCallRepair(checkerName, checkerCommand, apkLocation, methodOfInte
     pass
   print('calling execute and get call chains')
   #later, implement a way to handle multiple caught problems at the same time
-  currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerName, apkLocation)
+  currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
   #callChains start with the failing method and the class that method was defined in; then the next item holds the
   #class that incorrectly called the method
   #
   #for c in callChains[0]:
   #  print("call chain class: {0}, method {1}".format(c.className, c.methodName))
   #sys.exit(0)
-  classWithProblem=callChains[0][-2].className.split('.')[-1]
+  try:
+    classWithProblem=callChains[0][-2].className.split('.')[-1]
+  except IndexError:
+    #print(callChains)
+    #input('stopping to check call chain error')
+    #I think I can just return a False here, because this problem should
+    #only happen when running the wrong repair types for a detected issue
+    return False
   if currentProblemCount == -1:
     print('error: the changed app did not successfully execute')
   elif callChains == []:
@@ -689,16 +704,16 @@ def performMoveCallRepair(checkerName, checkerCommand, apkLocation, methodOfInte
     print('number of method objs: {0}'.format(l))
     print('length of call chains: {0}'.format(len(callChains)))
     if requiresAddingReference:
-      result = moveMethodToObjectInstantiation(testFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
+      result = moveMethodToObjectInstantiation(testFolder, originalSourceFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
       if result:
         currentProblemCount = 0
     else:
       def testMethodObj(m):
-        createNewCopyOfTestProgram()
+        createNewCopyOfTestProgram(originalSourceFolder)
         print('calling move line to new method')
         moveLineToNewMethod(testFolder, methodOfInterest1, m, callChains)
         #alteredCallChains is not used; but I have to catch the return value
-        currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerName, apkLocation)
+        currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
         return currentProblemCount, alteredCallChains
       methodsInFileWithProblem = [ m for m in methodObjList if m.className == classWithProblem]
       print("methods in problematic file: {0}".format(len(methodsInFileWithProblem)))
@@ -751,11 +766,11 @@ if __name__ == "__main__":
   if methodOfInterest2 is not None:
     print('last argument: {0}'.format(methodOfInterest2))
     if methodOfInterest2 == 'REQUIRES_ADDING_OBJ_REF':
-      result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, apkLocation, methodOfInterest1, True)
+      result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, True)
     else:
-      result = performMethodOrderRepair(checkerToRun, runFlowDroidCommand, apkLocation, methodOfInterest1, methodOfInterest2)
+      result = performMethodOrderRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, methodOfInterest2)
   else:
-    result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, apkLocation, methodOfInterest1, False)
+    result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, False)
   if result:
     print('repair ended with application fixed')
     sys.exit(0)

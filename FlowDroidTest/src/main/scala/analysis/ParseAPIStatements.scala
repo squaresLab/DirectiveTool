@@ -28,7 +28,7 @@ object ParseAPIStatements {
 
 
     //new statements to test
-    //for the statement below, need to add something about the first paramter being the same and null doesn't count
+    //for the statement below, need to add something about the first parameter being the same and null doesn't count
     val statementToParse: String = "if(methodToCheck(\"onResume\").contains(\"Context.registerReceiver\").firstParameterMustMatch() then (methodToCheck(\"onPause\").contains(\"Context.unregisterReceiver\").firstParameterMustMatch())"
 
     val methodShorthandToFullDeclaration: Map[String, String] = Map("getResources" -> "android.content.res.Resources getResources()")

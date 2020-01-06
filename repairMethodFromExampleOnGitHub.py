@@ -85,6 +85,9 @@ tempDebuggingBool = False
 #need to make this a parameter later
 shouldCheckForFragment = False
 
+#TODO: some of these parameter lists are getting large. I should probably group
+#them into an object to reduce the line sizes and improve readability
+
 def saveLines(linesToSave, nestingCount, line): 
   linesToSave.append(line)
   savingLines = True
@@ -147,7 +150,7 @@ def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompar
           nestingCountWasGreaterThanZero = True
           foundMethodOfInterest = False
               #this string check captures both the onCreate method and the onCreateOptionsMenu method
-      elif methodDeclarationStringToCompare in line:
+      elif methodDeclarationStringToCompare and methodDeclarationStringToCompare in line:
         methodName = line.split()[2].split('(')[0]
         (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
         foundMethodOfInterest = True
@@ -417,7 +420,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
   try: 
     os.chdir("/Users/zack/git/DirectiveTool/FlowDroidTest")
     #print("current directory for command: {0}".format(os.getcwd()))
-    print("running command: {0}".format(' '.join(commandList)))
+    #print("running command: {0}".format(' '.join(commandList)))
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if printingDebugInfo:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
@@ -469,7 +472,7 @@ def testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarat
           print("succeeded - change: added {0} to the end of method {1}".format(change, method))
           return
 
-def testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation):
+def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation):
   wasFixed = False
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
@@ -741,7 +744,7 @@ def testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDi
 #  return False
 #
 
-def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation):
+def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation, runFlowDroidCommand, projectDir, fileToChange):
   global tempDebuggingBool
   foundFixOfInterest = False
   linesToAddIndexList = []
@@ -989,7 +992,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
 #pretty sure I need to combine the ability to add and remove lines so I can 
 #support changing lines
 
-def testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLocation) :
+def testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLocation, runFlowDroidCommand, projectDir, fileToChange) :
 #  print('in test type differences')
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
@@ -1007,14 +1010,14 @@ def testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLo
       print('type mismatches is 0; returning False')
       return False
     else:
-      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
+      return addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, typeMismatches, methodDeclarationStringToCompare, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation, runFlowDroidCommand, projectDir, fileToChange)
 
 def handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation):
-  isSolved = testAddingOrRemovingMethodCalls(runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
+  isSolved = testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
   #commented out previous line and next line is for testing
   #isSolved = False
   if not isSolved:
-    isSolved = testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
+    isSolved = testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLocation, runFlowDroidCommand, projectDir, fileToChange)
   return isSolved
 
 def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclarationStringToCompare, projectDir, fileToChange, newAPKLocation, termsOfInterest):
@@ -1033,15 +1036,16 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
       #need to figure out how to determine if I should use the word Fragment in the search
       methodDeclarationItems = methodDeclarationStringToCompare.split(' ')
       keywords = [methodDeclarationItems[-1]]
-      keywords = keywords + termsOfInterest
+      if termsOfInterest:
+        keywords = keywords + termsOfInterest
       #this if isn't needed at the moment, but it might be used in later versions of the code
       if len(keywords) < 2:
         keyWordString = keywords[0]
       else:
         keyWordString = "+".join(keywords)
       command = 'curl -n https://api.github.com/search/code?q={0}+in:file+language:java?page={1}&per_page=100&sort=stars&order=desc'.format(keyWordString, pageNumber)
-      #print(command)
-      #sys.exit(0)
+      print(command)
+      sys.exit(0)
       commandList = command.split(" ")
       commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE).stdout.decode('utf-8') 
       searchResult = json.loads(commandOutput)
@@ -1082,98 +1086,102 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
         #  if(link.contents[0].endswith('.java')):
         time.sleep(1)
         #pageRequest = session.get(urlToSearch).content
-        with urllib.request.urlopen(urlToSearch) as pageRequest:
-          #read is read once, so save the result
-          pageResult = pageRequest.read()
-          soup2 = BeautifulSoup(pageResult, 'html.parser')
-          rawLink = soup2.find_all(id='raw-url')[0]
-          time.sleep(1)
-          #print('raw link: {0}'.format(rawLink))
-          rawLinkString = "https://github.com/" + rawLink['href']
-          with urllib.request.urlopen(rawLinkString) as finalResults:
-            programOfInterest = finalResults.read().decode('utf-8', errors="ignore")
-            if shouldCheckForFragment:
-              lookingForFragment = True
-              lineIndex = 0 
-              if printingSearchUpdates:
-                print('looking through:\n{0}'.format(programOfInterest))
-              linesInProgram = programOfInterest.splitlines()
-              while lookingForFragment and lineIndex < len(linesInProgram):
-                line = linesInProgram[lineIndex]
-                if ' Fragment ' in line:
-                  lookingForFragment = False
-                  containsFragment = True
-                lineIndex = lineIndex + 1
-            else:
-              lookingForFragment = False
-            foundMethodOfInterest = False
-            everFoundMethodOfInterest = False
-            if not lookingForFragment: 
-              savingLines = False
-              linesToSave = []
-              nestingCount = 0
-              nestingCountWasGreaterThanZero = False
-              methodName = ""
-              createdFiles = False
-              for line in programOfInterest.splitlines():
-                if foundMethodOfInterest or nestingCount > 0:
-                  everFoundMethodOfInterest = True
-                  (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
-                  # only use foundMethodOfInterest until we find the first {
-                  if nestingCountWasGreaterThanZero > 0:
-                    nestingCountWasGreaterThanZero = True
-                    foundMethodOfInterest = False
-                #this string check captures both the onCreate method and the onCreateOptionsMenu method
-                elif methodDeclarationStringToCompare in line:
-                  if printingSearchUpdates:
-                    print('found method of interest')
-                  methodName = line.split()[2].split('(')[0]
-                  (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
-                  foundMethodOfInterest = True
-                  if nestingCount > 0:
-                    nestingCountWasGreaterThanZero = True
-                elif nestingCountWasGreaterThanZero:
-                  nestingCountWasGreaterThanZero = False
-                  newFileName = 'downloaded_{0}.txt'.format(methodName)
-                  createdFileListToDelete.append(newFileName)
-                  if len(linesToSave) < 3:
-                    print('error: lines to save are too small')
-                    print(linesToSave)
-                    sys.exit(1)
-                  with open(newFileName,'w') as fout:
-                    for line in linesToSave:
-                      if len(linesToSave) < 3:
-                        print('error: method is too short, likely parsing error')
-                        print(linesToSave)
-                        sys.exit(1)
-                      fout.write(line)
-                      #\n seems to be required here
-                      fout.write('\n')
-                    createdFiles = True
-                  linesToSave = []
-              if createdFiles:
-                #print('reading program from: {0}'.format(rawLinkString))
-                #input('stopping to check found file')
-                if useAdvancedDiff:
-                  hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
-                  if hasSucceeded:
-                    print('found a successful repair!')
+        try:
+          with urllib.request.urlopen(urlToSearch) as pageRequest:
+            #read is read once, so save the result
+            pageResult = pageRequest.read()
+            soup2 = BeautifulSoup(pageResult, 'html.parser')
+            rawLink = soup2.find_all(id='raw-url')[0]
+            time.sleep(1)
+            #print('raw link: {0}'.format(rawLink))
+            rawLinkString = "https://github.com/" + rawLink['href']
+            with urllib.request.urlopen(rawLinkString) as finalResults:
+              programOfInterest = finalResults.read().decode('utf-8', errors="ignore")
+              if shouldCheckForFragment:
+                lookingForFragment = True
+                lineIndex = 0 
+                if printingSearchUpdates:
+                  print('looking through:\n{0}'.format(programOfInterest))
+                linesInProgram = programOfInterest.splitlines()
+                while lookingForFragment and lineIndex < len(linesInProgram):
+                  line = linesInProgram[lineIndex]
+                  if ' Fragment ' in line:
+                    lookingForFragment = False
+                    containsFragment = True
+                  lineIndex = lineIndex + 1
+              else:
+                lookingForFragment = False
+              foundMethodOfInterest = False
+              everFoundMethodOfInterest = False
+              if not lookingForFragment: 
+                savingLines = False
+                linesToSave = []
+                nestingCount = 0
+                nestingCountWasGreaterThanZero = False
+                methodName = ""
+                createdFiles = False
+                for line in programOfInterest.splitlines():
+                  if foundMethodOfInterest or nestingCount > 0:
+                    everFoundMethodOfInterest = True
+                    (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
+                    # only use foundMethodOfInterest until we find the first {
+                    if nestingCountWasGreaterThanZero > 0:
+                      nestingCountWasGreaterThanZero = True
+                      foundMethodOfInterest = False
+                  #this string check captures both the onCreate method and the onCreateOptionsMenu method
+                  elif methodDeclarationStringToCompare and methodDeclarationStringToCompare in line:
+                    if printingSearchUpdates:
+                      print('found method of interest')
+                    methodName = line.split()[2].split('(')[0]
+                    (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
+                    foundMethodOfInterest = True
+                    if nestingCount > 0:
+                      nestingCountWasGreaterThanZero = True
+                  elif nestingCountWasGreaterThanZero:
+                    nestingCountWasGreaterThanZero = False
+                    newFileName = 'downloaded_{0}.txt'.format(methodName)
+                    createdFileListToDelete.append(newFileName)
+                    if len(linesToSave) < 3:
+                      print('error: lines to save are too small')
+                      print(linesToSave)
+                      sys.exit(1)
+                    with open(newFileName,'w') as fout:
+                      for line in linesToSave:
+                        if len(linesToSave) < 3:
+                          print('error: method is too short, likely parsing error')
+                          print(linesToSave)
+                          sys.exit(1)
+                        fout.write(line)
+                        #\n seems to be required here
+                        fout.write('\n')
+                      createdFiles = True
+                    linesToSave = []
+                if createdFiles:
+                  #print('reading program from: {0}'.format(rawLinkString))
+                  #input('stopping to check found file')
+                  if useAdvancedDiff:
+                    hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
+                    if hasSucceeded:
+                      print('found a successful repair!')
+                      notDone = False
+                  else:
+                    changeSet = handleDiff(changeSet, methodDeclarationStringToCompare)
+                    testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarationStringToCompare, fileToChange, projectDir, newAPKLocation)
+                    testDiffChanges(changeSet, checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
                     notDone = False
-                else:
-                  changeSet = handleDiff(changeSet, methodDeclarationStringToCompare)
-                  testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarationStringToCompare, fileToChange, projectDir, newAPKLocation)
-                  testDiffChanges(changeSet, checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
-                  notDone = False
-            else:
-              if printingSearchUpdates:
+              else:
+                if printingSearchUpdates:
+                  print('lines of program: \n{0}'.format(programOfInterest))
+                  print('error: never found Fragment in file (error in main)')
+                  #sys.exit(1)
+              if not lookingForFragment and not everFoundMethodOfInterest:
                 print('lines of program: \n{0}'.format(programOfInterest))
-                print('error: never found Fragment in file (error in main)')
-                #sys.exit(1)
-            if not lookingForFragment and not everFoundMethodOfInterest:
-              print('lines of program: \n{0}'.format(programOfInterest))
-              print('error: never found method of interest (error in main)')
-              print('method declaration to compare: {0}'.format(methodDeclarationStringToCompare))
+                print('error: never found method of interest (error in main)')
+                print('method declaration to compare: {0}'.format(methodDeclarationStringToCompare))
               #sys.exit(1)
+        except urllib.error.HTTPError:
+          print('failed with url: {0}'.format(urlToSearch))
+          sys.exit(1)
     #if not containsFragment: 
     #  print('page {0} does not contain any Fragments!!!'.format(pageNumber))
     pageNumber = pageNumber + 1
