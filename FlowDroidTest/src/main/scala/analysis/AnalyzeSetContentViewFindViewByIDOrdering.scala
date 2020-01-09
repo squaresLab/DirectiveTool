@@ -36,6 +36,8 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     **/
   override protected def flowThrough(in: AnalyzeMethodOrdering.AnalysisInfo, d: soot.Unit, out: AnalyzeMethodOrdering.AnalysisInfo): Unit = {
     //println(s"line ${d.toString()} in has method1: ${in.di.hasMethod1}, in has method2: ${in.di.hasMethod2}")
+    println(s"previously foundSetContentView: ${in.di.hasMethod1}")
+    println(s"previously findViewById: ${in.di.hasMethod2}")
     val newFlowThroughItem = new FlowThroughItem(d.toString(),in.di.hasMethod1,in.di.hasMethod2)
     if (! (debugInfoMap contains newFlowThroughItem )){
       val ft:FlowThroughItem = new FlowThroughItem(d.toString(), in.di.hasMethod1, in.di.hasMethod2)
@@ -46,7 +48,7 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
     }
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if(possibleM.isDefined){
-      //println(possibleM)
+      println(possibleM)
       copy(in,out)
       var instanceName = ""
       for (ub <- d.getUseBoxes.asScala) {
@@ -56,17 +58,32 @@ class AnalyzeSetContentViewFindViewByIDOrdering(graph: UnitGraph) extends Forwar
           case _ => ()
         }
       }
+      //I think I could try to cast d to an Invoke expression and then if it worked, try to get the
+      //instance name with getBase, but I don't see why I would need to do that
       //avoid cases where findViewById is not called on the main view being instantiated
-      if(instanceName == "") {
-
+      //I think $r0 refers to the this object (the instance called when there are no
+      //object instances before the period). Test to see
+      if (instanceName.split(" ").length > 1){
+        //was unable to correctly parse the instance name using the method above; try string parsing instead
+        if (d.toString().contains("invoke")){
+          val words = d.toString().split(" ")
+          if (words.length > 1){
+            val subwords = words(1).split("""\.""")
+            if (subwords.length > 0){
+              instanceName = subwords(0)
+            }
+          }
+        }
+      }
+      if(instanceName == "$r0") {
         val methodName = possibleM.get.getName
-        println(s"${methodName}")
+        //println(s"${methodName}")
         if (methodName.contains("setContentView")) {
-          //println("found setContentView")
-          //out.di.hasMethod1 = true
+          println("found setContentView")
+          out.di.hasMethod1 = true
         } else if (methodName.contains("findViewById")) {
-          //out.di.hasMethod2 = true
-          //println("found findViewById")
+          out.di.hasMethod2 = true
+          println("found findViewById")
           checkForViolation(out)
         }
       }

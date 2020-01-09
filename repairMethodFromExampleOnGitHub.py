@@ -333,6 +333,8 @@ def createNewCopyOfTestProgram():
 def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
   if checkerToRun == 'DetectInvalidInflateCallMain':
     extraCheckString = '.inflate('
+  elif checkerToRun == 'DetectSetArgumentsMain':
+    extraCheckString = 'setArguments('
   else:
     #need to add support for the other checkers later, since they need to be
     #specific to the checker, I'll need to think about each one. I'll throw 

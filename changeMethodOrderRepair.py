@@ -317,8 +317,8 @@ def executeTestOfChangedApp(path, checkerToRun, apkLocation):
     print('command failed ({0}); run again in debug mode to get output'.format(commandList))
     print("debugging directory: {0}".format(os.getcwd()))
     #commandList = ['./gradlew','assembleDebug','--debug']
-    commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
+    #commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
+    #commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
     #print(commandOutput.stdout)
     os.chdir(currentDir)
     return False

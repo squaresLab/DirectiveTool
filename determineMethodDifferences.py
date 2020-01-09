@@ -507,9 +507,9 @@ def getParseInfo(fileToRead):
     
     #statementNodes = [ s for s in node.body if isStatementOfInterest(s)]
     statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
-    print('statement nodes:\n') 
+    #print('statement nodes:\n') 
     for statementNumber, s in enumerate(statementNodes): 
-      print(nodeToCodeLine(s))
+      #print(nodeToCodeLine(s))
       if(s == None):
         print('error: s should not be None')
         sys.exit(1)
@@ -616,8 +616,8 @@ def getParseInfo(fileToRead):
           errorFout.write('\n')
 
         #sys.exit(1)
-    print(variableDependencyChains)
-    print(variableTypeDict)
+    #print(variableDependencyChains)
+    #print(variableTypeDict)
     return (variableDependencyChains, variableTypeDict, fileTree)
 
 def getTypesInStatementNumber(statementNumber, typeName, dependencyChains):
