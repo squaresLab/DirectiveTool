@@ -234,6 +234,7 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
+  checkerToRun = 'analysis.{0}'.format(checkerToRun)
   commandList.append(checkerToRun)
   commandList.append(apkLocation)
   #print(commandList)

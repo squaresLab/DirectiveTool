@@ -50,6 +50,7 @@ printingSearchUpdates = True
 
 debugCounter = 0
 printingDebugInfo = False
+containsFalse = False
 
 #checkerToRun='DetectMissingSetHasOptionsMenu'
 #checkerToRun='DetectInvalidInflateCallMain'
@@ -103,7 +104,7 @@ def getFilesFullPath(projectDir, fileBaseName):
     fileBaseName = fileBaseName.split("$")[0]
   if not fileBaseName.endswith('.java'):
     fileBaseName='{0}.java'.format(fileBaseName)
-  print('file base name: {0}'.format(fileBaseName))
+  #print('file base name: {0}'.format(fileBaseName))
   for dirpath, dirnames, filenames in os.walk(projectDir):
     #print(filenames)
     for filename in [f for f in filenames if f.endswith(".java")]:
@@ -196,7 +197,6 @@ def handleDiff(changeSet, methodDeclarationStringToCompare):
     #print("")
   return changeSet
 
-#TODO: make this file independent - don't hard code the file to change
 def addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChange, projectDir):
   #need to go back later and remove the common paths in the two different path variables 
   fileContents = []
@@ -311,7 +311,7 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
 
 
    
-
+#TODO: eventually remove the hard coding here
 def createNewCopyOfTestProgram():
   #create a new directory if necessary
   #path is the location of the program to copy from
@@ -329,44 +329,54 @@ def createNewCopyOfTestProgram():
   shutil.copytree("/Users/zack/git/DirectiveTool/testFolder/",path)
   return path
 
-#I can't remember why I need this at the moment so, I'm leaving it as dead code 
-#until I test it or remember
-def hasPassedExtraCheck(runFlowDroidCommand, projectDir, fileToChange, methodDeclarationStringToCompare):
-  extraCheckString = '.inflate('
+
+def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
+  if checkerToRun == 'DetectInvalidInflateCallMain':
+    extraCheckString = '.inflate('
+  else:
+    #need to add support for the other checkers later, since they need to be
+    #specific to the checker, I'll need to think about each one. I'll throw 
+    #an error now and look into the specific problems later
+    print('unsupported checker for ensure method of interest wasn\'t deleted')
+    sys.exit(1)
   fullFileToChange = getFilesFullPath(projectDir, fileToChange)
   with open(fullFileToChange,'r') as fin:
     fileContents = fin.read().splitlines()
   #this is only true right when the method is found
-  foundMethodOfInterest = False
-  everFoundMethodOfInterest = False
+  inMethodOfInterest = False
   nestingCount = 0
+  #need to handle the case when the method declaration extends over two lines
+  inMethodDeclaration = False
   for lineCount, line in enumerate(fileContents):
     #This public void declaration might be too specific
-    if foundMethodOfInterest or nestingCount > 0:
+    if inMethodDeclaration and not inMethodOfInterest:
+      for c in line:
+        if c == '{':
+          nestingCount = nestingCount + 1
+          inMethodOfInterest = True
+          inMethodDeclaration = False
+        elif c == '}':
+          nestingCount = nestingCount - 1
+    elif inMethodOfInterest and nestingCount > 0:
       if extraCheckString in line:
         return True
-      everFoundMethodOfInterest = True
-      #use nesting count if they are both true
-      if nestingCount > 0:
-        foundMethodOfInterest = False
+      if nestingCount < 1:
+        inMethodOfInterest = False
       for c in line:
         if c == '{':
           nestingCount = nestingCount + 1
         elif c == '}':
           nestingCount = nestingCount - 1
     elif line.strip().startswith(methodDeclarationStringToCompare):
-      foundMethodOfInterest = True
-      everFoundMethodOfInterest = True
+      inMethodDeclaration = True
       for c in line:
         if c == '{':
           nestingCount = nestingCount + 1
+          inMethodOfInterest = True
+          inMethodDeclaration = False
         elif c == '}': 
           nestingCount = nestingCount - 1
-  if not everFoundMethodOfInterest:
-    print('error: never found method of interest {0} in {1}'.format(methodDeclarationStringToCompare, fileToChange))
-    return False
-  else:
-    return True
+  return False
 
 
 
@@ -376,9 +386,10 @@ def hasPassedExtraCheck(runFlowDroidCommand, projectDir, fileToChange, methodDec
 def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation):
   global tempDebuggingBool
   wasTested = False
-  if doingExtraCheck:
-    if not hasPassedExtraCheck(runFlowDroidCommand, projectDir, fileToChange, methodDeclarationStringToCompare):
-      return False
+  if containsFalse:
+    input('stopping to see contains false before testing')
+  if not ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
+    return False
   print("before build")
   currentDir = os.getcwd()
   os.chdir(path)
@@ -394,11 +405,14 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
   except:
     #try out the next change
     print('command failed ({0}); run again in debug mode to get output'.format(commandList))
+    #input('press enter to continue')
     os.chdir(currentDir)
   #  if tempDebuggingBool:
   #    tempDebuggingBool = False
   #    print('set tempDebuggingBool to false due to failed compilation!!!!!!!!!!!!!!!!!!!!!!!!!!')
   #    inputValue = input("press enter to continue")
+    #if containsFalse:
+    #  input('stopping here to see result')
     return False
   if printingDebugInfo:
     for line in commandOutput.stdout.decode('utf-8').splitlines():
@@ -406,6 +420,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
     #print('checking file that compiled: {0}'.format(fileToChange))
   #sys.exit(0)
   # I need to split by space but not on quoted parts of the string
+  print('command succeeded')
   unquotedAndQuotedList = runFlowDroidCommand.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
@@ -414,15 +429,16 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
-  commandList.append(checkerToRun)
+  commandList.append('analysis.{0}'.format(checkerToRun))
   #newAPKLocation = '/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk'
   commandList.append(newAPKLocation)
   try: 
     os.chdir("/Users/zack/git/DirectiveTool/FlowDroidTest")
     #print("current directory for command: {0}".format(os.getcwd()))
     #print("running command: {0}".format(' '.join(commandList)))
+    print('running checker')
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    if printingDebugInfo:
+    if printingDebugInfo or containsFalse:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
         print(line)
     #print(commandOutput)
@@ -430,14 +446,17 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
     #for line in commandOutput.stderr.decode('utf-8').splitlines():
       #print(line)
     for line in commandOutput.stdout.decode('utf-8').splitlines():
-      print(line)
+      #print(line)
       if line.startswith('total number of caught problems:'):
         lineItems = line.split(' ')
         wasTested = True
         if int(lineItems[-1]) == 0:
           commandSucceeded = True
   except: 
+    print('had an exception when running the checker')
     pass
+  #if containsFalse:
+    input('stopping here to see result')
   os.chdir(currentDir)
   #if wasTested and tempDebuggingBool:
   #  print('found a change that ended in false and compiled')
@@ -527,13 +546,13 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
                     break
             addChangeToFile(lineOfInterest, method, methodDeclarationStringToCompare, fileToChange, projectDir)
             #essentially breaking the code here with the return - done for debugging
-        wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+            wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
         #print('was fixed: {0}'.format(wasFixed))
         #input('checking if was fixed')
-        if wasFixed:
-          if listNumber == 2:
-            print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
-          return True
+            if wasFixed:
+              if listNumber == 2:
+                print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
+              return True
     print('Unable to find fix')
     return False
 
@@ -746,6 +765,10 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
 
 def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchList, methodDeclaration, originalVariableTypeDict, downloadedVariableTypeDict, checkerToRun, methodDeclarationStringToCompare, newAPKLocation, runFlowDroidCommand, projectDir, fileToChange):
   global tempDebuggingBool
+  global debugCounter
+  #containsFalse was added for debugging - can remove later
+  global containsFalse
+  containsFalse = False
   foundFixOfInterest = False
   linesToAddIndexList = []
   linesToAddIndexSet = set()
@@ -799,6 +822,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
   linesToAddDict = dict(zip(linesToAddIndexList, lineListToAdd))
   #can't get the length of lineIndexStringPairs - can't get the len of a zip object for some reason
   for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):
+    containsFalse = False
     path = createNewCopyOfTestProgram()
     if len(changeItemList) > 0:
       newFileContents = []
@@ -896,6 +920,11 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             print('start index: {0}, end index: {1}'.format(indexOfMethodStart, len(newFileContents)))
             for i in range(indexOfMethodStart, len(newFileContents)):
               print(newFileContents[i])
+              if 'false' in newFileContents[i]:
+                containsFalse = True
+                print('false here!!!')
+                if containsFalse and len(newFileContents) - indexOfMethodStart == 2:
+                  input('stop with false and single line changed')
           if incrementLineCountInMethodOfInterest:
             print('length of new file contents at this point: {0}'.format(len(newFileContents)))
             lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
@@ -978,12 +1007,16 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
           fout.write(line)
           fout.write('\n')
     wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+    containsFalse = False
     #if foundFixOfInterest:
     #  print('was fixed: {0}'.format(wasFixed))
     #  global printingDebugInfo
     #  printingDebugInfo = True
     #  wasFixed = executeTestOfChangedApp(path)
     #  sys.exit(1)
+    #if containsFalse:
+    #  input('{0}: contains false: press enter to continue'.format(debugCounter))
+    debugCounter += 1
     if wasFixed:
       return wasFixed
   return False
@@ -1005,7 +1038,6 @@ def testTypeDifferences(checkerToRun, methodDeclarationStringToCompare, newAPKLo
     (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
       determineMethodDifferences.getParseInfo(downloadedFileName)
     typeMismatches = determineMethodDifferences.checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
-    #print(typeMismatches)
     if len(typeMismatches) < 1:
       print('type mismatches is 0; returning False')
       return False
@@ -1026,11 +1058,21 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
   notDone = True
   changeSet = set()
   while notDone: 
+    # I might want to eventually remove this optimization - while it works, 
+    # it currently doesn't have a good way to determine when the saved data
+    # is out of date - might also be able to come up with some way to determine
+    # the code is out of date
     saveFileName = '{0}savedGitHubSearches/savedSearch{1}.json'.format(savedDataDirectory, pageNumber)
-    if os.path.isfile(saveFileName):
-      with open(saveFileName,'r') as fin:
-        searchResult = json.loads(fin.read())
-    else:
+    #removing the save file code - I might bring the optimization back in later, 
+    #but right now it is throwing off my tests..
+    #if os.path.isfile(saveFileName):
+    #  print('opened save file')
+    #  with open(saveFileName,'r') as fin:
+    #    searchResult = json.loads(fin.read())
+    #else:
+    #I don't want to change the indentation and leaving it easy to go back 
+    #to the check above
+    if True:
       #command = 'curl -n https://api.github.com/search/code?q=onCreate+Fragment+onCreateOptionsMenu+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
       #command = 'curl -n https://api.github.com/search/code?q=onCreateView+Fragment+in:file+language:java?page={0}&per_page=100&sort=stars&order=desc'.format(pageNumber)
       #need to figure out how to determine if I should use the word Fragment in the search
@@ -1045,16 +1087,20 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
         keyWordString = "+".join(keywords)
       command = 'curl -n https://api.github.com/search/code?q={0}+in:file+language:java?page={1}&per_page=100&sort=stars&order=desc'.format(keyWordString, pageNumber)
       print(command)
-      sys.exit(0)
+      #if containsFalse:
+      #  input('stopping here to see command')
       commandList = command.split(" ")
       commandOutput = subprocess.run(commandList, check=True, stdout=subprocess.PIPE).stdout.decode('utf-8') 
       searchResult = json.loads(commandOutput)
+      os.makedirs(os.path.dirname(saveFileName), exist_ok=True)
       with open(saveFileName,'w') as fout:
         json.dump(searchResult,fout)
 
+      print('pulled from github')
     #print(searchResult['total_count'])
     currentCount = 0
     pageLimit = 100
+    #input('stopping before page search loop')
     while notDone and currentCount < pageLimit - 1:
       containsFragment = False
     #urlToSearch='https://github.com/search?l=Java&q=onCreate+&type=Code'

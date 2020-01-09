@@ -363,11 +363,42 @@ def isStatementOfInterest(nodeToTest):
     sys.exit(1)
     return False
 
+def cleanFileLinesBeforeParsing(fileToEdit):
+  linesInFile = []
+  openParensCount = 0
+  tempLine = ""
+  with open(fileToEdit,'r') as fin:
+    print('original contents:')
+    for line in fin:
+      print(line, end="")
+      for c in line:
+        if c == ';':
+          openParensCount = 0
+          break
+        elif c == '(':
+          openParensCount += 1
+        elif c == ')':
+          openParensCount -= 1
+      if openParensCount > 0:
+        tempLine = tempLine + line.rstrip()
+      else:
+        openParensCount = 0
+        if tempLine != "":
+          line = line.lstrip()
+          line = tempLine + line
+          tempLine = ""
+        linesInFile.append(line)
+  with open(fileToEdit,'w') as fout:
+    for line in linesInFile:
+      print(line, file=fout, end = "")
+
+
 
 #later change this to take a parameter or argument; but hard coding for initial testing
 #TODO: clean up this method, it's getting too big and has too many subfunctions
 #to be easily readable
 def getParseInfo(fileToRead):
+  cleanFileLinesBeforeParsing(fileToRead)
   #I can't remember if these variables persist after the method exits if I return
   #them. Try it and see
   variableTypeDict = {}
@@ -389,8 +420,10 @@ def getParseInfo(fileToRead):
     try:
       fileTree = javalang.parse.parse(fileInput)
     except javalang.parser.JavaSyntaxError as j:
-      print(j)
+      print('syntax error: {0}'.format(j))
+      print(fileInput)
       print('error: unable to parse {0}'.format(fileToRead))
+      input('stopping here to check unparsable file')
       sys.exit(1)
     #nodeToLineNumberList = createNodeToLineNumberList(fileInput, fileTree)
     # debating on if I should put a break after the 
@@ -559,7 +592,7 @@ def getParseInfo(fileToRead):
         else:
           methodCall = s.value
         #make sure method call is an actual method call and ignore all others
-        if not isinstance(methodCall, javalang.tree.MemberReference):
+        if not isinstance(methodCall, javalang.tree.MemberReference) and not isinstance(methodCall, javalang.tree.Literal):
         #print(methodCall)
         #print('chain before: {0}'.format(variableDependencyChains))
           variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)

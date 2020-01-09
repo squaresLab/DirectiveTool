@@ -78,7 +78,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=8
+currentCheckerNumber=1
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -88,7 +88,7 @@ currentCheckerNumber=8
        scriptDir=/Users/zack/git/DirectiveTool/
        methodDeclarationStringToCompare="public View onCreateView"
        methodOfInterest1=inflate
-       termsOfInterest="None";;
+       termsOfInterest="Fragment";;
     #works! But I need to add a heuristic later to make the repair more sensical;
     #partially done, currently moving the method to a method in the class 
     #with the problem; but could add lifecycle guided information to the repair
@@ -241,7 +241,7 @@ currentCheckerNumber=8
   then
     echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2"
     /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2
-    echo "stopping after change method order"
+    #echo "stopping after change method order"
     #read stoppingHere
   #else
     if [ $? -ne 0 ]
