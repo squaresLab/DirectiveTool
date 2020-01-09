@@ -633,6 +633,9 @@ def getTypesInStatementNumber(statementNumber, typeName, dependencyChains):
 #returns list of tuples which contain first the type name then the list number 
 #(1 or 2) and the statement number in that list which did not have a match
 #Currently, this method pays attention to line ordering
+
+#Note: this will return multiple entries for the same line - if you are looking
+#for unique lines, you will need to filter by line later
 def checkIfEveryCallHasTheExpectedTypesWithIt(chain1, chain2, listNumber):
   resultList = []
   #print('in check if expected types')

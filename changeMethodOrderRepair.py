@@ -252,7 +252,10 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
       #print(line)
     savingLines = False
     chainsInfo = []
+    currentChain = []
     print('starting to create call chains')
+    #handle either the multiple line print out case or the single List print out
+    #case
     for line in commandOutput.stdout.decode('utf-8').splitlines():
       print(line)
       if line.startswith('total number of caught problems:'):
@@ -271,6 +274,19 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
           currentChain.append(CallChainItem(m.group(1), m.group(2)))
         else:
             print("call chain line did not match: {0}".format(line))
+      elif line.startswith('@@@@ Found a problem:'):
+        print('found problem line: {0}'.format(line))
+        listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
+        if listSequenceMatch:
+          print('found list: {0}'.format(listSequenceMatch.group(1)))
+          callItems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
+          for c in callItems:
+            print(c)
+            itemsInCall = c.split(':')
+            currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
+          currentChain.reverse()
+          chainsInfo.append(currentChain)
+          #sys.exit(0)
     print('finished creating call chains')
     print('final problem count: {0}'.format(currentProblems))
     #if int(currentProblems) == 0:
@@ -695,6 +711,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     #input('stopping to check call chain error')
     #I think I can just return a False here, because this problem should
     #only happen when running the wrong repair types for a detected issue
+    print('unable to get class with problem from call chain item: {0}'.format(callChains))
     return False
   if currentProblemCount == -1:
     print('error: the changed app did not successfully execute')

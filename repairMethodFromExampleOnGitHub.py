@@ -50,7 +50,7 @@ printingSearchUpdates = True
 
 debugCounter = 0
 printingDebugInfo = False
-containsFalse = False
+#containsFalse = False
 
 #checkerToRun='DetectMissingSetHasOptionsMenu'
 #checkerToRun='DetectInvalidInflateCallMain'
@@ -386,8 +386,8 @@ def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, m
 def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation):
   global tempDebuggingBool
   wasTested = False
-  if containsFalse:
-    input('stopping to see contains false before testing')
+  #if containsFalse:
+  #  input('stopping to see contains false before testing')
   if not ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
     return False
   print("before build")
@@ -438,7 +438,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
     #print("running command: {0}".format(' '.join(commandList)))
     print('running checker')
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    if printingDebugInfo or containsFalse:
+    if printingDebugInfo:# or containsFalse:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
         print(line)
     #print(commandOutput)
@@ -456,7 +456,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
     print('had an exception when running the checker')
     pass
   #if containsFalse:
-    input('stopping here to see result')
+  #  input('stopping here to see result')
   os.chdir(currentDir)
   #if wasTested and tempDebuggingBool:
   #  print('found a change that ended in false and compiled')
@@ -767,8 +767,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
   global tempDebuggingBool
   global debugCounter
   #containsFalse was added for debugging - can remove later
-  global containsFalse
-  containsFalse = False
+  #global containsFalse
+  #containsFalse = False
   foundFixOfInterest = False
   linesToAddIndexList = []
   linesToAddIndexSet = set()
@@ -821,12 +821,24 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
   #create a tuple list of the line indexes and the strings
   linesToAddDict = dict(zip(linesToAddIndexList, lineListToAdd))
   #can't get the length of lineIndexStringPairs - can't get the len of a zip object for some reason
-  for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):
-    containsFalse = False
+
+  # I don't care about which specific types are different on the different lines,
+  # just which lines are different, thus filter the mismatchList to one type item
+  # that represents each line
+  #print(mismatchList)
+  uniqueMismatchLineDict = {}
+  for m in mismatchList:
+    if not (m[1],m[2]) in uniqueMismatchLineDict:
+      uniqueMismatchLineDict[(m[1],m[2])] = m
+  uniqueMismatchList = uniqueMismatchLineDict.values()
+  #print(uniqueMismatchList)
+  #input('stopping to check filter function ')
+  for changeItemList in itertools.chain.from_iterable(itertools.combinations(uniqueMismatchList,n) for n in range(len(uniqueMismatchList)+1)):
+    #containsFalse = False
     path = createNewCopyOfTestProgram()
     if len(changeItemList) > 0:
       newFileContents = []
-      linesToChange = list(map(lambda x: x[2], changeItemList))
+      #linesToChange = list(map(lambda x: x[2], changeItemList))
 
       #if len(changeItemList) > 0:
       #  addList = []
@@ -886,7 +898,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             beforeEndOfMethodOfInterest = False
             #get all items with a line greater than i
             #sort and then add
-            itemsToAdd = [i for i in changeItemList if i[2] > lineCountInMethodOfInterest]
+            itemsToAdd = [i for i in changeItemList if i[2] > lineCountInMethodOfInterest and i[1] == 2]
             if len(itemsToAdd) > 0:
               indexesStillToAdd = [i[2] for i in itemsToAdd]
               indexesStillToAdd.sort()
@@ -920,11 +932,11 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             print('start index: {0}, end index: {1}'.format(indexOfMethodStart, len(newFileContents)))
             for i in range(indexOfMethodStart, len(newFileContents)):
               print(newFileContents[i])
-              if 'false' in newFileContents[i]:
-                containsFalse = True
-                print('false here!!!')
-                if containsFalse and len(newFileContents) - indexOfMethodStart == 2:
-                  input('stop with false and single line changed')
+              #if 'false' in newFileContents[i]:
+               # containsFalse = True
+               # print('false here!!!')
+                #if containsFalse and len(newFileContents) - indexOfMethodStart == 2:
+                #  input('stop with false and single line changed')
           if incrementLineCountInMethodOfInterest:
             print('length of new file contents at this point: {0}'.format(len(newFileContents)))
             lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
@@ -1007,7 +1019,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
           fout.write(line)
           fout.write('\n')
     wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
-    containsFalse = False
+    ##containsFalse = False
     #if foundFixOfInterest:
     #  print('was fixed: {0}'.format(wasFixed))
     #  global printingDebugInfo
