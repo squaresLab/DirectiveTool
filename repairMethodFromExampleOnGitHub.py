@@ -296,7 +296,7 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
     print('error: result lines are too small')
     print(resultLines)
     sys.exit(1)
-  print('testing result file')
+  #print('testing result file')
   #print(resultLines)
   with open(fullFileToChange,'w') as fout:
     for line in resultLines:
@@ -452,6 +452,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
       if line.startswith('total number of caught problems:'):
         lineItems = line.split(' ')
         wasTested = True
+        print(line)
         if int(lineItems[-1]) == 0:
           commandSucceeded = True
   except: 
@@ -862,6 +863,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         everFoundMethodOfInterest = False
         nestingCount = 0
         fileContents = fin.read().splitlines()
+        #line counts may not correspond exactly with what I was doing before 
+        #because I've changed it so all () are on the same line when checking 
+        #the type differences
         lineCount = 0
         for line in fileContents:
           #print(line)
@@ -898,7 +902,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                 nestingCount = nestingCount - 1
           if nestingCount < 1 and everFoundMethodOfInterest and beforeEndOfMethodOfInterest:
             beforeEndOfMethodOfInterest = False
-            #get all items with a line greater than i
+            #get all items with a line greater than the end of the method of interest
+            #
             #sort and then add
             itemsToAdd = [i for i in changeItemList if i[2] > lineCountInMethodOfInterest and i[1] == 2]
             if len(itemsToAdd) > 0:
@@ -923,17 +928,28 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             #needed to make sure the return statement is at the end of a method
             #for methods that return values
             if not methodDeclarationStringToCompare.split(' ')[1] == 'void':
-              newFileContents[-1] = "return " + newFileContents[-1]
+              try:
+                lineToChange = ''
+                linesBack = 1
+                while lineToChange == '':
+                  lineToChange = newFileContents[-linesBack].strip()
+                if lineToChange.split()[0] != "return":
+                  newFileContents[-linesBack] = "return " + newFileContents[-linesBack] 
+              except IndexError as e:
+                #print(newFileContents)
+                print(e)
+                print('last line of new file contents: {0}'.format(newFileContents[-1]))
+                sys.exit(1)
               #print('added return')
               #global debugCounter
               #if debugCounter > 1:
               #  print('new line with return : {0}'.format(newFileContents[-1]))
               #  sys.exit(1)
               #debugCounter = debugCounter + 1
-            print('new method with additions and deletions:')
-            print('start index: {0}, end index: {1}'.format(indexOfMethodStart, len(newFileContents)))
-            for i in range(indexOfMethodStart, len(newFileContents)):
-              print(newFileContents[i])
+            #print('new method with additions and deletions:')
+            #print('start index: {0}, end index: {1}'.format(indexOfMethodStart, len(newFileContents)))
+            #for i in range(indexOfMethodStart, len(newFileContents)):
+            #  print(newFileContents[i])
               #if 'false' in newFileContents[i]:
                # containsFalse = True
                # print('false here!!!')
@@ -943,6 +959,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             print('length of new file contents at this point: {0}'.format(len(newFileContents)))
             lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
             changesToLine = [ i for i in changeItemList if i[2] == lineCountInMethodOfInterest]
+            #if there are no changes to the line, just keep it in the file
             if len(changesToLine) < 1:
               newFileContents.append(line)
             else:
@@ -957,6 +974,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
               #  print('delete items: {0}'.format(deleteItems))
               #  print('line to delete: {0}'.format(line))
               #  sys.exit(1)
+
+              #delete the line if it should be deleted, otherwise, keep the line
+              #and remove any returns
               if len(deleteItems) > 0:
                 print('deleting line: {0}'.format(line))
                 deletedLineList.append(line)
@@ -977,6 +997,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
               #if len(addItems) > 0:
               #  print('adding line: {0}'.format(line))
               #  addedLineCount = addedLineCount  + 1
+
+              #add the line count that corresponded to this line count in the other file
               if len(addItems) > 0:
                 addedLine = linesToAddDict[lineCountInMethodOfInterest] 
                 addedLine = addedLine.replace('return ', '')
@@ -997,12 +1019,13 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         sys.exit(1)
       if addedLineCount < 1 and deletedLineCount < 1:
         print('error: did not add or delete any lines')
-        print(lineStringMap)
+        print(lineListToAdd)
         print(changeItemList)
         print('method declaration to look for: {0}'.format(methodDeclaration))
         print('ever found declaration of interest: {0}'.format(everFoundMethodOfInterest))
         print('line count: {0}'.format(lineCountInMethodOfInterest))
-        print('file to change: {0}'.format(fileToChange))
+        print('file to change: {0}'.format(fullFileToChange))
+        print('file contents size: {0}'.format(len(fileContents)))
         sys.exit(1)
       addedInflate = False
       deletedInflate = False

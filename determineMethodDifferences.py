@@ -592,7 +592,7 @@ def getParseInfo(fileToRead):
         else:
           methodCall = s.value
         #make sure method call is an actual method call and ignore all others
-        if not isinstance(methodCall, javalang.tree.MemberReference) and not isinstance(methodCall, javalang.tree.Literal):
+        if not isinstance(methodCall, javalang.tree.MemberReference) and not isinstance(methodCall, javalang.tree.Literal) and not isinstance(methodCall, javalang.tree.TernaryExpression):
         #print(methodCall)
         #print('chain before: {0}'.format(variableDependencyChains))
           variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
