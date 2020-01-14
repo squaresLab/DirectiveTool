@@ -583,8 +583,14 @@ def getParseInfo(fileToRead):
       #only statementexpressions and variabledeclarations) - although may 
       #expand to handle more later
       #print(s)
-      if isinstance(s, javalang.tree.Assignment):
-        typeQ = getTypeOfVar(variableTypeDict, s.expressionl.member)
+      if isinstance(s, javalang.tree.Assignment) and not isinstance(s.expressionl, javalang.tree.This):
+        try:
+          typeQ = getTypeOfVar(variableTypeDict, s.expressionl.member)
+        except Exception as e:
+          print(s.expressionl)
+          print(type(s.expressionl))
+          print(e)
+          sys.exit(1)
         if typeQ:
           variableDependencyChains[typeQ].append(statementNumber)
         if isinstance(s.value, javalang.tree.Cast):
@@ -597,7 +603,7 @@ def getParseInfo(fileToRead):
         #print('chain before: {0}'.format(variableDependencyChains))
           variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
         #print('chain after: {0}'.format(variableDependencyChains))
-      else: 
+      elif hasattr(s, 'expressionl') and not isinstance(s.expressionl, javalang.tree.This): 
         #print(s)
         #print('chain before: {0}'.format(variableDependencyChains))
         variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s)

@@ -15,6 +15,7 @@ import distutils.dir_util
 import shutil
 import determineMethodDifferences
 import operator
+import traceback
 
 #GitHub seems to require me to log in now to search the repos
 #def loginToGitHub(session):
@@ -335,11 +336,16 @@ def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, m
     extraCheckString = '.inflate('
   elif checkerToRun == 'DetectSetArgumentsMain':
     extraCheckString = 'setArguments('
+  elif checkerToRun == 'DetectMissingSetHasOptionsMenu':
+    #extraCheckStringList = ['setHasOptionsMenu(true);', 'onCreateOptionsMenu']
+    extraCheckString = 'setHasOptionsMenu(true);' #I'll need to adjust the logic here 
+    #when I add repair support for onCreateOptionsMenu
   else:
     #need to add support for the other checkers later, since they need to be
     #specific to the checker, I'll need to think about each one. I'll throw 
     #an error now and look into the specific problems later
-    print('unsupported checker for ensure method of interest wasn\'t deleted')
+    print('unsupported checker ({0}) for ensure method of interest wasn\'t deleted'.format(checkerToRun))
+    traceback.print_exc(file=sys.stdout)
     sys.exit(1)
   fullFileToChange = getFilesFullPath(projectDir, fileToChange)
   with open(fullFileToChange,'r') as fin:
@@ -1115,7 +1121,11 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
       #need to figure out how to determine if I should use the word Fragment in the search
       methodDeclarationItems = methodDeclarationStringToCompare.split(' ')
       keywords = [methodDeclarationItems[-1]]
+      #handle either the case when terms of interest is a string or when terms of 
+      #interest is a string of multiple words
       if termsOfInterest:
+        if isinstance(termsOfInterest, str):
+          termsOfInterest = termsOfInterest.split()
         keywords = keywords + termsOfInterest
       #this if isn't needed at the moment, but it might be used in later versions of the code
       if len(keywords) < 2:
