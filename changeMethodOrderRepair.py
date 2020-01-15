@@ -196,7 +196,7 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
     with open(fileToTest, 'w') as fout:
       for line in linesInFile:
         print(line, end="", file=fout)
-    #input('press enter to continue')
+    input('stopping after move before or move after')
   return foundChangeInFile
 
 #This can probably be combined with the method call executeTestOfChangedApp but
@@ -301,7 +301,7 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
   #print("succeeded - change: {0}, method {1}".format(change, method))
   return currentProblems, chainsInfo
 
-def executeTestOfChangedApp(path, checkerToRun, apkLocation):
+def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation):
   print("before build")
   currentDir = os.getcwd()
   os.chdir(path)
@@ -368,7 +368,7 @@ def executeTestOfChangedApp(path, checkerToRun, apkLocation):
  #that fixed the issue and stop
 
 
-def tryMoveBefore(projectDir, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+def tryMoveBefore(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
   print('in try move before')
   for dirpath, dirnames, filenames in os.walk(projectDir):
     for filename in [f for f in filenames if f.endswith(".java")]:
@@ -380,19 +380,20 @@ def tryMoveBefore(projectDir, originalSourceFolder, method1, method2, testedFile
         foundAPossibleFix = moveBackMethodBeforePreviousMethod(fileToTest, method1, method2)
         if foundAPossibleFix:
           print('testing: {0}'.format(fileToTest))
-          isFixed = executeTestOfChangedApp(edittingFolder, checkerToRun, apkLocation)
+          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
           if isFixed:
             return True
           else: 
             #print('testing file: {0} failed'.format(fileToTest))
             #sys.exit(0)
             print('failed to fix with move before')
-            createNewCopyOfTestProgram(originalSourceFolder)
+            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   #print('ending early')
   #sys.exit(0)
   return False
 
-def tryMoveAfter(projectDir, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+def tryMoveAfter(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
   print('in try move after')
   for dirpath, dirnames, filenames in os.walk(projectDir):
     for filename in [f for f in filenames if f.endswith(".java")]:
@@ -402,12 +403,12 @@ def tryMoveAfter(projectDir, originalSourceFolder, method1, method2, testedFiles
         foundAPossibleFix = moveFrontMethodAfterBackMethod(fileToTest, method1, method2)
         if foundAPossibleFix:
           print('testing: {0}'.format(fileToTest))
-          isFixed = executeTestOfChangedApp(edittingFolder, checkerToRun, apkLocation)
+          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
           if isFixed:
             return True
           else:
             print('failed to fix with move after')
-            createNewCopyOfTestProgram(originalSourceFolder)
+            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   return False
 
 
@@ -425,7 +426,15 @@ def createNewCopyOfTestProgram(originalSourceFolder):
   #distutils.dir_util.copy_tree("/Users/zack/git/DirectiveTool/testFolder/",path)
   #copy the application to the new directory
   shutil.copytree(originalSourceFolder, edittingFolder)
-  return edittingFolder
+  resultFolder = edittingFolder
+  #make sure the return matches the style that originalSourceFolder was provided in
+  if originalSourceFolder[-1] == os.path.sep and edittingFolder[-1] != os.path.sep:
+    #add the path seperator
+    resultFolder += os.path.sep
+  elif originalSourceFolder[-1] != os.path.sep and edittingFolder[-1] == os.path.sep:
+    #remove the path seperator
+    resultFolder = resultFolder[:-1]
+  return resultFolder
 
 
 def extractMethodInformation(sourceFile):
@@ -474,18 +483,26 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
   #move the back method to before the originally first method
   #run the checker again
   #if that doesn't work, move the originally first method after the second method
+  print(apkLocation)
+  print(testFolder)
+  print(originalSourceFolder)
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  print(apkLocation)
+  inupt('stopping to see why apk location is not updated')
   testedFiles = {}
   print('trying move before')
-  isFixed = tryMoveBefore(testFolder, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+  isFixed = tryMoveBefore(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+  input('stopping after move before')
   #try moving the back method before the original first method
   #check isFaulty again
   if not isFixed:
     testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+    apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying move after')
-    tryMoveAfter(testFolder, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
-    isFixed = executeTestOfChangedApp(edittingFolder, checkerName, apkLocation)
+    isFixed = tryMoveAfter(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+    input('stopping after move after')
   #if isFaulty is true, then revert and move the first method behind the 
   #original last method
   if isFixed:
@@ -614,7 +631,12 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
  
 
 def moveMethodToObjectInstantiation(projectDir, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
-  createNewCopyOfTestProgram(originalSourceFolder)
+  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+  print(apkLocation)
+  print(originalSourceFolder)
+  print(testFolder)
+  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  print(apkLocation)
   fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
@@ -665,9 +687,15 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #the method call to the first place the class is instantiated (maybe check for 
   #other places). After that, try to move the method to all the methods for the
   #class of the object.
-  
+
   methodObjList = []
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+  print(apkLocation)
+  print(originalSourceFolder)
+  print(testFolder)
+  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  print(apkLocation)
+  input('stopping there to figure out apkLocation issue')
   unquotedAndQuotedList = runGetMethodLocations.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
@@ -700,6 +728,11 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   print('calling execute and get call chains')
   #later, implement a way to handle multiple caught problems at the same time
   currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
+  #I could probably later change this to use the method of interest to get the class with problem
+  #if I wanted
+  if callChains == []:
+    print('no call chain')
+    return False
   #callChains start with the failing method and the class that method was defined in; then the next item holds the
   #class that incorrectly called the method
   #
@@ -729,7 +762,8 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
         currentProblemCount = 0
     else:
       def testMethodObj(m):
-        createNewCopyOfTestProgram(originalSourceFolder)
+        testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+        apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
         print('calling move line to new method')
         moveLineToNewMethod(testFolder, methodOfInterest1, m, callChains)
         #alteredCallChains is not used; but I have to catch the return value

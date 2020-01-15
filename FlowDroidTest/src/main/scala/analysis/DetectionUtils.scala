@@ -227,7 +227,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/Documents/CMU/testRepos/MyApplication/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk"
-      return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/org.xapek.andiodine_6.apk"
       //return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
       //return "/Users/zack/git/DirectiveTool/apkWithError.apk"
@@ -245,6 +245,8 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.physphil.android.unitconverterultimate_50500.apk"
       //return "/Users/zack/git/DirectiveTool/appsFromFDroid/org.linphone_4125.apk"
       //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/FreeKlondike/build/outputs/apk/debug/FreeKlondike-debug.apk"
+      return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/FreeKlondike/build/outputs/apk/debug/FreeKlondike-debug.apk"
     }
   }
 }
