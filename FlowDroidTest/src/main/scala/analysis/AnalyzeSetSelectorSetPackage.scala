@@ -57,6 +57,7 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
               if (methodName.contains("setSelector") && !d.toString().endsWith("null)")) {
                 //println(s"found setSelector with ${valueName}: ${d.toString()}")
                 //println(s"${possibleM.get.}")
+                //println("found setSelector")
                 val varInfoOption = out.getVar(valueName)
                 if (varInfoOption.isDefined) {
                   varInfoOption.get.hasSetSelector = true
@@ -69,6 +70,7 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
 
               } else if (methodName.contains("setPackage") && !d.toString().endsWith("null)")) {
                 //println(s"found setPackage with ${valueName}: ${d.toString()}")
+                //println("found setPackage")
                 val varInfoOption = out.getVar(valueName)
                 if (varInfoOption.isDefined) {
                   varInfoOption.get.hasSetPackage = true
@@ -125,9 +127,13 @@ class AnalyzeSetSelectorSetPackage(graph: UnitGraph) extends ForwardFlowAnalysis
     if (d== null){
       return false
     }
-    if(d.hasSetPackage.&&(d.hasSetSelector)){
+    if(numberOfCaughtProblems != 1 && d.hasSetPackage.&&(d.hasSetSelector)){
       Predef.println("error: code calls both setSelector and setPackage on the same intent")
-      numberOfCaughtProblems += 1
+      //just determine if there is an error - earlier I was trying to count all errors and
+      //I was getting the number of control flow paths that included the error instead.
+      //Since this analysis only checks one method at a time, we only throw an error per
+      //method call
+      numberOfCaughtProblems = 1
       println(s"number of caught problems: ${numberOfCaughtProblems}")
       return true
     }

@@ -28,9 +28,9 @@ def extractIDs(fullLayoutFilename):
         androidIdMatch = androidIdPattern.match(line)
         if androidIdMatch:
           ids.append(androidIdMatch.group(1).split('/')[-1])
-  if len(ids) > 0:
-    lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullLayoutFilename))
-    subprocess.run(lookAtFileCommand)
+  #if len(ids) > 0:
+    #lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullLayoutFilename))
+    #subprocess.run(lookAtFileCommand)
     #input('stop here because I can\'t see it')
   return ids
 
@@ -65,7 +65,7 @@ def getValidLayoutFile(fullFilename, layoutFile):
 def isPossibleInjectionFile(fullFilename):
   if 'transistor' in fullFilename:
     return 
-  lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+  #lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
   foundSetContentView = False
   ids = []
   fileContents = []
@@ -108,7 +108,7 @@ def injectSetContentViewIssue(fullFilename):
   #a skip added for testing; remove later
   if 'transistor' in fullFilename:
     return 
-  lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+  #lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
   foundSetContentView = False
   ids = []
   fileContents = []

@@ -95,6 +95,11 @@ object DetectInvalidInflateCallMain {
      */
     for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
+      if (cl.getName().contains("FilmDetailsFragment")){
+        println(cl.getName())
+        println("running sub class with print")
+        println(!DetectionUtils.classIsSubClassOfDialogFragment(cl))
+      }
       if (DetectionUtils.classIsSubClassOfFragment(cl) && !DetectionUtils.classIsSubClassOfDialogFragment(cl)) {
         //println(s"****${cl.getName()} is subclass of Fragment")
         for (m: SootMethod <- cl.getMethods().asScala) {
@@ -107,9 +112,9 @@ object DetectInvalidInflateCallMain {
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName.contains("onCreateView")) {
               //println("new method")
-              //println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
+              println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
               for (stmt <- m.getActiveBody.getUnits.asScala) {
-                //println(stmt)
+                println(stmt)
                 if (stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")) {
                   // 0 is how soot stores the final false parameter
                   if (!stmt.toString().endsWith("0)")) {

@@ -102,6 +102,7 @@ def determineInjectionInfoForInflateRepo(repo):
 
 
 def injectInflateProblem(repo):
+  #input('starting inject inflate problem')
   matchingFiles = getMatchingFiles(repo)
   fileToChange = matchingFiles[random.randrange(len(matchingFiles))]
   dirName, baseName = os.path.split(fileToChange)
@@ -110,8 +111,12 @@ def injectInflateProblem(repo):
   print('result of comby process: {0}'.format(combyProcess.returncode))
   for line in combyProcess.stdout.decode('utf-8').splitlines():
     print(line)
-  print('changed file: {0}'.format(os.path.join(dirName, baseName)))
+  fullFilename = os.path.join(dirName, baseName)
+  print('changed file: {0}'.format(fullFilename))
   print('comby command to cause change: {0}'.format(' '.join(combyCommand)))
+  commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+  subprocess.run(commandList)
+  input('stopping to check the injection')
   #input('stopped here for debugging')
 
   #repo = os.path.join(repoLocation,compilingRepoList[1])

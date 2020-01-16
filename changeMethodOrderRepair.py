@@ -466,17 +466,18 @@ def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, m
           everFoundAChange = True
 
 
-        if everFoundAChange:
-          print('testing: {0}'.format(fileToTest))
-          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
-          if isFixed:
-            return True
-          else:
-            print('failed to fix with deleting second line')
+  if everFoundAChange:
+    print('testing: {0}'.format(fileToTest))
+    isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
+    if isFixed:
+      return True
+    else:
+      print('failed to fix with deleting second line')
+      input('stopping to see why delete failed')
             #I think I recopy the test program twice now; I should go through
             #the logic and test again.
-            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+      testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+      apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   return False
 
 
@@ -551,6 +552,7 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
   #move the back method to before the originally first method
   #run the checker again
   #if that doesn't work, move the originally first method after the second method
+
   print('in method order repair')
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
@@ -561,14 +563,14 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
   if not isFixed:
     #if the application is not fixed, then revert and move the first method behind the 
     #original last method
-    testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-    apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+    #testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+    #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying move after')
     isFixed = tryMoveAfter(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
   if not isFixed:
-    testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-    apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+    #testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+    #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying to delete the second method call')
     isFixed = tryDeleteSecondCall(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)

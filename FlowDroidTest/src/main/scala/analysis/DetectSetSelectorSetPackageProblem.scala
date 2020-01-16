@@ -104,9 +104,11 @@ object DetectSetSelectorSetPackageProblem {
               try {
                 val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
                 if (s.getCaughtProblems() > 0){
-                  println(s"@@@@@ problem in class ${cl.getName()}")
+                  println(s"@@@@@ problem in class ${cl.getName()} in method ${m.getName()}")
                 }
-                println(s"caught problems: ${s.getCaughtProblems()}")
+                if(s.getCaughtProblems() > 0) {
+                  println(s"caught problems: ${s.getCaughtProblems()}")
+                }
                 problemCount += s.getCaughtProblems()
               } catch {
                 case r:RuntimeException => {
