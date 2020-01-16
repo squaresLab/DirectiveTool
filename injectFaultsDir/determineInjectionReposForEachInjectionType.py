@@ -8,6 +8,7 @@ import injectSetPackageSetSelectorProblem
 import injectInflateAndOptionsMenuIssues
 import injectSetArgumentsProblem
 import injectSetContentViewIssue
+import runInjectionTests
 import subprocess
 import shlex
 import os
@@ -21,19 +22,16 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runAllRepairs
 import extractRepoInfo
 
-getRepoFolderCommand =  shlex.split('git rev-parse --show-toplevel')
 copyRepoLocation = '/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/'
 #I may need to convert them to using gradlew instead of gradle wrapper
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
-buildAppCommand = shlex.split('./gradlew assembleDebug')
-testAppCommand = shlex.split('./gradlew test')
-permissionCommand = shlex.split('chmod +x gradlew')
-runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=56329:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.7-sources.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.7-sources.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/soot/target/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow-cmd/build/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/axml-2.0.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-api-1.7.5.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar analysis.{0} {1}'
+#permissionCommand = shlex.split('chmod +x gradlew')
+#runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=56329:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.7-sources.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.7-sources.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/soot/target/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow-cmd/build/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/axml-2.0.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-api-1.7.5.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar analysis.{0} {1}'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithSuccessfulTests.txt'
-workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
-fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
-attemptedFoldersFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/triedInjectionFolders.txt'
+#fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
+#attemptedFoldersFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/triedInjectionFolders.txt'
+successfulInjectionReposTemplate = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionRepos{0}.txt'
 
 #reposThatCompileNames = [
 #'muzei-commons',
@@ -76,7 +74,7 @@ class InjectionDispatch:
 def getTestResultsOfRepo(repoDir):
   originalDir = os.getcwd()
   os.chdir(repoDir)
-  testResult = subprocess.run(testAppCommand, capture_output=True)
+  testResult = subprocess.run(runInjectionTests.testAppCommand, capture_output=True)
   testsSucceeded = False
   if testResult.returncode == 0:
     print('tests succeeeded!')
@@ -95,10 +93,10 @@ def buildApp(repoDir):
     print('unable to find the gradle build file in directory: {0}'.format(repoDir))
     return []
   try:
-    buildResult = subprocess.run(buildAppCommand, capture_output=True)
+    buildResult = subprocess.run(runInjectionTests.buildAppCommand, capture_output=True)
   except PermissionError as p:
-    subprocess.run(permissionCommand, capture_output=True)
-    buildResult = subprocess.run(buildAppCommand, capture_output=True)
+    subprocess.run(runInjectionTests.permissionCommand, capture_output=True)
+    buildResult = subprocess.run(runInjectionTests.buildAppCommand, capture_output=True)
   for line in buildResult.stdout.decode('utf-8').splitlines():
     print(line)
   possibleBuildFiles = []
@@ -221,7 +219,7 @@ def injectInRepoWithDirectoriesInitializer(injectIssueMethod):
 
 def runTestOfApp(injectorInstance, app, debuggingResultList):
   debuggingResultList.append('testing application: {0}'.format(app))
-  checkerCommand = shlex.split(runCheckerTemplate.format(injectorInstance.checkerName, app))
+  checkerCommand = shlex.split(runInjectionTests.runCheckerTemplate.format(injectorInstance.checkerName, app))
   checkerResult = subprocess.run(checkerCommand, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
   fileWithProblem = None
   isAppToFix = False
@@ -291,13 +289,10 @@ def tryToRepairApps(injectorInstance, appBuilds, debuggingResultList):
         repairResult = None
         debuggingResultList.append('repair attempted timed out')
       if repairResult:
-        if getTestResultsOfRepo(runAllRepairs.testDir):
-          print('!!!! Succeeded !!!!')
-          successfulRepairCount += 1
-          repairedApps.append(app)
-        else:
-          print('repo tests failed after repair')
-          debuggingResultList.append('repo tests failed after repair')
+        getTestResultsOfRepo(runAllRepairs.testDir)
+        print('!!!! Succeeded !!!!')
+        successfulRepairCount += 1
+        repairedApps.append(app)
     else:
       print('ran checker but did not find the right number of errors')
   print('finished try to repair apps')
@@ -373,45 +368,36 @@ def main():
   attemptedFixCount = 0
   successfulRepairCount = 0
   workingReposDict = {}
-  reposInFileAreFullPaths = False
-  with open(workingReposFile, 'r') as fin:
-    for lineCount, line in enumerate(fin):  
+  with open(runInjectionTests.workingReposFile, 'r') as fin:
+    for line in fin:  
       workingReposDict[line.strip()] = True
-      if lineCount == 0 and line.strip()[0] == '/':
-        reposInFileAreFullPaths = True
   apkSourceInfo = extractRepoInfo.extractRepoInfo()
   #apkInfoDict = {}
   folderInfoDict = {}
-
-  if reposInFileAreFullPaths:
-    #assume that all folders exists, so folderInfoDict isn't needed
-    #this assumption is based on the fact that the full file list points
-    #to already downloaded repos on the machine and not just general repo names
-    reposToCheck = [r for r in workingReposDict]
-  else:
-    #otherwise collect the folder names and get the folderInfoDict so the
-    #repository can be downloaded
-    for a in apkSourceInfo:
-      if a[1] != '':
-        folderName = getFolderNameFromRepo(a[1])
-        #apkInfoDict[a[0]] = (a[0],a[1],a[2])
-        #print(folderName)
-        if folderName in workingReposDict:
-          #print('in working repos')
-          folderInfoDict[folderName] = a
-    reposToCheck = [os.path.join(fDroidRepoDir, f) for f in folderInfoDict]
+  for a in apkSourceInfo:
+    if a[1] != '':
+      folderName = getFolderNameFromRepo(a[1])
+      #apkInfoDict[a[0]] = (a[0],a[1],a[2])
+      #print(folderName)
+      if folderName in workingReposDict:
+        #print('in working repos')
+        folderInfoDict[folderName] = a
+  reposToCheck = [os.path.join(runInjectionTests.fDroidRepoDir, f) for f in folderInfoDict]
   #print('original repos to check count: {0}'.format(len(reposToCheck)))
   attemptedFoldersDict = {}
-  if os.path.exists(attemptedFoldersFile):
-    with open(attemptedFoldersFile,'r') as fin:
-      for line in fin:
-        attemptedFoldersDict[line.strip()] = True
-  if len(attemptedFoldersDict) > 0:
-    reposToCheck = [r for r in reposToCheck if not r in attemptedFoldersDict]
+  #I assume this script will be short enough that I won't need this. I can 
+  #add it back later if I end up needing it later
+  #if os.path.exists(attemptedFoldersFile):
+    #with open(attemptedFoldersFile,'r') as fin:
+      #for line in fin:
+        #attemptedFoldersDict[line.strip()] = True
+  #if len(attemptedFoldersDict) > 0:
+    #reposToCheck = [r for r in reposToCheck if not r in attemptedFoldersDict]
 
   #currently trying to figure out how to convert this to work for the list of 
   #possible repos that have test cases
-  with open(attemptedFoldersFile,'a') as fout:
+  successfulRepoFile = successfulInjectionReposTemplate.format(injectorInstanceList[0].checkerName)
+  with open(successfulRepoFile,'a') as fout:
     print('repo to check count: {0}'.format(len(reposToCheck)))
     for repoDir in reposToCheck:
       for injectorInstance in injectorInstanceList:
@@ -435,49 +421,53 @@ def main():
             #print(repoDir, file=fout)
             continue
           else: 
-            #see if the application already has a problem - if so, we don't need to inject anything.
-            newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
-            if attemptedFixCount > 0:
-              debuggingResultList.append('found a problem in the original app')
-              if newSuccessfulRepairCount:
-                debuggingResultList.append('was able to repair a problem in the original app')
-            else:
-              print('injecting problem')
-              injectorInstance.injectIssue(copyRepoLocation)
-              clearAPKS(copyRepoLocation)
-              appBuilds = buildApp(copyRepoLocation)
-              if len(appBuilds) < 1:
-                print('there was a problem building the app. Aborting before checking for injected problem.')
-                debuggingResultList.append('there was a problem building the app with the injected problem')
-                #input('stopping to check the build error')
-                #sys.exit(0)
-              newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
-          if newAttemptedFixCount < 1:
-            debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker after injecting the problem')
-          elif len(repairedApps) < 1:
-            debuggingResultList.append('was never able to successfully repair an app')
-          else:
-            #I'm not sure if running the tests should be before or after running the checker
-            #to see if the application contains an error - I don't think it matters, but I'll
-            #have to test it and see
-
-            #the tests are for the whole repo, so not app specific
             if getTestResultsOfRepo(copyRepoLocation):
-              print('passed tests')
-              debuggingResultList.append('the application was completely repaired!')
-              input('stopping to see the successful fix!!')
-                  #input('stopping to see checker result after injecting error')
-                        #run the automated fix on this application
+              print(repoDir, file=fout)
+              print('found a repo to inject later')
 
-                  #run checker on the new app
-            else:
-              debuggingResultList.append('the tests failed after trying to repair the app/apps')
-              print('failed tests')
-          attemptedFixCount += newAttemptedFixCount
-          successfulRepairCount += newSuccessfulRepairCount
+            #see if the application already has a problem - if so, we don't need to inject anything.
+            #newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
+            #if attemptedFixCount > 0:
+              #debuggingResultList.append('found a problem in the original app')
+              #if newSuccessfulRepairCount:
+                #debuggingResultList.append('was able to repair a problem in the original app')
+            #else:
+              #print('injecting problem')
+              #injectorInstance.injectIssue(copyRepoLocation)
+              #clearAPKS(copyRepoLocation)
+              #appBuilds = buildApp(copyRepoLocation)
+              #if len(appBuilds) < 1:
+                #print('there was a problem building the app. Aborting before checking for injected problem.')
+                #debuggingResultList.append('there was a problem building the app with the injected problem')
+                ##input('stopping to check the build error')
+                ##sys.exit(0)
+              #newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
+          ##if newAttemptedFixCount < 1:
+            #debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker after injecting the problem')
+          #elif len(repairedApps) < 1:
+            #debuggingResultList.append('was never able to successfully repair an app')
+          #else:
+            ##I'm not sure if running the tests should be before or after running the checker
+            ##to see if the application contains an error - I don't think it matters, but I'll
+            ##have to test it and see
+#
+            ##the tests are for the whole repo, so not app specific
+            #if getTestResultsOfRepo(copyRepoLocation):
+              #print('passed tests')
+              #debuggingResultList.append('the application was completely repaired!')
+              #input('stopping to see the successful fix!!')
+                  ##input('stopping to see checker result after injecting error')
+                        ##run the automated fix on this application
+#
+                  ##run checker on the new app
+            #else:
+              #debuggingResultList.append('the tests failed after trying to repair the app/apps')
+              #print('failed tests')
+          #attemptedFixCount += newAttemptedFixCount
+          #successfulRepairCount += newSuccessfulRepairCount
       repoCount +=1
       print('number of checked repos: {0}'.format(repoCount))
-      print(repoDir, file=fout)
+      #print(repoDir, file=fout)
 
     #input('checking result')
   for line in debuggingResultList:

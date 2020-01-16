@@ -2,6 +2,8 @@
 
 import os
 import random
+import subprocess
+import shlex
 
 startingDir = '/Users/zack/git/reposFromFDroid/'
 setSelectorTemplate = '{0}.setSelector(new Intent());\n'
@@ -57,6 +59,10 @@ def injectSetPackageSetSelectorProblem(fullFilename):
   newFileLines, linesOfInterest, instanceList, everFoundSetPackage, everFoundSetSelector = determineInjectionInfo(fullFilename)
   if everFoundSetPackage or everFoundSetSelector:  
     if len(linesOfInterest) > 0:
+      #if we can try to avoid adding the line at the end of the method - avoid 
+      #adding the line after return statements
+      if len(linesOfInterest) > 1:
+        linesOfInterest = linesOfInterest[:-1]
       lineToChange = linesOfInterest[random.randrange(len(linesOfInterest))]
       instanceToUse = ""
       for instance, lineNumber in instanceList:
@@ -77,7 +83,9 @@ def injectSetPackageSetSelectorProblem(fullFilename):
         for line in newFileLines:
           print(line, file=fout, end="")
       print('file: {0}, line: {1}'.format(fullFilename, lineToChange))
-      #input('stopping to let you check the result')
+      commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+      subprocess.run(commandList)
+      input('stopping to check the injection')
       return True
   return False
 

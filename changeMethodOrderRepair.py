@@ -196,7 +196,6 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
     with open(fileToTest, 'w') as fout:
       for line in linesInFile:
         print(line, end="", file=fout)
-    input('stopping after move before or move after')
   return foundChangeInFile
 
 #This can probably be combined with the method call executeTestOfChangedApp but
@@ -409,6 +408,75 @@ def tryMoveAfter(projectDir, runFlowDroidCommand, originalSourceFolder, method1,
           else:
             print('failed to fix with move after')
             testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  return False
+
+def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+  print('in try to delete second call')
+  everFoundAChange = False
+  for dirpath, dirnames, filenames in os.walk(projectDir):
+    for filename in [f for f in filenames if f.endswith(".java")]:
+      fileToTest = os.path.join(dirpath, filename)  
+      if not fileToTest in testedFiles:
+        testedFiles[fileToTest] = True
+        foundChangeInFile = False
+        method1LineNumber = None
+        method2LineNumber = None
+        inBlockComments = False
+        indentationCount = 0
+        def checkIndentationCountAndResetForNewMethods():
+          if indentationCount < 2:
+            method1LineNumber = None
+            method2LineNumber = None
+        with open(fileToTest,'r') as fin:
+          linesInFile = fin.readlines()
+          for lineCount, line in enumerate(linesInFile):
+            for c in line:
+              (nonCommentPartOfLine, inBlockComments) = getNonComments(line, inBlockComments)
+              if nonCommentPartOfLine is not '':
+                if c == "{":
+                  indentationCount = indentationCount + 1
+                  checkIndentationCountAndResetForNewMethods()
+                elif c == "}":
+                  indentationCount = indentationCount - 1
+                  checkIndentationCountAndResetForNewMethods()
+            if method1LineNumber is None and method1 in nonCommentPartOfLine:
+              method1LineNumber = lineCount
+            elif method2LineNumber is None and method2 in nonCommentPartOfLine:
+              method2LineNumber = lineCount
+            if method1LineNumber is not None and method2LineNumber is not None:
+              if method1LineNumber > method2LineNumber:
+                lineNumberToDelete = method1LineNumber
+              else:
+                lineNumberToDelete = method2LineNumber
+              lineToDelete = linesInFile[lineNumberToDelete]
+              del linesInFile[lineNumberToDelete]
+              print('deleted line {0} at line number {1} '.format(lineToDelete, lineNumberToDelete))
+              foundChangeInFile = True
+              break
+        #for debugging
+        #for line in linesInFile:
+          #print(line)
+        #sys.exit(0)
+        if foundChangeInFile:
+          print('found change in file: {0}'.format(fileToTest))
+          with open(fileToTest, 'w') as fout:
+            for line in linesInFile:
+              print(line, end="", file=fout)
+          everFoundAChange = True
+
+
+        if everFoundAChange:
+          print('testing: {0}'.format(fileToTest))
+          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
+          if isFixed:
+            return True
+          else:
+            print('failed to fix with deleting second line')
+            #I think I recopy the test program twice now; I should go through
+            #the logic and test again.
+            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   return False
 
 
@@ -483,28 +551,27 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
   #move the back method to before the originally first method
   #run the checker again
   #if that doesn't work, move the originally first method after the second method
-  print(apkLocation)
-  print(testFolder)
-  print(originalSourceFolder)
+  print('in method order repair')
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  print(apkLocation)
-  inupt('stopping to see why apk location is not updated')
   testedFiles = {}
   print('trying move before')
-  isFixed = tryMoveBefore(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
-  input('stopping after move before')
   #try moving the back method before the original first method
-  #check isFaulty again
+  isFixed = tryMoveBefore(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
   if not isFixed:
+    #if the application is not fixed, then revert and move the first method behind the 
+    #original last method
     testFolder = createNewCopyOfTestProgram(originalSourceFolder)
     apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying move after')
     isFixed = tryMoveAfter(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
-    input('stopping after move after')
-  #if isFaulty is true, then revert and move the first method behind the 
-  #original last method
+  if not isFixed:
+    testFolder = createNewCopyOfTestProgram(originalSourceFolder)
+    apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+    testedFiles = {}
+    print('trying to delete the second method call')
+    isFixed = tryDeleteSecondCall(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
   if isFixed:
     print('Successfully fixed the problem')
     return True
@@ -632,11 +699,7 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
 
 def moveMethodToObjectInstantiation(projectDir, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-  print(apkLocation)
-  print(originalSourceFolder)
-  print(testFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  print(apkLocation)
   fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
@@ -690,12 +753,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
 
   methodObjList = []
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-  print(apkLocation)
-  print(originalSourceFolder)
-  print(testFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  print(apkLocation)
-  input('stopping there to figure out apkLocation issue')
   unquotedAndQuotedList = runGetMethodLocations.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
