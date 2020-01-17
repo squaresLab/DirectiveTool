@@ -355,6 +355,7 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.CatchClause) or \
     isinstance(nodeToTest, javalang.tree.TernaryExpression) or \
     isinstance(nodeToTest, javalang.tree.ArrayCreator) or \
+    isinstance(nodeToTest, javalang.tree.TypeArgument) or \
     isinstance(nodeToTest, javalang.tree.CatchClauseParameter):
     return False
   else:
