@@ -77,6 +77,27 @@ def findPossibleInjectionRepos(dirListToCheck):
   return [d for d in dirListToCheck if isPossibleInjectionRepo(d)]
 
 
+def addToastImport(fullFilename):
+  importToastLine = 'import android.widget.Toast;\n'
+  foundToastImportLine = False
+  fileContents = []
+  lastImportLineCount = -1
+  with open(fullFilename, 'r') as fin:
+    for lineCount, line in enumerate(fin):
+      fileContents.append(line)
+      line = line.strip()
+      if line == importToastLine:
+        foundToastImportLine = True
+      if line.startswith('import '):
+        lastImportLineCount = lineCount
+  #if the view import line isn't in there, add the import line to the file
+  if not foundToastImportLine and lastImportLineCount > 0:
+    fileContents.insert(lastImportLineCount, importToastLine)
+  with open(fullFilename, 'w') as fout:
+    for line in fileContents:
+      print(line, file=fout, end="")
+
+
 #the current approach could break multi line if-else statements with out {}'s. 
 #Decide if it is worth it to correct this or determine another way around it'
 def parseFileForInjection(fullFilename):
@@ -115,7 +136,9 @@ def parseFileForInjection(fullFilename):
     methodLineSum = 0
     for p, c, n in methodBounds:
       #print("{0}: {1}, {2}".format(p,c, n))
-      if n == 2:
+      #counting from 0, so 0 is the class and 1 is the class methods
+      #might want to exclude the lines where n equals 2 later
+      if n == 1:
         if p == 'start':
           #adding a plus one because it doesn't make sense to add
           #a new line in the method call declaration. only makes sense 
@@ -125,7 +148,14 @@ def parseFileForInjection(fullFilename):
           methodLineSum += c - methodStartLocation + 1
     #print('chose the random line')
     if methodLineSum > 0:
+      print('possible number of lines to inject into: {0}'.format(methodLineSum))
       randomLineToChange = random.randrange(methodLineSum) + 1
+    else:
+      print(methodBounds)
+      print(methodLineSum)
+      print(fullFilename)
+      print('error: unable to find any possible methods to inject getActivity in the file')
+      sys.exit(1)
   if randomLineToChange is not None:
     tempLineToChange = randomLineToChange
     for p, c, n in methodBounds:
@@ -148,8 +178,12 @@ def parseFileForInjection(fullFilename):
     with open(fullFilename, 'w') as fout:
       for l in newFileContents:
         print(l, file=fout)
+    addToastImport(fullFilename)
     print('changed line {0} of {1}'.format(lineToChange, fullFilename))
     #input('stopping to check change')
+    lookAtFileCommand = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+    subprocess.run(lookAtFileCommand)
+    input('stopping to look at file {0}'.format(fullFilename))
     return True
   return False
 #
@@ -185,8 +219,6 @@ def parseFileForInjection(fullFilename):
     #for line in combyCountResult.stdout.decode('utf-8').splitlines():
     #  print(line)
     #input('stopping here for debugging')
-
-
 
 
 def injectInDirectory(directory):

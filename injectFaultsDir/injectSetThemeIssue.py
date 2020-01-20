@@ -42,6 +42,8 @@ def containsFileOfInterest(repo):
   return False
 
 
+
+
 def findPossibleInjectionRepos(possibleRepos):
   #print(os.listdir(startingDirectory))
   #print(os.path.isdir(os.listdir(startingDirectory)[0]))
@@ -51,7 +53,6 @@ def findPossibleInjectionRepos(possibleRepos):
   #print(len(possibleRepoList))
   #reposOfInterest = [r for r in possibleRepoList if containsFileOfInterest(r)]
   return reposOfInterest
-  
   
 def injectSetThemeIssue(fullFilename):
   fileContents = []

@@ -87,6 +87,9 @@ tempDebuggingBool = False
 #need to make this a parameter later
 shouldCheckForFragment = False
 
+experimentFolder = "/Users/zack/git/DirectiveTool/temporaryTestOfChange"
+
+
 #TODO: some of these parameter lists are getting large. I should probably group
 #them into an object to reduce the line sizes and improve readability
 
@@ -139,12 +142,16 @@ def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompar
   fileToExtractFrom = getFilesFullPath(projectDir, fileToChange)
   print('file to extract from: {0}'.format(fileToExtractFrom))
   #print('file to extract from: {0}'.format(fileToExtractFrom))
+  extractedFileList = []
   with open(fileToExtractFrom,'r') as fin:
     nestingCountWasGreaterThanZero = False
     nestingCount = 0
     linesToSave = []
     foundMethodOfInterest = False
     for line in fin:
+      if 'onCreate' in line:
+        print(line)
+        print(methodDeclarationStringToCompare in line)
       if foundMethodOfInterest or nestingCount > 0:
         (linesToSave, nestingCount) = saveLines(linesToSave, nestingCount, line)
         #only use foundMethodOfInterest until we find the first { of the method
@@ -162,7 +169,6 @@ def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompar
         nestingCountWasGreaterThanZero = False
         methodsToCompare.append(methodName)
         newFileName = 'original_{0}.txt'.format(methodName)
-        createdFileListToDelete.append(newFileName)
         if len(linesToSave) < 3:
           print('error: {0} is too small; likely parsing error'.format(newFileName))
           print(linesToSave)
@@ -173,7 +179,31 @@ def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompar
             #can't remember if the extra \n is needed. I should test and see
             #- tested and doesn't seem to be necessary here
             #fout.write('\n')
-            linesToSave = []
+        linesToSave = []
+        extractedFileList.append(methodName)
+  return extractedFileList
+
+#newAPKLoation originally points to the apk location in the provided repo;
+#if we copy the repo to create a new test file, we need to update the repo
+#path
+def changeAPKLocationForNewTestFolder(projectDir, path, newAPKLocation):
+  def getFoldernameFromPath(p):
+    pItems = p.split(os.path.sep)
+    startIndex = 1
+    foldername = ''
+    while foldername == '':
+      foldername = pItems[-startIndex]
+      startIndex += 1
+    return foldername
+  newAPKLocation = newAPKLocation.replace(projectDir, path)
+  #some times the apk base name changes based on the repo it was compiled in
+  originalBasename = getFoldernameFromPath(projectDir)
+  newBasename = getFoldernameFromPath(path)
+  if originalBasename in newAPKLocation:
+    newAPKLocation = newAPKLocation.replace(originalBasename, newBasename)
+  #print(newAPKLocation)
+  return newAPKLocation
+ 
 
 def handleDiff(changeSet, methodDeclarationStringToCompare):
   for method in methodsToCompare:
@@ -313,12 +343,14 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
 
    
 #TODO: eventually remove the hard coding here
-def createNewCopyOfTestProgram():
+def createNewCopyOfTestProgram(originalFolder):
   #create a new directory if necessary
   #path is the location of the program to copy from
-  path = "/Users/zack/git/DirectiveTool/temporaryTestOfChange"
-  if os.path.exists(path):
-    shutil.rmtree(path)
+  #print('original folder: {0}'.format(originalFolder))
+  #print('experiment folder: {0}'.format(experimentFolder))
+  #input('stopping to check copy test program')
+  if os.path.exists(experimentFolder):
+    shutil.rmtree(experimentFolder)
   #try: 
   #  os.makedirs(path)
   #except OSError as e:
@@ -327,8 +359,21 @@ def createNewCopyOfTestProgram():
   #  sys.exit(1)
   #distutils.dir_util.copy_tree("/Users/zack/git/DirectiveTool/testFolder/",path)
   #copy the application to the new directory
-  shutil.copytree("/Users/zack/git/DirectiveTool/testFolder/",path)
-  return path
+  shutil.copytree(originalFolder,experimentFolder)
+  #get the formatting fo the originalFolder and the experiment folder to match -
+  #using the originalFolder path as the guide
+  #if originalFolder has the path separator at the end, ensure it is on the
+  #end of the experiment folder
+  print(originalFolder)
+  print(experimentFolder)
+  if originalFolder[-1] == os.path.sep and experimentFolder[-1] != os.path.sep:
+    return experimentFolder + os.path.sep
+  #if the originalFolder does not have the path separator, remove it from the
+  #experiment folder if it is there
+  elif experimentFolder[-1] == os.path.sep and originalFolder[-1] != os.path.sep:
+    return experimentFolder[:-1]
+  else:
+    return experimentFolder
 
 
 def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
@@ -391,12 +436,12 @@ def ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, m
 
 #change and method are just needed for the final print statement
 #consider changing later
-def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation):
+def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation):
   global tempDebuggingBool
   wasTested = False
   #if containsFalse:
   #  input('stopping to see contains false before testing')
-  if not ensureMethodOfInterestWasntDeleted(checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare):
+  if not ensureMethodOfInterestWasntDeleted(checkerToRun, path, fileToChange, methodDeclarationStringToCompare):
     return False
   print("before build")
   currentDir = os.getcwd()
@@ -444,7 +489,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
     os.chdir("/Users/zack/git/DirectiveTool/FlowDroidTest")
     #print("current directory for command: {0}".format(os.getcwd()))
     #print("running command: {0}".format(' '.join(commandList)))
-    print('running checker')
+    print('running checker on app: {0}'.format(newAPKLocation))
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if printingDebugInfo:# or containsFalse:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
@@ -464,6 +509,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir,
   except: 
     print('had an exception when running the checker')
     pass
+  input('stopping to see checker result in repair method from github')
   #if containsFalse:
   #  input('stopping here to see result')
   os.chdir(currentDir)
@@ -490,12 +536,13 @@ def testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarat
   #for all subsets of the changes
   for changeItem in itertools.chain.from_iterable(itertools.combinations(changeSet,n) for n in range(len(changeSet)+1)):
     print("starting directory: {0}".format(os.getcwd()))
-    path = createNewCopyOfTestProgram()
+    path = createNewCopyOfTestProgram(projectDir)
+    apkLocation = changeAPKLocationForNewTestFolder(projectDir, path, apkLocation)
     if len(changeItem) > 0:
       for (change, method) in changeItem:
-        addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChange, projectDir)
+        addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChange, path)
         #essentially breaking the code here with the return - done for debugging
-        wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+        wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
         if wasFixed:
           print("succeeded - change: added {0} to the end of method {1}".format(change, method))
           return
@@ -505,16 +552,18 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
   for method in methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
-    #TODO: currently swapping for a test I need to do; REMEMBER to change it badk
-    #downloadedFileName = "original_{0}.txt".format(method)
-    ##originalFileName = "downloaded_{0}.txt".format(method)
+    print('downloaded file: {0}'.format(downloadedFileName))
+    with open(downloadedFileName,'r') as fin:
+      print('file contents: {0}'.format(fin.read()))
+
     (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
       determineMethodDifferences.getParseInfo(originalFileName)
     (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
       determineMethodDifferences.getParseInfo(downloadedFileName)
     methodCallMismatches = determineMethodDifferences.checkMethodCallsInLines(originalFileTree, downloadedFileTree)
     for mismatchTestItem in itertools.chain.from_iterable(itertools.combinations(methodCallMismatches,n) for n in range(len(methodCallMismatches)+1)):
-      path = createNewCopyOfTestProgram()
+      path = createNewCopyOfTestProgram(projectDir)
+      newAPKLocation = changeAPKLocationForNewTestFolder(projectDir, path, newAPKLocation)
       if len(mismatchTestItem) > 0:
         #TODO: see if you also need the filename here        
         for (missingMethodName, listNumber, lineNumber) in mismatchTestItem:  
@@ -553,9 +602,9 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
                     print('replace {0} with {1}'.format(item, var))
                     #sys.exit(1)
                     break
-            addChangeToFile(lineOfInterest, method, methodDeclarationStringToCompare, fileToChange, projectDir)
+            addChangeToFile(lineOfInterest, method, methodDeclarationStringToCompare, fileToChange, path)
             #essentially breaking the code here with the return - done for debugging
-            wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+            wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
         #print('was fixed: {0}'.format(wasFixed))
         #input('checking if was fixed')
             if wasFixed:
@@ -844,7 +893,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
   #input('stopping to check filter function ')
   for changeItemList in itertools.chain.from_iterable(itertools.combinations(uniqueMismatchList,n) for n in range(len(uniqueMismatchList)+1)):
     #containsFalse = False
-    path = createNewCopyOfTestProgram()
+    path = createNewCopyOfTestProgram(projectDir)
+    newAPKLocation = changeAPKLocationForNewTestFolder(projectDir, path, newAPKLocation)
     if len(changeItemList) > 0:
       newFileContents = []
       #linesToChange = list(map(lambda x: x[2], changeItemList))
@@ -1032,7 +1082,10 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         print('line count: {0}'.format(lineCountInMethodOfInterest))
         print('file to change: {0}'.format(fullFileToChange))
         print('file contents size: {0}'.format(len(fileContents)))
-        sys.exit(1)
+        #might eventually want to convert this back from just skipping the error
+        #to throwing the error and the fix it; I'm testing it to see
+        continue
+        #sys.exit(1)
       addedInflate = False
       deletedInflate = False
       #for l in addedLineList:
@@ -1049,7 +1102,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         for line in newFileContents:
           fout.write(line)
           fout.write('\n')
-    wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, projectDir, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+    wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
     ##containsFalse = False
     #if foundFixOfInterest:
     #  print('was fixed: {0}'.format(wasFixed))
@@ -1096,7 +1149,10 @@ def handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, p
   return isSolved
 
 def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclarationStringToCompare, projectDir, fileToChange, newAPKLocation, termsOfInterest):
-  extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompare, fileToChange)
+  print(methodDeclarationStringToCompare)
+  extractedFiles = extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompare, fileToChange)
+  print(extractedFiles)
+  #input('stopping to check the method declaration string')
   pageNumber = 1
   notDone = True
   changeSet = set()
@@ -1252,15 +1308,9 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
                 if createdFiles:
                   #print('reading program from: {0}'.format(rawLinkString))
                   #input('stopping to check found file')
-                  if useAdvancedDiff:
-                    hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
-                    if hasSucceeded:
-                      print('found a successful repair!')
-                      notDone = False
-                  else:
-                    changeSet = handleDiff(changeSet, methodDeclarationStringToCompare)
-                    testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarationStringToCompare, fileToChange, projectDir, newAPKLocation)
-                    testDiffChanges(changeSet, checkerToRun, methodDeclarationStringToCompare, newAPKLocation)
+                  hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
+                  if hasSucceeded:
+                    print('found a successful repair!')
                     notDone = False
               else:
                 if printingSearchUpdates:

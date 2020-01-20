@@ -14,6 +14,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import RegexUtils._
+import analysis.DetectIncorrectGetActivityMain
 
 /*
 What would I need to check for this directive?:
@@ -26,10 +27,10 @@ What would I need to check for this directive?:
 object DetectSetArgumentsMain {
 
 
-
   def main(args: Array[String]): Unit = {
     runAnalysis(args)
   }
+
   def runAnalysis(args: Array[String]): Unit = {
     val startTime = System.nanoTime()
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
@@ -61,7 +62,7 @@ object DetectSetArgumentsMain {
     var tabsAreHidden = false
     //var tabIsReferencedInHasSetArguments = false
     var possibleErrorString = ""
-    for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
       for (m: SootMethod <- cl.getMethods().asScala) {
         //println(s"method: ${m.getName}")
@@ -75,7 +76,7 @@ object DetectSetArgumentsMain {
           }
         }*/
 
-        if(m.hasActiveBody) {
+        if (m.hasActiveBody) {
 
           def superClassIsActionBarTabListener(c: SootClass): Boolean = {
             if (c.getName().contains("TabListener")) {
@@ -160,10 +161,17 @@ object DetectSetArgumentsMain {
           if (m.getName.contains("onClick")) {
             //println(s"parent class of m ${m.getDeclaringClass.toString}")
             for (stmt <- m.getActiveBody.getUnits.asScala) {
+              /*reference for expected format
+              @@@@@ Found a problem: getActivity may be called when the Fragment is not attached to an Activity:
+              call sequence List(<com.example.android.lnotifications.OtherMetadataFragment: void displayActivityTitle()>,
+              <android.app.Fragment: android.app.Activity getActivity()>)
+
+               */
               if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
                 val errorString = "@@@@@ Found a problem: onClick contains a call to " +
                   "setArguments on a Fragment when the Fragment may already be initialized in " +
-                  s"class ${m.getDeclaringClass.getName}"
+                  s"call sequence List(${cl.getName()}: ${m.getName()}," +
+                    "<android.app.Fragment: void setArguments(android.os.Bundle)>)}"
                 possibleErrorString += errorString + "\n"
                 //println(errorString)
                 //System.out.flush()
@@ -176,119 +184,157 @@ object DetectSetArgumentsMain {
         }
       }
     }
-        /*
-            def superClassIsActivity(c: SootClass) : Boolean = {
-              if (c.getName.contains("android.app.Activity")){
-                return true
-              }
-              else{
-                if (c.hasSuperclass){
-                  return superClassIsActivity(c.getSuperclass)
-                }
-                else {
-                  return false
-                }
-              }
-            }
-            def stringContainsItemInList(stringToCheck: String, listOfStrings: List[String]) : Boolean = {
-              for(item <- listOfStrings){
-                //This next statement could be written in a more optimized way but doing this way
-                //for simplicity of implementation the first timej
-                if(stringToCheck.contains(item)){
-                  return true
-                }
-              }
-              return false
-            }
-            if (m.getName().contains("onCreate") && superClassIsActivity(m.getDeclaringClass)){
-              val tabReferences: ListBuffer[String] = new ListBuffer[String]
-              //currently deciding to do multiple passes through the output to make writing the
-              //code easier; may want to go back later and optimize this depending on the overhead
-              def createVariable(statementString: String) : Option[(String, String)] = {
-                val NewInstancePattern = """(\$r[0-9]+) = staticinvoke <(.*): (.*) newInstance()>()""".r
-                 statementString match {
-                  //based on the example I have, className1 and className2 should be same string
-                  case NewInstancePattern(variableName, className1, className2) => {
-                      return Some((variableName,className1))
-                  }
-                  case _ => return None
-                }
-              }
-              val classVariableMapping = new MyBiMap[String](m.getActiveBody.getUnits.asScala.flatMap(x => createVariable(x.toString())).toSeq)
-              println(classVariableMapping)
-              //looping through the code again once we have the tab variable-class mappings
-              //to collect the tabVariables
-              def extractTabVariable(statementString: String) : Option[String] = {
-                val TabVarPattern = """(\$r[0-9]+ = virtualinvoke (\$r[0-9]+)\.<android\.app\.ActionBar\$Tab: android\.app\.ActionBar\$Tab newTab\(\)>\(\)""".r
-                statementString match {
-                    //based on the example I have, var1 and var2 should be the same string
-                  case TabVarPattern(var1,var2) => {
-                    return Some(var1)
-                  }
-                  case _ => return None
-                }
-              }
-              val tabVariables = m.getActiveBody.getUnits.asScala.flatMap(x => extractTabVariable(x.toString()))
-              def extractAllVariableReferencesFromLine(statementString: String) : (Regex.MatchIterator) = {
-                val VariablePattern = """(\$r[0-9]+)""".r
-                return VariablePattern.findAllIn(statementString)
-              }
-              def extractTabVariablesToClassVariables(statementString: String): Option[(String,Seq[String])] = {
-                val VirtualInvokePattern = """^virtualinvoke.*""".r
-                val StaticInvokePattern = """^staticinvoke.*""".r
-                val lineVariables: Option[Regex.MatchIterator] = statementString match {
-                  case VirtualInvokePattern => Some(extractAllVariableReferencesFromLine(statementString))
-                  case StaticInvokePattern => Some(extractAllVariableReferencesFromLine(statementString))
-                  case _ => None
-                }
-                lineVariables match {
-                  case Some(x) => {
-                    val allLineVars = x.toList
-                    allLineVars.size match {
-                      case 0 => return None
-                      case 1 => return Some(allLineVars(0), Seq[String]())
-                      case _ => return Some(allLineVars(0), allLineVars.tail)
-                    }
-                  }
-                }
-              }
-              val variableInstantiationDependencies = m.getActiveBody.getUnits.asScala.flatMap(x => extractTabVariablesToClassVariables(x.toString()))
+    //Also check the setArguments control chains and not just the specific situation checked for earlier
+    val methodNameToCheckFor = "setArguments"
+    var (startingMethod, calledByList) = analysis.DetectIncorrectGetActivityMain.getStartingMethodAndCallChain(methodNameToCheckFor)
+    val checkingClasses = true
+    var callChains: List[ControlFlowChain] = List()
+    val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
+    if (startingMethod.isDefined) {
+      analysis.DetectIncorrectGetActivityMain.createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
+    }
+    callChains = fullCallChains.toList
+    for (chain <- callChains) {
+      println(s"${chain.controlChain}")
+      println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+      println(s"${!checkingClasses}")
+      println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
 
-                val TabListenerPattern = """virtualinvoke (\$r[0-9]+)\.<android\.app\.ActionBar\$Tab: android\.app\.ActionBar\$Tab setTabListener(android\.app\.ActionBar\$TabListener)>\((\$r[0-9]+)\)""".r
 
-                """specialinvoke (\$r[0-9]+\.<com\.example\.android\.lnotifications.LNotificationActivity$FragmentTabListener: void <init>(android.app.Activity,android.app.Fragment,java.lang.String)>($r0, $r8, "visibility")""".r
-                if(stringContainsItemInList(stmt.toString(), tabReferences.toList)){
-                  stmt match {
-                    case TabListenerPattern(fragmentVariable, tabVariable) =>
-                      println(s"fragment variable ${fragmentVariable}")
-                      println(s"tab variable ${tabVariable}")
-                    case _ => ()
-                  }
-
-                }
-              }
-
-            }
-
-            if(m.getName.contains("onClick")){
-              for(stmt <- m.getActiveBody.getUnits.asScala){
-                 if(stmt.toString().contains("void setArguments(android.os.Bundle)")) {
-                   val errorString = "@@@@ Found a problem: onClick contains a call to " +
-                     "setArguments on a Fragment when the Fragment may already be initialized in " +
-                     s"class ${m.getDeclaringClass.getName}"
-                   println(errorString)
-                   System.out.flush()
-                   System.err.println(errorString)
-                   System.err.flush()
-                   problemCount += 1
-                 }
-              }
-            }
-            println("")
+      if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))){
+        //I might add the next part of the check back in, but I'm not sure how to apply to the setArgument case at
+        //the moment
+        //&& (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
+        //println("caught problem")
+        /*println("start of call chain")
+        for(chainItem <- chain.controlChain){
+          println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
+        println("end of call chain")*/
+        val errorString = "@@@@ Found a problem: setArguments may be called when " +
+          "the Fragment is attached to an Activity" +
+          s": call sequence ${chain.controlChain}"
+        println(errorString)
+        System.out.flush()
+        System.err.println(errorString)
+        System.err.flush()
+        possibleProblemCount += 1
+
       }
     }
-    */
+    /*
+        def superClassIsActivity(c: SootClass) : Boolean = {
+          if (c.getName.contains("android.app.Activity")){
+            return true
+          }
+          else{
+            if (c.hasSuperclass){
+              return superClassIsActivity(c.getSuperclass)
+            }
+            else {
+              return false
+            }
+          }
+        }
+        def stringContainsItemInList(stringToCheck: String, listOfStrings: List[String]) : Boolean = {
+          for(item <- listOfStrings){
+            //This next statement could be written in a more optimized way but doing this way
+            //for simplicity of implementation the first timej
+            if(stringToCheck.contains(item)){
+              return true
+            }
+          }
+          return false
+        }
+        if (m.getName().contains("onCreate") && superClassIsActivity(m.getDeclaringClass)){
+          val tabReferences: ListBuffer[String] = new ListBuffer[String]
+          //currently deciding to do multiple passes through the output to make writing the
+          //code easier; may want to go back later and optimize this depending on the overhead
+          def createVariable(statementString: String) : Option[(String, String)] = {
+            val NewInstancePattern = """(\$r[0-9]+) = staticinvoke <(.*): (.*) newInstance()>()""".r
+             statementString match {
+              //based on the example I have, className1 and className2 should be same string
+              case NewInstancePattern(variableName, className1, className2) => {
+                  return Some((variableName,className1))
+              }
+              case _ => return None
+            }
+          }
+          val classVariableMapping = new MyBiMap[String](m.getActiveBody.getUnits.asScala.flatMap(x => createVariable(x.toString())).toSeq)
+          println(classVariableMapping)
+          //looping through the code again once we have the tab variable-class mappings
+          //to collect the tabVariables
+          def extractTabVariable(statementString: String) : Option[String] = {
+            val TabVarPattern = """(\$r[0-9]+ = virtualinvoke (\$r[0-9]+)\.<android\.app\.ActionBar\$Tab: android\.app\.ActionBar\$Tab newTab\(\)>\(\)""".r
+            statementString match {
+                //based on the example I have, var1 and var2 should be the same string
+              case TabVarPattern(var1,var2) => {
+                return Some(var1)
+              }
+              case _ => return None
+            }
+          }
+          val tabVariables = m.getActiveBody.getUnits.asScala.flatMap(x => extractTabVariable(x.toString()))
+          def extractAllVariableReferencesFromLine(statementString: String) : (Regex.MatchIterator) = {
+            val VariablePattern = """(\$r[0-9]+)""".r
+            return VariablePattern.findAllIn(statementString)
+          }
+          def extractTabVariablesToClassVariables(statementString: String): Option[(String,Seq[String])] = {
+            val VirtualInvokePattern = """^virtualinvoke.*""".r
+            val StaticInvokePattern = """^staticinvoke.*""".r
+            val lineVariables: Option[Regex.MatchIterator] = statementString match {
+              case VirtualInvokePattern => Some(extractAllVariableReferencesFromLine(statementString))
+              case StaticInvokePattern => Some(extractAllVariableReferencesFromLine(statementString))
+              case _ => None
+            }
+            lineVariables match {
+              case Some(x) => {
+                val allLineVars = x.toList
+                allLineVars.size match {
+                  case 0 => return None
+                  case 1 => return Some(allLineVars(0), Seq[String]())
+                  case _ => return Some(allLineVars(0), allLineVars.tail)
+                }
+              }
+            }
+          }
+          val variableInstantiationDependencies = m.getActiveBody.getUnits.asScala.flatMap(x => extractTabVariablesToClassVariables(x.toString()))
+
+            val TabListenerPattern = """virtualinvoke (\$r[0-9]+)\.<android\.app\.ActionBar\$Tab: android\.app\.ActionBar\$Tab setTabListener(android\.app\.ActionBar\$TabListener)>\((\$r[0-9]+)\)""".r
+
+            """specialinvoke (\$r[0-9]+\.<com\.example\.android\.lnotifications.LNotificationActivity$FragmentTabListener: void <init>(android.app.Activity,android.app.Fragment,java.lang.String)>($r0, $r8, "visibility")""".r
+            if(stringContainsItemInList(stmt.toString(), tabReferences.toList)){
+              stmt match {
+                case TabListenerPattern(fragmentVariable, tabVariable) =>
+                  println(s"fragment variable ${fragmentVariable}")
+                  println(s"tab variable ${tabVariable}")
+                case _ => ()
+              }
+
+            }
+          }
+
+        }
+
+        if(m.getName.contains("onClick")){
+          for(stmt <- m.getActiveBody.getUnits.asScala){
+             if(stmt.toString().contains("void setArguments(android.os.Bundle)")) {
+               val errorString = "@@@@ Found a problem: onClick contains a call to " +
+                 "setArguments on a Fragment when the Fragment may already be initialized in " +
+                 s"class ${m.getDeclaringClass.getName}"
+               println(errorString)
+               System.out.flush()
+               System.err.println(errorString)
+               System.err.flush()
+               problemCount += 1
+             }
+          }
+        }
+        println("")
+    }
+  }
+}
+*/
     //if(tabsAreAdded && tabsAreHidden){
     println("printing results")
     System.err.println("printing results")
@@ -297,6 +343,6 @@ object DetectSetArgumentsMain {
     println(s"total number of problems: ${possibleProblemCount}")
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
-    println(s"total time (in seconds): ${totalTime/1000000000}")
+    println(s"total time (in seconds): ${totalTime / 1000000000}")
   }
 }

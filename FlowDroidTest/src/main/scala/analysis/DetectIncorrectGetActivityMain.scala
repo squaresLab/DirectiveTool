@@ -42,6 +42,79 @@ object DetectIncorrectGetActivityMain {
     })
     */
 
+  def getStartingMethodAndCallChain(methodNameToCheckFor: String): Tuple2[Option[SootMethod], mutable.Map[String, ListBuffer[SootMethod]]] = {
+    var startingMethod: Option[SootMethod] = None
+    val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
+    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+      //no idea why I need this xmlpull check. These for loops through the classes and methods seem to
+      //work on other checkers
+      if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
+        for (m: SootMethod <- cl.getMethods().asScala) {
+          val listBuffer: ListBuffer[SootMethod] = ListBuffer[SootMethod]()
+          try {
+            for (stmt <- m.getActiveBody.getUnits.asScala) {
+              extractMethodCallInStatement(stmt) match {
+                case Some(call) => {
+                  if (startingMethod.isEmpty) {
+                    if (call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)) {
+
+                      startingMethod = Some(call)
+                    }
+                  }
+                  if (calledByList.contains(call.toString())) {
+                    if (!calledByList(call.toString()).contains(m)) {
+                      calledByList(call.toString()) += m
+                    }
+                  } else {
+                    calledByList += (call.toString() -> ListBuffer[SootMethod](m))
+                  }
+                }
+                case None => ()
+              }
+            }
+          }
+          catch {
+            case r: RuntimeException => {
+              //removing print statement to see if it speeds up the checker
+              //println(s"error with method ${m.getName} - skipping")
+              //skip method with problem
+            }
+          }
+        }
+      }
+    }
+    return (startingMethod, calledByList)
+  }
+  def createCallChainsDepthFirst(calledByList: mutable.Map[String, ListBuffer[SootMethod]],
+                                 currentCallChains: ListBuffer[ControlFlowChain],
+                                 currentChain: List[ControlFlowItem], methodName: String,
+                                 checkingClasses: Boolean): Unit = {
+    //println(currentChain)
+    var foundMatch = false
+    for (c <- calledByList) {
+      if (c._1.toString().contains(methodName)) {
+        foundMatch = true
+        //println(s"found ${methodName} in calledByList")
+        val callList: scala.collection.mutable.ListBuffer[soot.SootMethod] = c._2
+        for (m <- callList) {
+          if (!currentChain.exists(_.isMethodEquals(m))) {
+            createCallChainsDepthFirst(calledByList.clone(), currentCallChains,
+              currentChain.::(new ControlFlowItem(m, checkingClasses)),
+              m.toString(), checkingClasses)
+          }
+        }
+      }
+    }
+    if (! foundMatch) {
+      //currentCallChains = addControlFlowChain(currentCallChains.toList,new ControlFlowChain(currentChain))
+      val newChain = new ControlFlowChain(currentChain)
+      if (!currentCallChains.contains(newChain)) {
+        //println(s"adding chain: ${newChain.controlChain}")
+        currentCallChains += newChain
+      }
+    }
+  }
+
   def runAnalysis(args: Array[String]): Unit = {
     val startTime = System.nanoTime()
     //val endTime = System.currentTimeMillis + 300 * 1000
@@ -109,50 +182,14 @@ object DetectIncorrectGetActivityMain {
     val methodNameToCheckFor = "getActivity"
     var callChains: List[ControlFlowChain] = List()
     val checkingClasses = true
-    var startingMethod: Option[SootMethod] = None
-    val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
+    //var startingMethod: Option[SootMethod] = None
+    //val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
+    var (startingMethod, calledByList) = getStartingMethodAndCallChain(methodNameToCheckFor)
     //not sure how to write this functionally; might want to figure out later to clean this
     //up but I'm going to implement the quick way first
     //unsure about this variable type at this point
     var newCallChains: List[ControlFlowChain] = List()
-    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      //no idea why I need this xmlpull check. These for loops through the classes and methods seem to
-      //work on other checkers
-      if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
-        for (m: SootMethod <- cl.getMethods().asScala) {
-          val listBuffer: ListBuffer[SootMethod] = ListBuffer[SootMethod]()
-          try {
-            for (stmt <- m.getActiveBody.getUnits.asScala) {
-              extractMethodCallInStatement(stmt) match {
-                case Some(call) => {
-                  if(startingMethod.isEmpty){
-                    if(call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)){
 
-                      startingMethod = Some(call)
-                    }
-                  }
-                  if (calledByList.contains(call.toString())) {
-                    if (!calledByList(call.toString()).contains(m)) {
-                      calledByList(call.toString()) += m
-                    }
-                  } else {
-                    calledByList += (call.toString() -> ListBuffer[SootMethod](m))
-                  }
-                }
-                case None => ()
-              }
-            }
-          }
-          catch {
-            case r: RuntimeException => {
-              //removing print statement to see if it speeds up the checker
-              //println(s"error with method ${m.getName} - skipping")
-              //skip method with problem
-            }
-          }
-        }
-      }
-    }
     /*println(s"called by list size: ${calledByList.size}")
     for (call <- calledByList) {
       print(s"${call}, ")
@@ -160,37 +197,10 @@ object DetectIncorrectGetActivityMain {
     println("")
      */
 
-    def createCallChainsDepthFirst(calledByList: mutable.Map[String, ListBuffer[SootMethod]],
-                                   currentCallChains: ListBuffer[ControlFlowChain],
-                                   currentChain: List[ControlFlowItem], methodName: String): Unit = {
-      //println(currentChain)
-      var foundMatch = false
-      for (c <- calledByList) {
-        if (c._1.toString().contains(methodName)) {
-          foundMatch = true
-          //println(s"found ${methodName} in calledByList")
-          val callList: scala.collection.mutable.ListBuffer[soot.SootMethod] = c._2
-          for (m <- callList) {
-            if (!currentChain.exists(_.isMethodEquals(m))) {
-              createCallChainsDepthFirst(calledByList.clone(), currentCallChains,
-                currentChain.::(new ControlFlowItem(m, checkingClasses)),
-                m.toString())
-            }
-          }
-        }
-      }
-      if (! foundMatch) {
-        //currentCallChains = addControlFlowChain(currentCallChains.toList,new ControlFlowChain(currentChain))
-        val newChain = new ControlFlowChain(currentChain)
-        if (!currentCallChains.contains(newChain)) {
-          //println(s"adding chain: ${newChain.controlChain}")
-          currentCallChains += newChain
-        }
-      }
-    }
+
     val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
     if(startingMethod.isDefined) {
-      createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor)
+      createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
     }
     callChains = fullCallChains.toList
         //remove the true later; added for debugging
@@ -232,21 +242,21 @@ object DetectIncorrectGetActivityMain {
     for (chain <- callChains) {
       //println("checking call chain")
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-      //println(s"${chain.controlChain}")
-      /*println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+      println(s"${chain.controlChain}")
+      println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
       println(s"${!checkingClasses}")
-      println(s"${!chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+      println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
 
-       */
+
       if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
-      && (!checkingClasses || !chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
+      && (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
         //println("caught problem")
         /*println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-        val errorString = "@@@@ Found a problem: getActivity may be called when " +
+        val errorString = "@@@@@ Found a problem: getActivity may be called when " +
           "the Fragment is not attached to an Activity" +
           s": call sequence ${chain.controlChain}"
         println(errorString)
@@ -263,18 +273,6 @@ object DetectIncorrectGetActivityMain {
     val timeAfterFlowDroid = totalTime - flowDroidTime
     println(s"time minus flowdroid (in nanoseconds): ${timeAfterFlowDroid}")
     println(s"time minus flowdroid (in seconds): ${timeAfterFlowDroid/1000000000}")
-  }
-
-  def classIsSubClassOfFragment(c: SootClass): Boolean = {
-    if(c.toString() == "android.app.Fragment"){
-      return true
-    } else {
-      if(c.hasSuperclass) {
-        return classIsSubClassOfFragment(c.getSuperclass)
-      } else {
-        return false
-      }
-    }
   }
 
   def addControlFlowChain(controlFlowChainList: List[ControlFlowChain], controlFlowChainToAdd: ControlFlowChain): List[ControlFlowChain] = {

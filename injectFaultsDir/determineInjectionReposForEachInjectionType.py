@@ -347,8 +347,11 @@ def main():
   #can fix at least 3
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
-  #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem)))
-  injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
+  injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem)))
+  #Can fix
+  #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
+  #Can fix
+  #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetTheme', filterRepoInitializer(injectSetThemeIssue.containsFileOfInterest), injectSetThemeIssue.injectInRepo))
   #injectorInstance = InjectionDispatch('DetectSetSelectorSetPackageProblem', filterRepoInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem))
   #njectorInstance = InjectionDispatch('DetectInvalidInflateCallMain', filterRepoInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem)
   #injectorInstance = InjectionDispatch('DetectMissingSetHasOptionsMenu', filterRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem))
@@ -361,7 +364,7 @@ def main():
 
   startingDir = '/Users/zack/git/reposFromFDroid/'
   originalDir = os.getcwd()
-  #reposThatCompile = [os.path.join(startingDir,r) for r in reposThatCompileNames]
+  #posThatCompile = [os.path.join(startingDir,r) for r in reposThatCompileNames]
   #for file in injectorInstance.getPossibleInjectionSites(startingDir):
     #os.chdir(os.path.dirname(file))
     #result = subprocess.run(getRepoFolderCommand, capture_output=True)
@@ -430,7 +433,7 @@ def main():
             if getTestResultsOfRepo(copyRepoLocation):
               print(repoDir, file=fout)
               fout.flush()
-              os.fsync(fout.fileno)
+              os.fsync(fout.fileno())
               print('found a repo to inject later')
 
             #see if the application already has a problem - if so, we don't need to inject anything.

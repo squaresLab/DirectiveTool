@@ -356,6 +356,7 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.TernaryExpression) or \
     isinstance(nodeToTest, javalang.tree.ArrayCreator) or \
     isinstance(nodeToTest, javalang.tree.TypeArgument) or \
+    isinstance(nodeToTest, javalang.tree.ArrayInitializer) or \
     isinstance(nodeToTest, javalang.tree.CatchClauseParameter):
     return False
   else:
@@ -613,9 +614,9 @@ def getParseInfo(fileToRead):
     #print('final dependency chains: {0}'.format(variableDependencyChains))
     for typeName in variableDependencyChains:
       if len(variableDependencyChains[typeName]) < 1:
-        print('possible error: this code violates the assumption that all locally declared types are used')
-        print('filename: {0}'.format(fileToRead))
-        print('original code:\n{0}'.format(fileInput))
+        #print('possible error: this code violates the assumption that all locally declared types are used')
+        #print('filename: {0}'.format(fileToRead))
+        #print('original code:\n{0}'.format(fileInput))
         with open(errorFile, 'a') as errorFout:
           errorFout.write('possible error: this code violates the assumption that all locally declared types are used\n')
           errorFout.write('filename: {0}'.format(fileToRead))

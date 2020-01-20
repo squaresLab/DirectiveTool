@@ -187,6 +187,7 @@ def injectOptionsMenuProblem():
     injectSetHasOptionsMenuProblem(repo)
   #injectOnCreateOptionsMenuProblem()
 
+#this method removes the onCreateOptions menu method from a file
 def injectOnCreateOptionsMenuProblem():
   onCreateCombyFullPattern = """@Override
     public void onCreateOptionsMenu(:[parameters]) {
@@ -235,6 +236,8 @@ def injectOnCreateOptionsMenuProblem():
       print('comby command to cause change: {0}'.format(removeSetHasOptionsMenuLine))
       #input('stopped here for debugging')
 
+#this method checks if the method definition of onCreateOptionsMenu exists
+#in a file
 def canInjectSetHasOptionsMenuProblem(repo):
   extendsFragmentPattern = re.compile('extends [\.\w]*Fragment ')
   #os.chdir(repo)
@@ -248,15 +251,20 @@ def canInjectSetHasOptionsMenuProblem(repo):
     with open(f, 'r',encoding="utf-8",errors="surrogateescape") as fin:
       fileContainsFragment = False
       fileContainsOptionsMenu = False
+      fileContainsOnCreate = False
       for line in fin:
         line = line.strip()
         #if 'Fragment' in line:
         if re.search(extendsFragmentPattern,line):
           fileContainsFragment = True
         #should I change to setHasOptionsMenu? I'm unsure at the moment
-        elif 'onCreateOptionsMenu' in line:
+        #elif 'onCreateOptionsMenu' in line:
+        elif 'setHasOptionsMenu(true)' in line:
           fileContainsOptionsMenu = True
-        if fileContainsFragment and fileContainsOptionsMenu:
+        elif 'public void onCreate(' in line:
+          fileContainsOnCreate = True
+        if fileContainsFragment and fileContainsOptionsMenu and fileContainsOnCreate:
+          print('file with all: {0}'.format(f))
           return True
           #filesOfInterest.append(f)
           #break
@@ -264,41 +272,56 @@ def canInjectSetHasOptionsMenuProblem(repo):
   #  print(f)
   return False
 
-def injectSetHasOptionsMenuProblem(repo):
+def injectSetHasOptionsMenuProblem(injectionFile):
+  #print('running inject options menu issue')
   extendsFragmentPattern = re.compile('extends [\.\w]*Fragment ')
   #os.chdir(repo)
-  filesToCheck = []
-  for r,d,f in os.walk(repo):
-    for file in f:
-      if file.endswith('.java'):
-        filesToCheck.append(os.path.join(r,file))
-  filesOfInterest = []
-  for f in filesToCheck:
-    with open(f, 'r',encoding="utf-8",errors="surrogateescape") as fin:
-      fileContainsFragment = False
-      fileContainsOptionsMenu = False
-      for line in fin:
-        line = line.strip()
-        #if 'Fragment' in line:
-        if re.search(extendsFragmentPattern,line):
-          fileContainsFragment = True
-        #should I change to setHasOptionsMenu? I'm unsure at the moment
-        elif 'onCreateOptionsMenu' in line:
-          fileContainsOptionsMenu = True
-        if fileContainsFragment and fileContainsOptionsMenu:
-          filesOfInterest.append(f)
-          break
+  #filesToCheck = []
+  #for r,d,f in os.walk(repo):
+    #for file in f:
+      #if file.endswith('.java'):
+        #filesToCheck.append(os.path.join(r,file))
+  filesChanged = []
+  #print(filesToCheck)
+  #for f in filesToCheck:
+  with open(injectionFile, 'r',encoding="utf-8",errors="surrogateescape") as fin:
+    fileContainsFragment = False
+    fileContainsOptionsMenu = False
+    fileContainsOnCreate = False
+    for line in fin:
+      line = line.strip()
+      #if 'Fragment' in line:
+      if re.search(extendsFragmentPattern,line):
+        fileContainsFragment = True
+      #should I change to setHasOptionsMenu? I'm unsure at the moment;
+      #I'll try it and see
+      #elif 'onCreateOptionsMenu' in line:
+      elif 'setHasOptionsMenu(true)' in line:
+        fileContainsOptionsMenu = True
+      elif 'public void onCreate(' in line:
+        fileContainsOnCreate = True
+      if fileContainsFragment and fileContainsOptionsMenu and fileContainsOnCreate:
+        filesChanged.append(injectionFile)
+        break
   #for f in filesOfInterest:
   #  print(f)
-  if len(filesOfInterest) > 0:
-    randChoice = random.randrange(len(filesOfInterest))
-    dirName, baseName = os.path.split(filesOfInterest[randChoice])
+  if len(filesChanged) > 0:
+    #randChoice = random.randrange(len(filesChanged))
+    dirName, baseName = os.path.split(filesChanged[0])
     removeSetHasOptionsMenuLine = shlex.split('comby "setHasOptionsMenu(true);\n" "" -i {0} -d {1}'.format(baseName, dirName))
+    commandList = shlex.split('open -a "Sublime Text" {0}'.format(injectionFile))
+    subprocess.run(commandList)
+    input('checking file before running comby')
     combyProcess = subprocess.run(removeSetHasOptionsMenuLine,stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     for line in combyProcess.stdout.decode('utf-8').splitlines():
       print(line)
-    print('changed file: {0}'.format(os.path.join(baseName, dirName)))
-    #input('stopped here for debugging')
+    print('changed file: {0}'.format(os.path.join(dirName, baseName)))
+
+    print(filesChanged[0] == injectionFile)
+    input('stopped here for debugging')
+    return True
+  else:
+    return False
 
 
 def resetAllRepos():

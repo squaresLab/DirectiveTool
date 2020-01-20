@@ -275,7 +275,7 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
           currentChain.append(CallChainItem(m.group(1), m.group(2)))
         else:
             print("call chain line did not match: {0}".format(line))
-      elif line.startswith('@@@@ Found a problem:'):
+      elif line.startswith('@@@@@ Found a problem:'):
         print('found problem line: {0}'.format(line))
         listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
         if listSequenceMatch:
@@ -821,7 +821,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
       if result:
         currentProblemCount = 0
     else:
-      def testMethodObj(m):
+      def testMethodObj(m, apkLocation):
         testFolder = createNewCopyOfTestProgram(originalSourceFolder)
         apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
         print('calling move line to new method')
@@ -831,15 +831,19 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
         return currentProblemCount, alteredCallChains
       methodsInFileWithProblem = [ m for m in methodObjList if m.className == classWithProblem]
       print("methods in problematic file: {0}".format(len(methodsInFileWithProblem)))
+      if len(methodsInFileWithProblem) < 1:
+        print('error: unable to find methods in problematic file: {0}'.format(classWithProblem))
+        input('stopping to check error')
+      print('trying to move to {0} methods in file'.format(len(methodsInFileWithProblem)))
       for m in methodsInFileWithProblem:
         print('*** moving to {0} in {1}'.format(m.methodName, m.className))
-        currentProblemCount, alteredCallChains = testMethodObj(m)
+        currentProblemCount, alteredCallChains = testMethodObj(m,apkLocation)
         if currentProblemCount == 0:
           break
       if currentProblemCount != 0:
         methodsInFileWithOutProblem = [ m for m in methodObjList if m.className != classWithProblem]
         for m in methodsInFileWithOutProblem:
-          currentProblemCount, alteredCallChains = testMethodObj(m)
+          currentProblemCount, alteredCallChains = testMethodObj(m, apkLocation)
           if currentProblemCount == 0:
             break
     if currentProblemCount == 0:
