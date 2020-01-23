@@ -78,7 +78,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=2
+currentCheckerNumber=4
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -215,12 +215,12 @@ currentCheckerNumber=2
   appLocationForRepair=${appLocation/testFolder/temporaryTestOfChange}
   #echo $appLocationForRepair
   #echo $repairType
-  if [ "$repairType" == "Method" ]
-  then
-    echo "strings are equal"
-  else
-    echo "strings are not equal"
-  fi
+  #if [ "$repairType" == "Method" ]
+  #then
+  #  echo "strings are equal"
+  #else
+  #  echo "strings are not equal"
+  #fi
   #if [ "$repairType" == "Method" ]
   #then
   if [ -z ${methodOfInterest2+x} ]

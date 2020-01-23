@@ -50,7 +50,7 @@ def runChecker(checker, filename):
 
 
 
-with open('rerunFDroidCheckResults.txt','r') as fin:
+with open('twoCheckerResults.txt','r') as fin:
   for line in fin:
     line = line.strip()
     if line.startswith('success!'):

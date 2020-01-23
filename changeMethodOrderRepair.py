@@ -6,6 +6,9 @@ import os.path
 import shutil
 import subprocess
 import re
+
+
+import levenshteinDistance
 #checkerToRun = sys.argv[1]
 #    originalSourceFolder = sys.argv[2]
 #    apkLocation = sys.argv[3]
@@ -237,7 +240,11 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
       commandList.append("{0}".format(item))
   checkerToRun = 'analysis.{0}'.format(checkerToRun)
   commandList.append(checkerToRun)
-  commandList.append(apkLocation)
+  if os.path.exists(apkLocation):
+    commandList.append(apkLocation)
+  else:
+    apkLocation = levenshteinDistance.findAPKInRepo(path, apkLocation)
+    commandList.append(apkLocation)
   #print(commandList)
   try: 
     print("current directory for command: {0}".format(os.getcwd()))
@@ -285,7 +292,7 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
             print(c)
             itemsInCall = c.split(':')
             currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
-          currentChain.reverse()
+          #currentChain.reverse()
           chainsInfo.append(currentChain)
           #sys.exit(0)
     print('finished creating call chains')
@@ -334,7 +341,11 @@ def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation
       commandList.append("{0}".format(item))
   checkerToRun = 'analysis.{0}'.format(checkerToRun)
   commandList.append(checkerToRun)
-  commandList.append(apkLocation)
+  if os.path.exists(apkLocation):
+    commandList.append(apkLocation)
+  else:
+    apkLocation = levenshteinDistance.findAPKInRepo(path, apkLocation)
+    commandList.append(apkLocation)
   try: 
     print("current directory for command: {0}".format(os.getcwd()))
     print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, apkLocation))
@@ -800,7 +811,12 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #  print("call chain class: {0}, method {1}".format(c.className, c.methodName))
   #sys.exit(0)
   try:
+    print(callChains)
     classWithProblem=callChains[0][-2].className.split('.')[-1]
+    #try to handle nested classes - although I'm not sure what I'm doing at the 
+    #moment will fully support them or if this will just die later
+    if '$' in classWithProblem:
+      classWithProblem = classWithProblem.split('$')[0]
   except IndexError:
     #print(callChains)
     #input('stopping to check call chain error')

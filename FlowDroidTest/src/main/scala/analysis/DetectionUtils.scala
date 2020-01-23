@@ -249,7 +249,9 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/build/outputs/apk/debug/tempRepoForInjection-debug.apk"
       //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/app-debug.apk"
-      return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/extra/debug/tempRepoForInjection-Extra-2.969.apk"
+      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/extra/debug/tempRepoForInjection-Extra-2.969.apk"
+      //return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
+      return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/MBEStyle-1.7.6.apk"
     }
   }
 }

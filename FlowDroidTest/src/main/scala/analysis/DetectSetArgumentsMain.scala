@@ -62,6 +62,7 @@ object DetectSetArgumentsMain {
     var tabsAreHidden = false
     //var tabIsReferencedInHasSetArguments = false
     var possibleErrorString = ""
+    var foundControlFlowItemStrings = ListBuffer[String]()
     for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
       for (m: SootMethod <- cl.getMethods().asScala) {
@@ -170,7 +171,7 @@ object DetectSetArgumentsMain {
               if (stmt.toString().contains("void setArguments(android.os.Bundle)")) {
                 val errorString = "@@@@@ Found a problem: onClick contains a call to " +
                   "setArguments on a Fragment when the Fragment may already be initialized in " +
-                  s"call sequence List(${cl.getName()}: ${m.getName()}," +
+                  s"call sequence List(${m.toString()}, " +
                     "<android.app.Fragment: void setArguments(android.os.Bundle)>)}"
                 possibleErrorString += errorString + "\n"
                 //println(errorString)
@@ -178,6 +179,7 @@ object DetectSetArgumentsMain {
                 //System.err.println(errorString)
                 //System.err.flush()
                 possibleProblemCount += 1
+                foundControlFlowItemStrings += s"List(${m.toString()}, <android.app.Fragment: void setArguments(android.os.Bundle)>)"
               }
             }
           }
@@ -211,15 +213,19 @@ object DetectSetArgumentsMain {
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-        val errorString = "@@@@ Found a problem: setArguments may be called when " +
-          "the Fragment is attached to an Activity" +
-          s": call sequence ${chain.controlChain}"
-        println(errorString)
-        System.out.flush()
-        System.err.println(errorString)
-        System.err.flush()
-        possibleProblemCount += 1
-
+        //don't record the error again if we've already found it from the earlier check
+        val testString = chain.controlChain.slice(chain.controlChain.length-2, chain.controlChain.length).toString()
+        println(testString)
+        if (!foundControlFlowItemStrings.contains(testString)) {
+          val errorString = "@@@@@ Found a problem: setArguments may be called when " +
+            "the Fragment is attached to an Activity" +
+            s": call sequence ${chain.controlChain}"
+          println(errorString)
+          System.out.flush()
+          System.err.println(errorString)
+          System.err.flush()
+          possibleProblemCount += 1
+        }
       }
     }
     /*

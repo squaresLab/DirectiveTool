@@ -241,7 +241,7 @@ def runTestOfApp(injectorInstance, app, debuggingResultList):
           print('found {0} errors in app'.format(errorCount))
       else:
         print('found no errors in the application')
-        debuggingResultList.append('found no errors in application')
+        debuggingResultList.append('found 0 errors in application')
     elif line.startswith('@@@@@'):
       #classWithProblemWithFullNamespace = 
       lineItems = line.split()
@@ -344,10 +344,11 @@ def main():
   #doesn't have enough instances - only two contain either, 1 compiles but doesn't parse in Flowdroid, the other one has the section commented out
   #tries to fix 0 apps
   #injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
+  #injectorInstanceList.append(InjectionDispatch('DetectSetArgumentsMain', filterRepoInitializer(injectSetArgumentsProblem.isRepoOfInterest), injectInRepoInitializer(injectSetArgumentsProblem.injectSetArgumentsProblem)))
   #can fix at least 3
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
-  #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
-  injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem)))
+  injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
+  #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem)))
   #Can fix
   #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
   #Can fix
@@ -375,6 +376,7 @@ def main():
   attemptedFixCount = 0
   successfulRepairCount = 0
   workingReposDict = {}
+  printedCount = 0
   with open(workingReposFile, 'r') as fin:
     for line in fin:  
       workingReposDict[line.strip()] = True
@@ -413,7 +415,7 @@ def main():
         print(injectorInstance.checkerName)
         if injectorInstance.isPossibleInjectionRepo(folderInfoDict, repoDir):
           print('is a possible injection repo')
-          debuggingResultList.append(repoDir)
+          debuggingResultList.append('{0} repo: {1}'.format(repoCount, repoDir))
           print('repoDir: {0}'.format(repoDir))
           if os.path.exists(copyRepoLocation):
             shutil.rmtree(copyRepoLocation)
@@ -435,6 +437,7 @@ def main():
               fout.flush()
               os.fsync(fout.fileno())
               print('found a repo to inject later')
+              printedCount += 1
 
             #see if the application already has a problem - if so, we don't need to inject anything.
             #newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
@@ -487,7 +490,8 @@ def main():
   print('tested {0} repos'.format(repoCount))
   print('attempted to fix {0} apps'.format(attemptedFixCount))
   print('successful fix count: {0}'.format(successfulRepairCount))
-  
+  print('saved {0} repos to file'.format(printedCount))
+
 
 if __name__ == "__main__":
   main()

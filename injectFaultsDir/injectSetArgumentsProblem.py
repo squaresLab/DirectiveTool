@@ -25,6 +25,7 @@ extendsFragmentPattern = re.compile('.*extends [^ ]+Fragment .*')
 
 
 def isRepoOfInterest(repo):
+  print('in injectSetArgumentsProblem isRepoOfInterest')
   for root, dirs, files in os.walk(repo):
     for f in files:
       fullFilename = os.path.join(root, f)
@@ -50,10 +51,12 @@ def isRepoOfInterest(repo):
           if '}' in line:
             nestingCount -= 1
       if len(linesOfInterest) > 0:
+        print('found possible injection site in injectSetArgumentsProblem: {0}'.format(fullFilename))
         return True
   return False
  
-
+#this just injects the lines of code into a random Fragment method - it doesn't 
+#check if it injects the code into a method that will cause a problem
 def injectSetArgumentsProblem(fullFilename):
   linesInFile = []
   nestingCount = 0

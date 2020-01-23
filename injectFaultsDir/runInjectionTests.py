@@ -34,9 +34,10 @@ runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Content
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidInflateCallMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetTheme.txt'
-workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
-#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectMissingSetHasOptionsMenu.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetArgumentsMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
+workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetContentViewFindViewByIDOrdering.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedFoldersFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/triedInjectionFolders.txt'
 #reposWithZeroErrorsFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
@@ -167,8 +168,7 @@ def downloadRepo(folderInfoDict, repoDir):
     return True
 
 #This method was originally used to filter down a list of repos to the ones
-#that mattered for the injection type. Due to reordering, this is now dead code,
-#but I'm leaving it here in case the logic is useful later
+#that mattered for the injection type. 
 def filterRepoInitializer(containsFileOfInterestMethod):
   def findPossibleInjectionRepos(folderInfoDict, possibleRepoList):
     for r in possibleRepoList:
@@ -266,7 +266,9 @@ def runTestOfApp(injectorInstance, app, debuggingResultList, repoDir):
       else:
         print('found no errors in the application {0}'.format(app))
         debuggingResultList.append('found no errors in application')
-        input('stopping to debug this case')
+        #removing because the setArguments injection doesn't always inject a 
+        #problem; it just injects into a guessed location
+        #input('stopping to debug this case')
         #with open(reposWithZeroErrorsFile,'a') as fout:
         #  print(repoDir, file=fout)
     elif line.startswith('@@@@@'):
@@ -301,7 +303,7 @@ def runTestOfApp(injectorInstance, app, debuggingResultList, repoDir):
   #case where they both occur is obvious and add unnecessary print statements
   else:
     if fileWithProblem is None:
-      debuggingResultList.append('never found file with problem')
+      debuggingResultList.append('never found file with problem - this is ok for certain repairs')
       #for line in checkerResult.stdout.decode('utf-8').splitlines():
       #  print(line)
       #input('stopping to see this case')
@@ -382,15 +384,16 @@ def main():
 
   #using a new method starting here - need to fix the ones above here to adapt to the new approach
   #skipping come back to later - it doesn't compile when injected - getSupportFragment doesn't work
+  #injectorInstanceList.append(InjectionDispatch('DetectSetArgumentsMain', isRepoOfInterestInitializer(injectSetArgumentsProblem.isRepoOfInterest), injectInRepoInitializer(injectSetArgumentsProblem.injectSetArgumentsProblem)))
   #injectorInstance = InjectionDispatch('DetectIncorrectSetInitialSavedState', filterRepoInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem))
   #doesn't have enough instances - only two contain either, 1 compiles but doesn't parse in Flowdroid, the other one has the section commented out
   #tries to fix 0 apps
   #injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
-  injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
+  #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
   #set options menu works now for 
   #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectSetHasOptionsMenuProblem)))
-  #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
+  injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
   #injectorInstance = InjectionDispatch('DetectSetSelectorSetPackageProblem', filterRepoInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem))
   #injectorInstance = InjectionDispatch('DetectInvalidInflateCallMain', filterRepoInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem)
   #injectorInstance = InjectionDispatch('DetectMissingSetHasOptionsMenu', filterRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem))
@@ -415,6 +418,7 @@ def main():
   totalSuccessfulRepairCount = 0
   workingReposDict = {}
   reposInFileAreFullPaths = False
+  successfullyFixedRepoSet = set()
   with open(workingReposFile, 'r') as fin:
     for lineCount, line in enumerate(fin):  
       workingReposDict[line.strip()] = True
@@ -466,6 +470,7 @@ def main():
           try:
             shutil.copytree(repoDir, copyRepoLocation)
           except:
+            debuggingResultList.append('problem copying repo')
             print('problem copying repo')
             continue
           clearAPKS(copyRepoLocation)
@@ -483,7 +488,7 @@ def main():
             if attemptedFixCount > 0:
               debuggingResultList.append('found a problem in the original app')
               if newSuccessfulRepairCount:
-                debuggingResultList.append('was able to repair a problem in the original app')
+                debuggingResultList.append('was able to repair a problem in the original app on first try')
             else:
               print('injecting problem')
               injectorInstance.injectIssue(copyRepoLocation)
@@ -496,7 +501,7 @@ def main():
                 #sys.exit(0)
               newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList, repoDir)
           if newAttemptedFixCount < 1:
-            debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker after injecting the problem')
+            debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker or found too many problems after injecting the problem')
             #input('stopping to debug this case')
           elif len(repairedApps) < 1:
             debuggingResultList.append('was never able to successfully repair an app')
@@ -509,7 +514,9 @@ def main():
             if getTestResultsOfRepo(copyRepoLocation):
               print('passed tests')
               debuggingResultList.append('the application was completely repaired!')
-              input('stopping to see the successful fix!!')
+              print('fixed repo: {0}'.format(repoDir))
+              successfullyFixedRepoSet.add(repoDir)
+              #input('stopping to see the successful fix!!')
                   #input('stopping to see checker result after injecting error')
                         #run the automated fix on this application
 
@@ -519,6 +526,8 @@ def main():
               print('failed tests')
           totalAttemptedFixCount += newAttemptedFixCount
           totalSuccessfulRepairCount += newSuccessfulRepairCount
+        else:
+          debuggingResultList.append('{0} was determined not to be a possible repo for injection'.format(debuggingResultList))
       repoCount +=1
       print('number of checked repos: {0}'.format(repoCount))
       print(repoDir, file=fout)
@@ -530,6 +539,7 @@ def main():
   print('tested {0} repos'.format(repoCount))
   print('attempted to fix {0} apps'.format(totalAttemptedFixCount))
   print('successful fix count: {0}'.format(totalSuccessfulRepairCount))
+  print('successfully fixed repos: {0}'.format(successfullyFixedRepoSet))
   
 
 if __name__ == "__main__":

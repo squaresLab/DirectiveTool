@@ -16,6 +16,7 @@ import shutil
 import determineMethodDifferences
 import operator
 import traceback
+import levenshteinDistance
 
 #GitHub seems to require me to log in now to search the repos
 #def loginToGitHub(session):
@@ -484,7 +485,11 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChang
       commandList.append("{0}".format(item))
   commandList.append('analysis.{0}'.format(checkerToRun))
   #newAPKLocation = '/Users/zack/git/DirectiveTool/temporaryTestOfChange/Application/build/outputs/apk/debug/Application-debug.apk'
-  commandList.append(newAPKLocation)
+  if os.path.exists(newAPKLocation):
+    commandList.append(newAPKLocation)
+  else:
+    newAPKLocation = levenshteinDistance.findAPKInRepo(path, newAPKLocation)
+    commandList.append(newAPKLocation)
   try: 
     os.chdir("/Users/zack/git/DirectiveTool/FlowDroidTest")
     #print("current directory for command: {0}".format(os.getcwd()))
@@ -509,7 +514,7 @@ def executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChang
   except: 
     print('had an exception when running the checker')
     pass
-  input('stopping to see checker result in repair method from github')
+  #input('stopping to see checker result in repair method from github')
   #if containsFalse:
   #  input('stopping here to see result')
   os.chdir(currentDir)
@@ -972,6 +977,10 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                   print('change item list: {0}'.format(changeItemList))
                 addedLine = linesToAddDict[i]
                 addedLine = addedLine.replace('return ','')
+                #These few lines are for debugging
+                if 'inflate' in addedLine and ('false)' in addedLine or 'false )' in addedLine):
+                  print('addedLine: {0}'.format(addedLine))
+                  input('stopping to check added line that might fix the problem')
                 print('length of new file contents before adding: {0}'.format(len(newFileContents)))
                 newFileContents.append(addedLine)
                 print('length of new file contents after adding: {0}'.format(len(newFileContents)))
@@ -1064,9 +1073,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                 print('added line 2: {0}'.format(addedLine))
                 addedLineCount = addedLineCount + 1
                 addedLineList.append(addedLine)
-                if(addedLine.strip().endswith('false);')):
-                  tempDebuggingBool = True
-                  print('set tempDebuggingBool to true !!!!!!!!!!!!!!!!!!!!!!!!!!')
+                if 'inflate' in addedLine and ('false)' in addedLine or 'false )' in addedLine):
+                  print('addedLine: {0}'.format(addedLine))
+                  input('stopping to check added line that might fix the problem')
           else: 
             newFileContents.append(line)
       if len(newFileContents) < 3:
@@ -1337,6 +1346,7 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
       os.remove(f)
     except:
       pass
+  return True
 
 #extractOriginalMethodsOfInterest()
 #handleAndTestAdvancedDiff()
