@@ -16,6 +16,8 @@ import scala.util.matching.Regex
 import RegexUtils._
 import analysis.DetectIncorrectGetActivityMain
 
+import scala.collection.mutable
+
 /*
 What would I need to check for this directive?:
 - Tabs are changed in onTabSelected
@@ -196,35 +198,40 @@ object DetectSetArgumentsMain {
       analysis.DetectIncorrectGetActivityMain.createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
     }
     callChains = fullCallChains.toList
+    var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
     for (chain <- callChains) {
-      println(s"${chain.controlChain}")
-      println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
-      println(s"${!checkingClasses}")
-      println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+      if (! alreadyReportedErrors.contains(chain.controlChain(-2).methodCall.toString)) {
+        println(s"${chain.controlChain}")
+        println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+        println(s"${!checkingClasses}")
+        println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
 
 
-      if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))){
-        //I might add the next part of the check back in, but I'm not sure how to apply to the setArgument case at
-        //the moment
-        //&& (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
-        //println("caught problem")
-        /*println("start of call chain")
+        if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))) {
+          //I might add the next part of the check back in, but I'm not sure how to apply to the setArgument case at
+          //the moment
+          //&& (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
+          //println("caught problem")
+          /*println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-        //don't record the error again if we've already found it from the earlier check
-        val testString = chain.controlChain.slice(chain.controlChain.length-2, chain.controlChain.length).toString()
-        println(testString)
-        if (!foundControlFlowItemStrings.contains(testString)) {
-          val errorString = "@@@@@ Found a problem: setArguments may be called when " +
-            "the Fragment is attached to an Activity" +
-            s": call sequence ${chain.controlChain}"
-          println(errorString)
-          System.out.flush()
-          System.err.println(errorString)
-          System.err.flush()
-          possibleProblemCount += 1
+          //don't record the error again if we've already found it from the earlier check
+          alreadyReportedErrors += (chain.controlChain(-2).methodCall.toString -> true)
+
+          val testString = chain.controlChain.slice(chain.controlChain.length - 2, chain.controlChain.length).toString()
+          println(testString)
+          if (!foundControlFlowItemStrings.contains(testString)) {
+            val errorString = "@@@@@ Found a problem: setArguments may be called when " +
+              "the Fragment is attached to an Activity" +
+              s": call sequence ${chain.controlChain}"
+            println(errorString)
+            System.out.flush()
+            System.err.println(errorString)
+            System.err.flush()
+            possibleProblemCount += 1
+          }
         }
       }
     }

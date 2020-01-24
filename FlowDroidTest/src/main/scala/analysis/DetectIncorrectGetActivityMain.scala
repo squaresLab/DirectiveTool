@@ -239,31 +239,36 @@ object DetectIncorrectGetActivityMain {
     for (callChain <- callChains) {
       println(s"${callChain.controlChain}")
     }*/
+    var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
     for (chain <- callChains) {
-      //println("checking call chain")
-      //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-      println(s"${chain.controlChain}")
-      println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
-      println(s"${!checkingClasses}")
-      println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+      if (! alreadyReportedErrors.contains(chain.controlChain(-2).methodCall.toString)) {
+        //println("checking call chain")
+        //check if the chain contains a call to a method that demonstrates the fragment has been initialized
+        println(s"${chain.controlChain}")
+        println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+        println(s"${!checkingClasses}")
+        println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
 
 
-      if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
-      && (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
-        //println("caught problem")
-        /*println("start of call chain")
+        if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
+          && (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
+          //println("caught problem")
+          /*println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-        val errorString = "@@@@@ Found a problem: getActivity may be called when " +
-          "the Fragment is not attached to an Activity" +
-          s": call sequence ${chain.controlChain}"
-        println(errorString)
-        System.out.flush()
-        System.err.println(errorString)
-        System.err.flush()
-        problemCount += 1
+          alreadyReportedErrors += (chain.controlChain(-2).methodCall.toString -> true)
+
+          val errorString = "@@@@@ Found a problem: getActivity may be called when " +
+            "the Fragment is not attached to an Activity" +
+            s": call sequence ${chain.controlChain}"
+          println(errorString)
+          System.out.flush()
+          System.err.println(errorString)
+          System.err.flush()
+          problemCount += 1
+        }
       }
     }
     println(s"total number of caught problems: ${problemCount}")

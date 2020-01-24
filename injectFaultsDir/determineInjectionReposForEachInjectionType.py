@@ -347,8 +347,8 @@ def main():
   #injectorInstanceList.append(InjectionDispatch('DetectSetArgumentsMain', filterRepoInitializer(injectSetArgumentsProblem.isRepoOfInterest), injectInRepoInitializer(injectSetArgumentsProblem.injectSetArgumentsProblem)))
   #can fix at least 3
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
-  injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
   #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem)))
+  injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectInflateProblemWithoutComby)))
   #Can fix
   #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
   #Can fix

@@ -39,6 +39,9 @@ extendsFragmentPattern = re.compile('.*extends [^ ]+Fragment .*')
 combyInflateNoChangeCommand = shlex.split('comby "inflate(:[firstParam], :[secondParam], false);" "inflate(:[firstParam],:[secondParam], true);" .java -match-only')
 combyInflateWithChangeCommandTemplate = 'comby "inflate(:[firstParam], :[secondParam], false);" "inflate(:[firstParam],:[secondParam], true);" -f {0} -d {1} -in-place'
 
+#this method determines if the repo contains a file that can be replaces with the inflate comby
+#template; currently this is dead code. I'm trying out the method determineInvalidInflateRepo 
+#at the moment
 def getMatchingFiles(repo):
   originalDir = os.getcwd()
   os.chdir(repo)
@@ -68,10 +71,34 @@ def getMatchingFiles(repo):
   os.chdir(originalDir)
   return matchingFiles
 
+def determineValidInflateRepoWithoutComby(repo):
+  matchingFiles = []
+  for root, dirs, files in os.walk(repo):
+    for f in files:
+      if f.endswith('.java'):
+        fullFilename = os.path.join(root, f)
+        foundFragmentClassInFile = False
+        foundInflate = False
+        with open(fullFilename, 'r', encoding="utf-8",errors="surrogateescape") as fin:
+          for line in fin:
+            if not foundFragmentClassInFile:
+              fragmentMatchResult = extendsFragmentPattern.match(line)
+              if fragmentMatchResult:
+                foundFragmentClassInFile = True
+            elif not foundInflate and 'inflate(' in line:
+              foundInflate = True
+            if foundInflate and foundFragmentClassInFile:
+              matchingFiles.append(fullFilename)
+              break
+  return matchingFiles
+
+
 def determineInjectionInfoForInflateRepo(repo): 
   #repo = os.path.join(repoLocation,compilingRepoList[1])
   #print('running on repo: {0}'.format(repo))
-  matchingFiles = getMatchingFiles(repo)
+  #trying out the non comby injection way
+  #matchingFiles = getMatchingFiles(repo)
+  matchingFiles = determineValidInflateRepoWithoutComby(repo)
   if len(matchingFiles) > 0:
     return True
   return False
@@ -99,6 +126,74 @@ def determineInjectionInfoForInflateRepo(repo):
   #      break
   #if matchesFound > 0:
   #return matchesFound
+
+def injectInflateProblemWithoutComby(fullFilename):
+  #input('starting inject inflate problem')
+  isAFileToChange = False
+  injectLine = None
+  fileContents = []
+  with open(fullFilename, 'r', encoding="utf-8",errors="surrogateescape") as fin:
+    for lineCount,line in enumerate(fin):
+      fileContent.append(line)
+      if not fragmentMatchResult:
+        fragmentMatchResult = extendsFragmentPattern.match(line)
+        if fragmentMatchResult:
+            foundFragmentClassInFile = True
+      elif not foundInflate and 'inflate(' in line:
+        foundInflate = True
+        injectLine = lineCount
+  if not isAFileToChange:
+    return False
+  else:
+    inflateLineToChange = fileContents[injectLine]
+    inflateIndex = inflateLineToChange.find('inflate(')
+    endOfCallIndex = inflateLineToChange.find(')')
+    paramStrings = inflateLineToChange[inflateIndex + len('inflate('): endOfCallIndex]
+    params = paramStrings.split(',')
+    parameterOfInterest = params[-1].strip()
+    if parameterOfInterest == 'true':
+      #don't inject if the problem is already there
+      return False
+    elif parameterOfInterest == 'false':
+      #if the parameter is the wrong type, change it
+      params[-1] = 'true'
+      paramString = ','.join(params)
+      newInflateString = inflateLineToChange[:inflateIndex + len('inflate(') + 1] + paramString + inflateLineToChange[endOfCallIndex:]
+      fileContents[injectLine] = newInflateString
+    else:
+      #if the parameter is missing, add the wrong one
+      newInflateString = inflateLineToChange[:endOfCallIndex] + ', true' + inflateLineToChange[endOfCallIndex:]
+      fileContents[injectLine] = newInflateString
+  with open(fullFilename, 'w', encoding="utf-8",errors="surrogateescape") as fout:
+    for line in fileContents:
+      print(line, file=fout, end='')
+  commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+  subprocess.run(commandList)
+  input('stopping to check the injection')
+  #if we got to this point then the file has been successfully changed
+  return True
+
+
+
+
+
+
+def injectInflateProblem(repo):
+  #input('starting inject inflate problem')
+  matchingFiles = getMatchingFiles(repo)
+  fileToChange = matchingFiles[random.randrange(len(matchingFiles))]
+  dirName, baseName = os.path.split(fileToChange)
+  combyCommand = shlex.split(combyInflateWithChangeCommandTemplate.format(baseName, dirName))
+  combyProcess = subprocess.run(combyCommand, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+  print('result of comby process: {0}'.format(combyProcess.returncode))
+  for line in combyProcess.stdout.decode('utf-8').splitlines():
+    print(line)
+  fullFilename = os.path.join(dirName, baseName)
+  print('changed file: {0}'.format(fullFilename))
+  print('comby command to cause change: {0}'.format(' '.join(combyCommand)))
+  commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+  subprocess.run(commandList)
+  input('stopping to check the injection')
 
 
 def injectInflateProblem(repo):

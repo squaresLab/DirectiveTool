@@ -32,12 +32,13 @@ permissionCommand = shlex.split('chmod +x gradlew')
 runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=56329:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.7-sources.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.7-sources.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/soot/target/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow-cmd/build/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/axml-2.0.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-api-1.7.5.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar analysis.{0} {1}'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithSuccessfulTests.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
-#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidInflateCallMain.txt'
+workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidInflateCallMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetTheme.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/singleGetActivityInjectionRepos.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetArgumentsMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
-workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetContentViewFindViewByIDOrdering.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetContentViewFindViewByIDOrdering.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedFoldersFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/triedInjectionFolders.txt'
 #reposWithZeroErrorsFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
@@ -390,10 +391,10 @@ def main():
   #tries to fix 0 apps
   #injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
-  #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem))
+  injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectInflateProblemWithoutComby)))
   #set options menu works now for 
   #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectSetHasOptionsMenuProblem)))
-  injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
+  #injectorInstanceList.append(InjectionDispatch('DetectInvalidSetContentViewFindViewByIDOrdering', isRepoOfInterestInitializer(injectSetContentViewIssue.isPossibleInjectionRepo), injectInRepoInitializer(injectSetContentViewIssue.injectSetContentViewIssue)))
   #injectorInstance = InjectionDispatch('DetectSetSelectorSetPackageProblem', filterRepoInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem))
   #injectorInstance = InjectionDispatch('DetectInvalidInflateCallMain', filterRepoInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInflateAndOptionsMenuIssues.injectInflateProblem)
   #injectorInstance = InjectionDispatch('DetectMissingSetHasOptionsMenu', filterRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem))
@@ -420,10 +421,15 @@ def main():
   reposInFileAreFullPaths = False
   successfullyFixedRepoSet = set()
   with open(workingReposFile, 'r') as fin:
+    checkedFullPaths = False
     for lineCount, line in enumerate(fin):  
-      workingReposDict[line.strip()] = True
-      if lineCount == 0 and line.strip()[0] == '/':
-        reposInFileAreFullPaths = True
+      line = line.strip()
+      #allow lines in the file to commented out
+      if not line.startswith('#'):
+        workingReposDict[line] = True
+        if not checkedFullPaths and line[0] == '/':
+          reposInFileAreFullPaths = True
+          checkedFullPaths = True
   apkSourceInfo = extractRepoInfo.extractRepoInfo()
   #apkInfoDict = {}
   folderInfoDict = {}
@@ -450,7 +456,10 @@ def main():
   if os.path.exists(attemptedFoldersFile):
     with open(attemptedFoldersFile,'r') as fin:
       for line in fin:
-        attemptedFoldersDict[line.strip()] = True
+        line = line.strip()
+        #allow commenting out of lines
+        if not line.startswith('#'):
+          attemptedFoldersDict[line.strip()] = True
   if len(attemptedFoldersDict) > 0:
     reposToCheck = [r for r in reposToCheck if not r in attemptedFoldersDict]
 
@@ -464,7 +473,7 @@ def main():
         if injectorInstance.isPossibleInjectionRepo(folderInfoDict, repoDir):
           print('is a possible injection repo')
           debuggingResultList.append(repoDir)
-          print('repoDir: {0}'.format(repoDir))
+          print('{0} repoDir: {1}'.format(repoCount, repoDir))
           if os.path.exists(copyRepoLocation):
             shutil.rmtree(copyRepoLocation)
           try:
@@ -483,8 +492,10 @@ def main():
           else: 
             #see if the application already has a problem - if so, we don't need to inject anything.
             #commenting out for debugging - I should add this back later
-            #newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList)
-            attemptedFixCount = 0
+            if injectorInstance.checkerName == 'DetectIncorrectGetActivityMain':
+              attemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance, appBuilds, debuggingResultList, repoDir)
+            else:
+              attemptedFixCount = 0
             if attemptedFixCount > 0:
               debuggingResultList.append('found a problem in the original app')
               if newSuccessfulRepairCount:

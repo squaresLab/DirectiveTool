@@ -30,12 +30,29 @@ changeMethodRepairFile = 'changeMethodOrderRepair.py'
 shutil.copyfile(os.path.join(directiveToolDir, changeMethodRepairFile), os.path.join(packagedDirectory, changeMethodRepairFile))
 runAllRepairsFile = 'runAllRepairs.py'
 shutil.copyfile(os.path.join(directiveToolDir, runAllRepairsFile), os.path.join(packagedDirectory, runAllRepairsFile))
+levenshteinFile = 'levenshteinDistance.py'
+shutil.copyfile(os.path.join(directiveToolDir, levenshteinFile), os.path.join(packagedDirectory, levenshteinFile))
 repairFoundErrorsFile = 'repairFoundErrors.py'
 #shutil.copyfile(os.path.join(directiveToolDir, repai))
 
+filesInInjectionFolderToCopyList = ['determineInjectionReposForEachInjectionType.py',
+'injectGetActivityIssue.py',
+'injectGetResourcesIssue.py',
+'injectInflateAndOptionsMenuIssues.py',
+'injectSetArgumentsProblem.py',
+'injectSetContentViewIssue.py',
+'injectSetInitialSavedStateProblem.py',
+'injectSetPackageSetSelectorProblem.py',
+'injectSetThemeIssue.py',
+'runInjectionTests.py',]
 
 injectionFolder = 'injectFaultsDir'
-shutil.copytree(os.path.join(directiveToolDir, injectionFolder), os.path.join(packagedDirectory, injectionFolder))
+os.mkdir(os.path.join(packagedDirectory,injectionFolder))
+for f in filesInInjectionFolderToCopyList:
+  sourceFile = os.path.join(directiveToolDir, injectionFolder, f)
+  destFile = os.path.join(packagedDirectory, injectionFolder, f)
+  shutil.copyfile(sourceFile, destFile)
+shutil.copytree('/Users/zack/git/DirectiveTool/injectFaultsDir/onCreateOptionsMenuTemplates', os.path.join(packagedDirectory, injectionFolder,'onCreateOptionsMenuTemplates'))
 
 
 
