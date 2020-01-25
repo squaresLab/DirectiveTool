@@ -132,9 +132,11 @@ def injectInflateProblemWithoutComby(fullFilename):
   isAFileToChange = False
   injectLine = None
   fileContents = []
+  fragmentMatchResult = False
+  foundInflate = False
   with open(fullFilename, 'r', encoding="utf-8",errors="surrogateescape") as fin:
     for lineCount,line in enumerate(fin):
-      fileContent.append(line)
+      fileContents.append(line)
       if not fragmentMatchResult:
         fragmentMatchResult = extendsFragmentPattern.match(line)
         if fragmentMatchResult:
@@ -142,6 +144,8 @@ def injectInflateProblemWithoutComby(fullFilename):
       elif not foundInflate and 'inflate(' in line:
         foundInflate = True
         injectLine = lineCount
+      elif foundInflate and foundFragmentClassInFile:
+        isAFileToChange = True
   if not isAFileToChange:
     return False
   else:

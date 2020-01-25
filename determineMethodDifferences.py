@@ -357,7 +357,9 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.ArrayCreator) or \
     isinstance(nodeToTest, javalang.tree.TypeArgument) or \
     isinstance(nodeToTest, javalang.tree.ArrayInitializer) or \
-    isinstance(nodeToTest, javalang.tree.CatchClauseParameter):
+    isinstance(nodeToTest, javalang.tree.ThrowStatement) or \
+    isinstance(nodeToTest, javalang.tree.CatchClauseParameter) or \
+    isinstance(nodeToTest, javalang.tree.LambdaExpression):
     return False
   else:
     print('unsupported expression: {0}'.format(nodeToTest))
@@ -601,7 +603,10 @@ def getParseInfo(fileToRead):
         else:
           methodCall = s.value
         #make sure method call is an actual method call and ignore all others
-        if not isinstance(methodCall, javalang.tree.MemberReference) and not isinstance(methodCall, javalang.tree.Literal) and not isinstance(methodCall, javalang.tree.TernaryExpression):
+        if not isinstance(methodCall, javalang.tree.MemberReference) and \
+        not isinstance(methodCall, javalang.tree.Literal) and \
+        not isinstance(methodCall, javalang.tree.TernaryExpression) and \
+        not isinstance(methodCall, javalang.tree.This):
         #print(methodCall)
         #print('chain before: {0}'.format(variableDependencyChains))
           variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)

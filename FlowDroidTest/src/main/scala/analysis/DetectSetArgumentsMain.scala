@@ -218,7 +218,8 @@ object DetectSetArgumentsMain {
         }
         println("end of call chain")*/
           //don't record the error again if we've already found it from the earlier check
-          alreadyReportedErrors += (chain.controlChain(-2).methodCall.toString -> true)
+
+          alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
 
           val testString = chain.controlChain.slice(chain.controlChain.length - 2, chain.controlChain.length).toString()
           println(testString)

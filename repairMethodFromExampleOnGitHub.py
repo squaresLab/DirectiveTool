@@ -116,6 +116,8 @@ def getFilesFullPath(projectDir, fileBaseName):
       #print('checking filename: {0}'.format(filename))
       if filename == fileBaseName:
         return os.path.join(dirpath, filename)  
+  #shouldn't reach this point
+  print('error getting file path for {0} in {1}'.format(fileBaseName, proejctDir))
  
 
 def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompare, fileToChange):
@@ -286,7 +288,7 @@ def addChangeToFile(change, method, methodDeclarationStringToCompare, fileToChan
         elif c == '}': 
           nestingCount = nestingCount - 1
   if not everFoundMethodOfInterest:
-    print('error: never found method of interest {0} in {1}'.format(methodDeclaration, fileToChange))
+    print('error: never found method of interest {0} in {1}'.format(methodDeclaration, fullFileToChange))
 
 #methodToFindTheCall is the method to delete from
 def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChange, projectDir):
@@ -554,12 +556,15 @@ def testDiffChanges(runFlowDroidCommand, changeSet, checkerToRun, methodDeclarat
 
 def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation):
   wasFixed = False
+  print(methodsToCompare)
   for method in methodsToCompare:
+    print('comparing method: {0}'.format(method))
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
     print('downloaded file: {0}'.format(downloadedFileName))
     with open(downloadedFileName,'r') as fin:
       print('file contents: {0}'.format(fin.read()))
+    input('stopping to check downloaded file')
 
     (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
       determineMethodDifferences.getParseInfo(originalFileName)
@@ -616,8 +621,8 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
               if listNumber == 2:
                 print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
               return True
-    print('Unable to find fix')
-    return False
+  print('Unable to find fix')
+  return False
 
 #def deleteTypeDifferences(runFlowDroidCommand, fileName, mismatchList, methodDeclaration, projectDir, fileToChange):
 #  for changeItemList in itertools.chain.from_iterable(itertools.combinations(mismatchList,n) for n in range(len(mismatchList)+1)):

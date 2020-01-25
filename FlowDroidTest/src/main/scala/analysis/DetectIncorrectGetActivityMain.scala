@@ -241,10 +241,13 @@ object DetectIncorrectGetActivityMain {
     }*/
     var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
     for (chain <- callChains) {
-      if (! alreadyReportedErrors.contains(chain.controlChain(-2).methodCall.toString)) {
+      println(s"${chain.controlChain}")
+      Console.flush
+      val reversedList = chain.controlChain.reverse
+      val methodCallWithError = reversedList(1)
+      if (! alreadyReportedErrors.contains(methodCallWithError.methodCall.toString)) {
         //println("checking call chain")
         //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-        println(s"${chain.controlChain}")
         println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
         println(s"${!checkingClasses}")
         println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
@@ -258,7 +261,7 @@ object DetectIncorrectGetActivityMain {
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-          alreadyReportedErrors += (chain.controlChain(-2).methodCall.toString -> true)
+          alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
 
           val errorString = "@@@@@ Found a problem: getActivity may be called when " +
             "the Fragment is not attached to an Activity" +
