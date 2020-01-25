@@ -59,10 +59,13 @@ runAllRepairsFile = 'runAllRepairs.py'
 shutil.copyfile(os.path.join(directiveToolDir, runAllRepairsFile), os.path.join(packagedDirectory, runAllRepairsFile))
 repoInfoFile = 'extractRepoInfo.py'
 shutil.copyfile(os.path.join(directiveToolDir, repoInfoFile), os.path.join(packagedDirectory, repoInfoFile))
+#added a new file to copy over - not sure I change all the paths correctly in this file
+repairErrorsFile =  'repairFoundErrors2.py'
+shutil.copyfile(os.path.join(directiveToolDir, 'analysis/EarlyJanuaryResults', repairErrorsFile), os.path.join(packagedDirectory, 'analysis/EarlyJanuaryResults', repoInfoFile))
 
 levenshteinFile = 'levenshteinDistance.py'
 shutil.copyfile(os.path.join(directiveToolDir, levenshteinFile), os.path.join(packagedDirectory, levenshteinFile))
-repairFoundErrorsFile = 'repairFoundErrors.py'
+#repairFoundErrorsFile = 'repairFoundErrors.py'
 #shutil.copyfile(os.path.join(directiveToolDir, repai))
 
 filesInInjectionFolderToCopyList = ['determineInjectionReposForEachInjectionType.py',
