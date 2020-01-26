@@ -17,6 +17,7 @@ import determineMethodDifferences
 import operator
 import traceback
 import levenshteinDistance
+import shlex
 
 #GitHub seems to require me to log in now to search the repos
 #def loginToGitHub(session):
@@ -349,9 +350,9 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
 def createNewCopyOfTestProgram(originalFolder):
   #create a new directory if necessary
   #path is the location of the program to copy from
-  #print('original folder: {0}'.format(originalFolder))
-  #print('experiment folder: {0}'.format(experimentFolder))
-  #input('stopping to check copy test program')
+  print('original folder: {0}'.format(originalFolder))
+  print('experiment folder: {0}'.format(experimentFolder))
+  input('stopping to check copy test program')
   if os.path.exists(experimentFolder):
     shutil.rmtree(experimentFolder)
   #try: 
@@ -362,13 +363,13 @@ def createNewCopyOfTestProgram(originalFolder):
   #  sys.exit(1)
   #distutils.dir_util.copy_tree("/Users/zack/git/DirectiveTool/testFolder/",path)
   #copy the application to the new directory
+  print('original folder: {0}'.format(originalFolder))
+  print('experiment folder: {0}'.format(experimentFolder))
   shutil.copytree(originalFolder,experimentFolder)
   #get the formatting fo the originalFolder and the experiment folder to match -
   #using the originalFolder path as the guide
   #if originalFolder has the path separator at the end, ensure it is on the
   #end of the experiment folder
-  print(originalFolder)
-  print(experimentFolder)
   if originalFolder[-1] == os.path.sep and experimentFolder[-1] != os.path.sep:
     return experimentFolder + os.path.sep
   #if the originalFolder does not have the path separator, remove it from the
@@ -564,13 +565,14 @@ def testAddingOrRemovingMethodCalls(checkerToRun, runFlowDroidCommand, fileToCha
     print('downloaded file: {0}'.format(downloadedFileName))
     with open(downloadedFileName,'r') as fin:
       print('file contents: {0}'.format(fin.read()))
-    input('stopping to check downloaded file')
+    #input('stopping to check downloaded file')
 
     (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
       determineMethodDifferences.getParseInfo(originalFileName)
     (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
       determineMethodDifferences.getParseInfo(downloadedFileName)
     methodCallMismatches = determineMethodDifferences.checkMethodCallsInLines(originalFileTree, downloadedFileTree)
+    print('number of method ')
     for mismatchTestItem in itertools.chain.from_iterable(itertools.combinations(methodCallMismatches,n) for n in range(len(methodCallMismatches)+1)):
       path = createNewCopyOfTestProgram(projectDir)
       newAPKLocation = changeAPKLocationForNewTestFolder(projectDir, path, newAPKLocation)
@@ -902,6 +904,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
   #print(uniqueMismatchList)
   #input('stopping to check filter function ')
   for changeItemList in itertools.chain.from_iterable(itertools.combinations(uniqueMismatchList,n) for n in range(len(uniqueMismatchList)+1)):
+    print('testing a change')
+    wasFixed = False
     #containsFalse = False
     path = createNewCopyOfTestProgram(projectDir)
     newAPKLocation = changeAPKLocationForNewTestFolder(projectDir, path, newAPKLocation)
@@ -918,7 +922,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
       addedLineList = []
       deletedLineList = []
       indexOfMethodStart = -1
-      fullFileToChange = getFilesFullPath(projectDir, fileToChange)
+      fullFileToChange = getFilesFullPath(path, fileToChange)
       with open(fullFileToChange, 'r') as fin:
         #initializing the line count to negative one so that 0 starts on the 
         #first valid line in the method
@@ -1116,7 +1120,10 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         for line in newFileContents:
           fout.write(line)
           fout.write('\n')
-    wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
+      commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFileToChange))
+      subprocess.run(commandList)
+      input('stopping to check changed file')
+      wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
     ##containsFalse = False
     #if foundFixOfInterest:
     #  print('was fixed: {0}'.format(wasFixed))
@@ -1170,6 +1177,9 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
   pageNumber = 1
   notDone = True
   changeSet = set()
+  #the number of repos needed to check before finding a solution - just for 
+  #personal interest and debugging
+  reposComparedCount = 0
   while notDone: 
     # I might want to eventually remove this optimization - while it works, 
     # it currently doesn't have a good way to determine when the saved data
@@ -1322,8 +1332,11 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
                 if createdFiles:
                   #print('reading program from: {0}'.format(rawLinkString))
                   #input('stopping to check found file')
+                  reposComparedCount += 1
                   hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
+                  input('stop after test of repo')
                   if hasSucceeded:
+                    print('repos compared to produce a fix: {0}'.format(reposComparedCount))
                     print('found a successful repair!')
                     notDone = False
               else:

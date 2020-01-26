@@ -49,7 +49,9 @@ def getTypeOfVar(dictToUse, varName):
   if varName.startswith("R."):
     return "StaticFile"
   if varName == 'true' or varName == 'false':
-    return "bool"
+    #return "bool"
+    #I think I want to meaningfully differentiate between true and false
+    return varName
   else:
     #first example of this case was a global variable, which I'm currently
     #not handling; I'll have to look into if not handling those cases are a 
@@ -514,16 +516,23 @@ def getParseInfo(fileToRead):
     statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
     #print('statement nodes:\n') 
     for statementNumber, s in enumerate(statementNodes): 
-      #print(nodeToCodeLine(s))
-      if(s == None):
+      print(nodeToCodeLine(s))
+      print(statementNumber)
+      print(variableDependencyChains)
+      input('checking how variable dependency chain is built')
+      if s == None:
         print('error: s should not be None')
         sys.exit(1)
       def processMethodCall(variableDependencyChains, statementNumber, methodCall):
+        print('in process method call')
         if not (methodCall.qualifier == None or methodCall.qualifier == "" or methodCall.qualifier == "super"):
+          print('in first if of process method call')
           if methodCall.qualifier[0].islower():
             typeOfQ = getTypeOfVar(variableTypeDict, methodCall.qualifier)
             if not typeOfQ == None:
               variableDependencyChains[typeOfQ].append(statementNumber)
+              print('added {0} to {1} in {2}'.format( statementNumber, typeOfQ, variableDependencyChains))
+              input('stop to check addition')
         #methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments if (not isinstance(a, javalang.tree.Literal)) ]  
         try: 
           methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments ]  
@@ -538,6 +547,7 @@ def getParseInfo(fileToRead):
           #can't remember everything this check was blocking, but it blocks the static
           #files, which I currently don't want
           #if p[0].islower():
+          print('param: {0}'.format(p))
           typeOfP = getTypeOfVar(variableTypeDict, p) 
           if typeOfP == None:
             #if the variable is a global variable, then don't worry about it, since
@@ -569,17 +579,24 @@ def getParseInfo(fileToRead):
           else:
             if typeOfP in variableDependencyChains:
               variableDependencyChains[typeOfP].append(statementNumber)
+              print('added {0} to {1} in {2}'.format( statementNumber, typeOfP, variableDependencyChains))
+              input('stop to check addition')
             else:
               #this else should only execute for the first occurrence of a Literal
               #all other types should already be added
-              if typeOfP == 'bool':
-                variableDependencyChains[typeOfP] = [statementNumber]
+              if typeOfP == 'true' or typeOfP == 'false':
+                if typeOfP in variableDependencyChains:
+                  variableDependencyChains[typeOfP].append([statementNumber])
+                else:
+                  variableDependencyChains[typeOfP] = [statementNumber]
+                print('added {0} to {1} in {2}'.format( statementNumber, typeOfP, variableDependencyChains))
+                input('stop to check addition')
               else:
                 #skipping global variables
                 if typeOfP is not None:
                   print('error: type {0} not found in dependency chain dict for variable {1}'.format(typeOfP, p))
-                  print('is type of bool: {0}'.format(isinstance(p, bool)))
-                  print('python type of bool: {0}'.format(type(p)))
+                  #print('is type of bool: {0}'.format(isinstance(p, bool)))
+                  print('python type of true or false: {0}'.format(type(p)))
                   print('dependency chain dict: {0}'.format(variableDependencyChains))
                   sys.exit(1)
         return variableDependencyChains
@@ -587,8 +604,11 @@ def getParseInfo(fileToRead):
       #we only care about statement expressions this time (when considering
       #only statementexpressions and variabledeclarations) - although may 
       #expand to handle more later
-      #print(s)
+      print(s)
+      print(type(s))
+      input('stopping to check statement type')
       if isinstance(s, javalang.tree.Assignment) and not isinstance(s.expressionl, javalang.tree.This):
+        print('past is instance')
         try:
           typeQ = getTypeOfVar(variableTypeDict, s.expressionl.member)
         except Exception as e:
@@ -602,6 +622,8 @@ def getParseInfo(fileToRead):
           methodCall = s.value.expression
         else:
           methodCall = s.value
+        print('type of method call: {0}'.format(type(methodCall)))
+        input('stopping to check method call type')
         #make sure method call is an actual method call and ignore all others
         if not isinstance(methodCall, javalang.tree.MemberReference) and \
         not isinstance(methodCall, javalang.tree.Literal) and \
@@ -612,10 +634,14 @@ def getParseInfo(fileToRead):
           variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, methodCall)
         #print('chain after: {0}'.format(variableDependencyChains))
       elif hasattr(s, 'expressionl') and not isinstance(s.expressionl, javalang.tree.This): 
+        print('in second elif')
         #print(s)
         #print('chain before: {0}'.format(variableDependencyChains))
         variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s)
         #print('chain after: {0}'.format(variableDependencyChains))
+      elif isinstance(s, javalang.tree.MethodInvocation):
+        variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s)
+      print('never passed if or elif')
     #print('final dependency chains: {0}'.format(variableDependencyChains))
     for typeName in variableDependencyChains:
       if len(variableDependencyChains[typeName]) < 1:
@@ -655,7 +681,11 @@ def checkIfEveryCallHasTheExpectedTypesWithIt(chain1, chain2, listNumber):
   #print('in check if expected types')
   for typeName in chain1.keys():
     #print("in first for")
-    #print(chain1)
+    print('chain 1')
+    print(chain1)
+    print('chain 2')
+    print(chain2)
+    input('stopping to check chains')
     #print("end of chain1")
     previousStatementNumberInChain2Lines = -1
     for statementNumber in chain1[typeName]:

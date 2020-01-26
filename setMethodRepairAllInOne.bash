@@ -78,7 +78,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=7
+currentCheckerNumber=3
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -88,7 +88,11 @@ currentCheckerNumber=7
        scriptDir=/Users/zack/git/DirectiveTool/
        methodDeclarationStringToCompare="public View onCreateView"
        methodOfInterest1=inflate
-       termsOfInterest="Fragment";;
+       #eventually I might want to have the repair just automatically include
+       #the method of interest in the terms of interest, but doing this quick 
+       #change now because it's faster and I'm not sure what problems the other
+       #approach could cause without trying it out
+       termsOfInterest="Fragment inflate";;
     #works! But I need to add a heuristic later to make the repair more sensical;
     #partially done, currently moving the method to a method in the class 
     #with the problem; but could add lifecycle guided information to the repair
@@ -266,7 +270,8 @@ currentCheckerNumber=7
       #echo "^$runCheckerString"
       #echo /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $temporaryTestDir $fileToChange "$termsOfInterest"
       #exit 0
-      /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $temporaryTestDir $fileToChange $appLocationForRepair "$termsOfInterest"
+      echo "file to change before github repair: $fileToChange"
+      /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $testDir $fileToChange $appLocationForRepair "$termsOfInterest"
     fi
   #fi
   fi
