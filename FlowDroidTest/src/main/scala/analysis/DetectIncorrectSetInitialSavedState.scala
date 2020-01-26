@@ -102,7 +102,9 @@ object DetectIncorrectSetInitialSavedState {
                 //println("in second for")
                 if (stillOnFirstPass && stmt.toString().contains(methodNameToCheckFor)) {
                   extractMethodCallInStatement(stmt) match {
-                    case Some(m) => newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
+                    case Some(m) => {
+                      newCallChains = addControlFlowChain(newCallChains, new ControlFlowChain(List(new ControlFlowItem(m, checkingClasses))))
+                    }
                     case None => ()
                   }
                   stillChanging = true
@@ -156,11 +158,12 @@ object DetectIncorrectSetInitialSavedState {
     for (callChain <- callChains) {
       println(s"${callChain.controlChain}")
     }*/
+    println(s"number of found call chains: ${callChains.length}")
     for (chain <- callChains) {
       //check if the chain contains a call to a method that demonstrates the fragment has been initialized
       //(note) I think this is right.  Might need to check my logic later
-      if (chain.controlChain.exists(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
-      || (checkingClasses && chain.controlChain.forall(call => classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
+      if (chain.controlChain.exists(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass) && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
+      || (checkingClasses && chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))){
         println("start of call chain")
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
@@ -183,18 +186,6 @@ object DetectIncorrectSetInitialSavedState {
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
     println(s"total time (in seconds): ${totalTime/1000000000}")
-  }
-
-  def classIsSubClassOfFragment(c: SootClass): Boolean = {
-    if(c.toString() == "android.app.Fragment"){
-      return true
-    } else {
-      if(c.hasSuperclass) {
-        return classIsSubClassOfFragment(c.getSuperclass)
-      } else {
-        return false
-      }
-    }
   }
 
   def addControlFlowChain(controlFlowChainList: List[ControlFlowChain], controlFlowChainToAdd: ControlFlowChain): List[ControlFlowChain] = {

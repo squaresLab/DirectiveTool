@@ -598,7 +598,10 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
 #    moveFrontMethodAfterBackMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
 
 def getFileAndMethodWithProblem(callChains, projectDir):
-  for chainItem in callChains[0]:
+  #removing the first item from the call chain because it's often the failing method
+  #and not the location of the failing method
+  for chainItem in callChains[0][1:]:
+    print(chainItem)
     if not chainItem.className.startswith('android.app'):
       classToGetMethodFrom = chainItem.className
       methodWithProblem = chainItem.methodName
@@ -701,8 +704,8 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
         varName = lineItems[lineItems.index('=') - 1]
         yield lineCount,fullFileName, varName
   #otherwise, see if the method can moved to a method in the other java files
-  for dirpath, dirnames, filenames in os.walk(projectDir):
-    for filename in [f for f in filenames if f.endswith(".java")]:
+  for root, dirnames, filenames in os.walk(projectDir):
+    for filename in [os.path.join(root,f) for f in filenames if f.endswith(".java")]:
       if filename != fullFileName:
         with open(filename, 'r') as fin:
           for lineCount, line in enumerate(fin):
@@ -713,13 +716,15 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
 
  
 
-def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
+def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSourceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
+  print('method to move at start: {0}'.format(methodToMove))
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
   fileLines = []
+  lineToMove = None
   for (changeLine, changeFile, varName) in getInstantiationLines(fullFileName, projectDir, instantiationString):
     with open(changeFile, 'r') as fin:
       for line in fin:
@@ -727,6 +732,10 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, orignalSouc
           lineToMove = line
         else:
           fileLines.append(line)
+    if lineToMove is None:
+      print('unable to find method to move {0} in {1}'.format(methodToMove, changeFile))
+      input('stopping to check if this is an error or not')
+      return False
     lineToMove=lineToMove.lstrip()
     lineToMove = '{0}.{1}'.format(varName, lineToMove)
     print('line to move: {0}'.format(lineToMove))
@@ -767,7 +776,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #the method call to the first place the class is instantiated (maybe check for 
   #other places). After that, try to move the method to all the methods for the
   #class of the object.
-
+  print('method of interest 1 at beginning of move call repair: {0}'.format(methodOfInterest1))
   methodObjList = []
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
@@ -842,6 +851,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     #print(requiresAddingReference)
     #input('stopping to see this value')
     if requiresAddingReference:
+      print('method of interest1 before call: {0}'.format(methodOfInterest1))
       result = moveMethodToObjectInstantiation(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
       if result:
         currentProblemCount = 0
