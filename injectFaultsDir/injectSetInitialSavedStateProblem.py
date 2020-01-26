@@ -8,6 +8,8 @@ import os
 import re
 import random
 import sys
+import subprocess
+import shlex
 
 #I'm not sure my initial approach makes the most sense because the Fragment instance
 #may be different when you move it around
@@ -16,8 +18,9 @@ startingDir = '/Users/zack/git/reposFromFDroid/'
 newInstanceDeclarationPattern = re.compile('public static .* newInstance(){')
 injectImportStatement = 'import android.support.v4.app.Fragment;\n'
 injectProblemStringInActivity = "Fragment.SavedState savedState = getSupportFragmentManager().saveFragmentInstanceState({0});\n{0}.setInitialSavedState(savedState);\n"
+#injectProblemStringInFragment = "Fragment.SavedState savedState = getFragmentManager().saveFragmentInstanceState({0});\n{0}.setInitialSavedState(savedState);\n"
 injectProblemStringInFragment = "Fragment.SavedState savedState = getFragmentManager().saveFragmentInstanceState({0});\n{0}.setInitialSavedState(savedState);\n"
-
+'Fragment.SavedState savedState = null;\ntry {\nsavedState = Fragment.SavedState.class.getConstructor(Bundle.class).newInstance(new Bundle());\n}\ncatch(Exception e) { \n}\n{0}.setInitialSavedState(savedState);\n'
 
 def determineChanges(fullFilename):
   with open(fullFilename,'r',encoding='utf-8',errors="surrogateescape") as fin:
@@ -112,7 +115,9 @@ def injectSetInitialSavedStateProblem(fullFilename):
       for line in fileContents:
         print(line, file=fout, end="")
     print('done, check file: {0}, line number: {1}'.format(fullFilename, lineToChange))
-    #input('stopping to check result. press enter to continue') 
+    input('stopping to check result. press enter to continue') 
+    commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
+    subprocess.run(commandList)
     return True
   return False
 

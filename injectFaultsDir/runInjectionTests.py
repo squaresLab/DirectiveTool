@@ -517,7 +517,7 @@ def main():
               newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance.checkerName, appBuilds, debuggingResultList, copyRepoLocation, repoDir )
           if newAttemptedFixCount < 1:
             debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker or found too many problems after injecting the problem')
-            #input('stopping to debug this case')
+            input('stopping to debug the failed injection case')
           elif len(repairedApps) < 1:
             debuggingResultList.append('was never able to successfully repair an app')
           else:

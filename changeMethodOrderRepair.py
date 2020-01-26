@@ -265,7 +265,7 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
     #handle either the multiple line print out case or the single List print out
     #case
     for line in commandOutput.stdout.decode('utf-8').splitlines():
-      print(line)
+      print('line from output: {0}'.format(line))
       if line.startswith('total number of caught problems:'):
         lineItems = line.split(' ')
         currentProblems = int(lineItems[-1])
@@ -287,11 +287,12 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
         listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
         if listSequenceMatch:
           print('found list: {0}'.format(listSequenceMatch.group(1)))
-          callItems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
-          for c in callItems:
-            print(c)
+          callitems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
+          for c in callitems:
+            #print(c)
             itemsInCall = c.split(':')
             currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
+            print('|{0}|'.format(chainsInfo))
           #currentChain.reverse()
           chainsInfo.append(currentChain)
           #sys.exit(0)
@@ -692,12 +693,14 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           #pass
           #
 def getInstantiationLines(fullFileName, projectDir, instantiationString):
+  #first check if the fix can be moved to a method in the current file
   with open(fullFileName, 'r') as fin:
     for lineCount, line in enumerate(fin):
       if instantiationString in line:
         lineItems = line.split(' ')
         varName = lineItems[lineItems.index('=') - 1]
         yield lineCount,fullFileName, varName
+  #otherwise, see if the method can moved to a method in the other java files
   for dirpath, dirnames, filenames in os.walk(projectDir):
     for filename in [f for f in filenames if f.endswith(".java")]:
       if filename != fullFileName:
@@ -710,7 +713,7 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
 
  
 
-def moveMethodToObjectInstantiation(projectDir, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
+def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, orignalSouceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
@@ -733,7 +736,8 @@ def moveMethodToObjectInstantiation(projectDir, orignalSouceFolder, methodToMove
         fout.write(line)
     #test the newly created file and break with a success if the test succeeds
     print('changed file: {0}'.format(changeFile))
-    appWasFixed = executeTestOfChangedApp(projectDir, checkerName, apkLocation)
+    appWasFixed = executeTestOfChangedApp(projectDir, runFlowDroidCommand, checkerName, apkLocation)
+    #def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation):
     print('app was fixed: {0}'.format(appWasFixed))
     #sys.exit(0)
     if appWasFixed:
@@ -812,6 +816,9 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #sys.exit(0)
   try:
     print(callChains)
+    #the first call is always the exact failing method, but I want the location
+    #where the failing method occurred. Also, the list is assumed to be ordered 
+    #where the failing method call is at the end.
     classWithProblem=callChains[0][-2].className.split('.')[-1]
     #try to handle nested classes - although I'm not sure what I'm doing at the 
     #moment will fully support them or if this will just die later
@@ -830,10 +837,12 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     print('error: the call chains were not created')
   else: 
     l = len(methodObjList)
-    print('number of method objs: {0}'.format(l))
-    print('length of call chains: {0}'.format(len(callChains)))
+    #print('number of method objs: {0}'.format(l))
+    #print('length of call chains: {0}'.format(len(callChains)))
+    #print(requiresAddingReference)
+    #input('stopping to see this value')
     if requiresAddingReference:
-      result = moveMethodToObjectInstantiation(testFolder, originalSourceFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
+      result = moveMethodToObjectInstantiation(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
       if result:
         currentProblemCount = 0
     else:

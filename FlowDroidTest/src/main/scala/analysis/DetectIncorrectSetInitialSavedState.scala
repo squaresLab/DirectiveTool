@@ -165,10 +165,13 @@ object DetectIncorrectSetInitialSavedState {
         for(chainItem <- chain.controlChain){
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
+        //these control chains are the opposite order from the order of getActivity and are throwing
+        //off the code parsing the print errors
+        val printedControlChain = chain.controlChain
         println("end of call chain")
-        val errorString = "@@@@ Found a problem: setInitialSavedState may be called when " +
+        val errorString = "@@@@@ Found a problem: setInitialSavedState may be called when " +
           "the Fragment is attached to an Activity" +
-          s": call sequence ${chain.controlChain}"
+          s": call sequence ${printedControlChain}"
         println(errorString)
         System.out.flush()
         System.err.println(errorString)

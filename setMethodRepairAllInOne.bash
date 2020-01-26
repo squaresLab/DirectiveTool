@@ -78,7 +78,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=4
+currentCheckerNumber=7
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -229,22 +229,26 @@ currentCheckerNumber=4
     then
       echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1"
       /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1
+      checkerResult=$?
     else
       echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1 $additionalInfo"
       /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1 $additionalInfo
+      checkerResult=$?
     fi
     skippedTwoMethod=false
   else
     skippedTwoMethod=true 
   fi
-  if [ $skippedTwoMethod = true ] || [ $? -ne 0 ] 
+  if [ $skippedTwoMethod = true ] || [ $checkerResult -ne 0 ] 
   then
     echo "/Users/zack/git/DirectiveTool/changeMethodOrderRepair.py \"$runCheckerString\" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2"
     /Users/zack/git/DirectiveTool/changeMethodOrderRepair.py "$runCheckerString" $checker $testDir $appLocationForRepair $methodOfInterest1 $methodOfInterest2
+    checkerResult=$?
+
     #echo "stopping after change method order"
     #read stoppingHere
   #else
-    if [ $? -ne 0 ]
+    if [ $checkerResult -ne 0 ]
     then 
       if [ -z $classWithProblem ]
       then 
