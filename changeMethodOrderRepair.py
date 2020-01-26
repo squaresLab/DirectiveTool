@@ -6,6 +6,7 @@ import os.path
 import shutil
 import subprocess
 import re
+import traceback
 
 
 import levenshteinDistance
@@ -628,10 +629,99 @@ def getFileAndMethodWithProblem(callChains, projectDir):
   else:
     return fullFileName, methodWithProblem
 
+#this method tries to extract the lines in the file needed to make the lineToMove
+#compile in a new method, but does so heuristically, so it's not perfect
+def getLineToMoveDependencies(fullFileName, lineToMove):
+  #get the variables in the line
+  paramString = lineToMove.split('(')[-1].split(')')[0]
+  if paramString == '':
+    #didn't find any dependencies so just return the original line
+    return [lineToMove]
+  else:
+    paramItems = paramString.split(',')
+    totalDependencyLines = []
+    totalTryLines = []
+    for p in paramItems:
+      p = p.strip()
+      dependencyLineTuples = []
+      nestingCount = 0
+      tryTuples = []
+      nestingToRecord = []
+      try:
+        with open(fullFileName, 'r') as fin:
+          for lineCount,line in enumerate(fin):
+            if p in line:
+              dependencyLineTuples.append((line, lineCount))
+            testLine = line.strip()
+            if testLine.startswith('try'):
+              tryTuples.append(('try',lineCount,nestingCount, line))
+              nestingToRecord.append(nestingCount)
+            elif testLine.startswith('catch'):
+              tryTuples.append(('catch',lineCount,nestingCount, line))
+              nestingToRecord.append(nestingCount)
+            for c in line:
+              if c == '{':
+                nestingCount += 1
+              if c == '}':
+                nestingCount -= 1
+            if nestingCount in nestingToRecord:
+              nestingToRecord.remove(nestingCount)
+              tryTuples.append(('end',lineCount, nestingCount, line))
+      except Exception:
+        #This try except probably isn't needed anymore. I had a misnamed variable
+        #issue that I couldn't figure out, so I added this. I think everything is
+        #fixed now, but leaving it just in case
+        print(e)
+        traceback.print_exc()
+        input('stop to check the exception')
+      #now that I have the try catch blocks, try to determine the ones I need
+      #to copy over  
+      tryLinesToAdd = []
+      endCountSavedInTry = 0
+      #savingTry = False
+      nestCountToSave = None
+      #print(dependencyLineTuples)
+      #print(tryTuples)
+      for t in tryTuples:
+        if t[0] == 'try':
+          #if the try statement is right before a line to add, add the try end, and catch
+          #to the lines to add
+          if t[1]+1 in [lineCountToAdd for line, lineCountToAdd in dependencyLineTuples]:
+            tryLinesToAdd.append(t)
+            nestCountToSave = t[2]
+        elif nestCountToSave != None:
+          if t[2] == nestCountToSave:
+            tryLinesToAdd.append(t)
+            if t[0] == 'end':
+              endCountSavedInTry += 1
+              #currently only gets one catch statement
+              if endCountSavedInTry == 2:
+                nestCountToSave = None
+      totalTryLines.extend(tryLinesToAdd)
+      totalDependencyLines.extend(dependencyLineTuples)
+    #combine the full lists in sorted order, also this should remove duplicates
+    #in the lists
+    fullLinesToAddDict = {} 
+    for t in totalTryLines:
+      fullLinesToAddDict[t[1]] = t[3]
+    for d in totalDependencyLines:
+      fullLinesToAddDict[d[1]] = d[0]
+    finalLineList = []
+    for k in sorted(fullLinesToAddDict.keys()):
+      finalLineList.append(fullLinesToAddDict[k])
+    print(finalLineList)
+    return finalLineList
+
+
+  
+
 
 #currently I am getting the file and method with problem every iteration and
 #they don't change between each iteration, need to refactor the code
 #to remove this unnessary calculation later
+
+#I also need to change the code to move any variable initializations that it
+#depends on with it; doing that now
 def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   print('in move line to new method')
   print('current project dir: {0}'.format(projectDir))
@@ -641,6 +731,7 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   #interest after seeing the method declaration is the wrong call
   foundMethodWithProblem = False
   fileWithoutLineToMove = []
+  lineToMove = None
   with open(fullFileName,'r') as fin:
     for line in fin:
       if foundMethodWithProblem:
@@ -650,8 +741,6 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           fileWithoutLineToMove.append(line)
       else:
         fileWithoutLineToMove.append(line)
-        if 'onCreateView' in line:
-          print('line: {0}, methodWithProblem: {1}, is in line: {2}'.format(line, methodWithProblem, methodWithProblem in line))
         #this check currently only works if the method with problem returns a void,
         #takes no arguments, and is only on a single line
         if methodWithProblem in line:
@@ -659,6 +748,12 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           #ends and method declarations since I only want the method declaration
           if ';' not in line:
             foundMethodWithProblem = True
+  if lineToMove is None:
+    print('error: never found method to move {0} in file {1}'.format(methodToMove, fullFileName))
+    input('stop to check this error')
+  else:
+    print('calling line to move with dependencies')
+    lineToMoveWithDependencies = getLineToMoveDependencies(fullFileName, lineToMove)
   #remove the faulty code line from the file to test
   with open(fullFileName,'w') as fout:
     for line in fileWithoutLineToMove:
@@ -671,10 +766,14 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   print('moving |{0}| to line number {1} (method: {2}) in file: {3}'.format(lineToMove, int(moveLocationObj.lineNumber) + 1, moveLocationObj.methodName, moveLocationObj.fileName))
   #TODO SOON: this next line isn't working for some reason; or the file is 
   #not being correctly overwritten
-  contentsOfFileWithAddedLine.insert(int(moveLocationObj.lineNumber) + 1, lineToMove)
+  #contentsOfFileWithAddedLine.insert(int(moveLocationObj.lineNumber) + 1, lineToMove)
+  insertLocation = int(moveLocationObj.lineNumber) + 1
+  contentsOfFileWithAddedLine[insertLocation: insertLocation] = lineToMoveWithDependencies
   with open(moveLocationObj.fileName, 'w') as fout:
     for line in contentsOfFileWithAddedLine:
       fout.write(line)
+  print('rewrote {0}'.format(moveLocationObj.fileName))
+  input('stop to check the rewrite')
 
 
 
@@ -697,6 +796,7 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           #
 def getInstantiationLines(fullFileName, projectDir, instantiationString):
   #first check if the fix can be moved to a method in the current file
+  print('first checking {0}'.format(fullFileName))
   with open(fullFileName, 'r') as fin:
     for lineCount, line in enumerate(fin):
       if instantiationString in line:
@@ -707,6 +807,7 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
   for root, dirnames, filenames in os.walk(projectDir):
     for filename in [os.path.join(root,f) for f in filenames if f.endswith(".java")]:
       if filename != fullFileName:
+        print('now checking: {0}'.format(filename))
         with open(filename, 'r') as fin:
           for lineCount, line in enumerate(fin):
             if instantiationString in line:
@@ -725,6 +826,7 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
   instantiationString = "new {0}(".format(className)
   fileLines = []
   lineToMove = None
+  print('instantiation line: {0}'.format(instantiationString))
   for (changeLine, changeFile, varName) in getInstantiationLines(fullFileName, projectDir, instantiationString):
     with open(changeFile, 'r') as fin:
       for line in fin:
@@ -737,14 +839,19 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
       input('stopping to check if this is an error or not')
       return False
     lineToMove=lineToMove.lstrip()
-    lineToMove = '{0}.{1}'.format(varName, lineToMove)
     print('line to move: {0}'.format(lineToMove))
-    fileLines.insert(changeLine + 1, lineToMove)
+    lineToMoveWithDependencies = getLineToMoveDependencies(changeFile, lineToMove)
+    for lCount, l in enumerate(lineToMoveWithDependencies):
+      if methodToMove in l:
+        lineToMoveWithDependencies[lCount] = '{0}.{1}'.format(varName, l)
+    insertLocation = changeLine + 1
+    fileLines[insertLocation:insertLocation] = lineToMoveWithDependencies
     with open(changeFile, 'w') as fout:
       for line in fileLines:
         fout.write(line)
     #test the newly created file and break with a success if the test succeeds
     print('changed file: {0}'.format(changeFile))
+    input('stop to check file changed with object instance added')
     appWasFixed = executeTestOfChangedApp(projectDir, runFlowDroidCommand, checkerName, apkLocation)
     #def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation):
     print('app was fixed: {0}'.format(appWasFixed))
