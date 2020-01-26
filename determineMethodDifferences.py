@@ -516,10 +516,6 @@ def getParseInfo(fileToRead):
     statementNodes = [ node for path,node in fileTree if isStatementOfInterest(node)]
     #print('statement nodes:\n') 
     for statementNumber, s in enumerate(statementNodes): 
-      print(nodeToCodeLine(s))
-      print(statementNumber)
-      print(variableDependencyChains)
-      input('checking how variable dependency chain is built')
       if s == None:
         print('error: s should not be None')
         sys.exit(1)
@@ -531,8 +527,6 @@ def getParseInfo(fileToRead):
             typeOfQ = getTypeOfVar(variableTypeDict, methodCall.qualifier)
             if not typeOfQ == None:
               variableDependencyChains[typeOfQ].append(statementNumber)
-              print('added {0} to {1} in {2}'.format( statementNumber, typeOfQ, variableDependencyChains))
-              input('stop to check addition')
         #methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments if (not isinstance(a, javalang.tree.Literal)) ]  
         try: 
           methodParams = [ getFullNameOfArg(a) for a in methodCall.arguments ]  
@@ -579,8 +573,6 @@ def getParseInfo(fileToRead):
           else:
             if typeOfP in variableDependencyChains:
               variableDependencyChains[typeOfP].append(statementNumber)
-              print('added {0} to {1} in {2}'.format( statementNumber, typeOfP, variableDependencyChains))
-              input('stop to check addition')
             else:
               #this else should only execute for the first occurrence of a Literal
               #all other types should already be added
@@ -589,8 +581,6 @@ def getParseInfo(fileToRead):
                   variableDependencyChains[typeOfP].append([statementNumber])
                 else:
                   variableDependencyChains[typeOfP] = [statementNumber]
-                print('added {0} to {1} in {2}'.format( statementNumber, typeOfP, variableDependencyChains))
-                input('stop to check addition')
               else:
                 #skipping global variables
                 if typeOfP is not None:
@@ -604,9 +594,6 @@ def getParseInfo(fileToRead):
       #we only care about statement expressions this time (when considering
       #only statementexpressions and variabledeclarations) - although may 
       #expand to handle more later
-      print(s)
-      print(type(s))
-      input('stopping to check statement type')
       if isinstance(s, javalang.tree.Assignment) and not isinstance(s.expressionl, javalang.tree.This):
         print('past is instance')
         try:
@@ -622,8 +609,6 @@ def getParseInfo(fileToRead):
           methodCall = s.value.expression
         else:
           methodCall = s.value
-        print('type of method call: {0}'.format(type(methodCall)))
-        input('stopping to check method call type')
         #make sure method call is an actual method call and ignore all others
         if not isinstance(methodCall, javalang.tree.MemberReference) and \
         not isinstance(methodCall, javalang.tree.Literal) and \
@@ -641,7 +626,6 @@ def getParseInfo(fileToRead):
         #print('chain after: {0}'.format(variableDependencyChains))
       elif isinstance(s, javalang.tree.MethodInvocation):
         variableDependencyChains = processMethodCall(variableDependencyChains, statementNumber, s)
-      print('never passed if or elif')
     #print('final dependency chains: {0}'.format(variableDependencyChains))
     for typeName in variableDependencyChains:
       if len(variableDependencyChains[typeName]) < 1:
@@ -681,11 +665,6 @@ def checkIfEveryCallHasTheExpectedTypesWithIt(chain1, chain2, listNumber):
   #print('in check if expected types')
   for typeName in chain1.keys():
     #print("in first for")
-    print('chain 1')
-    print(chain1)
-    print('chain 2')
-    print(chain2)
-    input('stopping to check chains')
     #print("end of chain1")
     previousStatementNumberInChain2Lines = -1
     for statementNumber in chain1[typeName]:
