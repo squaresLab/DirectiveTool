@@ -939,8 +939,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   commandList.append(testFolder)
   try: 
     #print(' '.join(commandList ))
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    for line in commandOutput.stderr.decode('utf-8').splitlines():
+    commandOutput = subprocess.run(commandList, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     for line in commandOutput.stdout.decode('utf-8').splitlines():
       if line.strip() is not '':
         m = re.match(r"(.+), (.+), \(line (\d+),col (\d+)\), (.+)", line)
