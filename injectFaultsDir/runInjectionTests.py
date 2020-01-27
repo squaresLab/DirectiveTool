@@ -35,10 +35,10 @@ runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Content
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidInflateCallMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetTheme.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
-#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/singleGetActivityInjectionRepos.txt'
+workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/singleGetActivityInjectionRepos.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetArgumentsMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
-workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectSetInitialSavedState.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectSetInitialSavedState.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetContentViewFindViewByIDOrdering.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedFoldersFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/triedInjectionFolders.txt'
@@ -340,6 +340,8 @@ def tryToRepairApps(currentChecker, appBuilds, debuggingResultList, currentTestR
         else:
           print('repo tests failed after repair')
           debuggingResultList.append('repo tests failed after repair')
+      else:
+        print('fix attempt of application returned false')
     else:
       print('ran checker but did not find the right number of errors')
   print('finished trying to repair apps')
@@ -381,7 +383,7 @@ def main():
   ##issues - first one can only inject into a nested class (whose repair isn't supported) and
   #second one only injects into methods that aren't called directly (I could make those errors, but 
   #that would probably open up even more false positives)
-  #injectorInstanceList.append(InjectionDispatch('DetectIncorrectGetActivityMain', isRepoOfInterestInitializer(injectGetActivityIssue.isPossibleInjectionRepo), injectGetActivityIssue.injectInRepo))
+  injectorInstanceList.append(InjectionDispatch('DetectIncorrectGetActivityMain', isRepoOfInterestInitializer(injectGetActivityIssue.isPossibleInjectionRepo), injectGetActivityIssue.injectInRepo))
   #injectorInstance = InjectionDispatch('DetectInvalidGetResources', injectGetResourcesIssue.findPossibleInjectionRepos, injectGetResourcesIssue.injectInRepo)
   #injectorInstance = InjectionDispatch('DetectSetArgumentsMain', filterRepoInitializer(injectSetArgumentsProblem.isRepoOfInterest), injectInRepoInitializer(injectSetArgumentsProblem.injectSetArgumentsProblem))
   #injectorInstance = InjectionDispatch('DetectInvalidSetTheme', injectSetThemeIssue.findPossibleInjectionRepos, injectSetThemeIssue.injectInRepo)
@@ -393,7 +395,7 @@ def main():
   #injectorInstance = InjectionDispatch('DetectIncorrectSetInitialSavedState', filterRepoInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem))
   #doesn't have enough instances - only two contain either, 1 compiles but doesn't parse in Flowdroid, the other one has the section commented out
   #tries to fix 0 apps
-  injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
+  #injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectInflateProblemWithoutComby)))
   #set options menu works now for 

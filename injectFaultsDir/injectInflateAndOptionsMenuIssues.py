@@ -129,6 +129,10 @@ def determineInjectionInfoForInflateRepo(repo):
 
 def injectInflateProblemWithoutComby(fullFilename):
   #input('starting inject inflate problem')
+  #skipping some files for debugging
+  filesToSkip = ['YouTubePlayerV1Fragment.java', 'YouTubePlayerV2Fragment.java', 'YouTubePlayerTutorialFragment.java', 'ChromecastControllerFragment.java', 'ChannelBrowserFragment.java']
+  if os.path.basename(fullFilename) in filesToSkip:
+    return False
   isAFileToChange = False
   injectLine = None
   fileContents = []
@@ -151,7 +155,7 @@ def injectInflateProblemWithoutComby(fullFilename):
   else:
     inflateLineToChange = fileContents[injectLine]
     inflateIndex = inflateLineToChange.find('inflate(')
-    endOfCallIndex = inflateLineToChange.find(')')
+    endOfCallIndex = inflateLineToChange.rfind(')')
     paramStrings = inflateLineToChange[inflateIndex + len('inflate('): endOfCallIndex]
     params = paramStrings.split(',')
     parameterOfInterest = params[-1].strip()
@@ -162,7 +166,9 @@ def injectInflateProblemWithoutComby(fullFilename):
       #if the parameter is the wrong type, change it
       params[-1] = 'true'
       paramString = ','.join(params)
-      newInflateString = inflateLineToChange[:inflateIndex + len('inflate(') + 1] + paramString + inflateLineToChange[endOfCallIndex:]
+      #I think the + 1 is wrong. I'm testing out to see
+      #newInflateString = inflateLineToChange[:inflateIndex + len('inflate(') + 1] + paramString + inflateLineToChange[endOfCallIndex:]
+      newInflateString = inflateLineToChange[:inflateIndex + len('inflate(')] + paramString + inflateLineToChange[endOfCallIndex:]
       fileContents[injectLine] = newInflateString
     else:
       #if the parameter is missing, add the wrong one
@@ -173,7 +179,7 @@ def injectInflateProblemWithoutComby(fullFilename):
       print(line, file=fout, end='')
   commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFilename))
   subprocess.run(commandList)
-  input('stopping to check the injection')
+  input('stopping to check the injection in {0}'.format(fullFilename))
   #if we got to this point then the file has been successfully changed
   return True
 

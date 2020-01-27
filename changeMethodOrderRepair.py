@@ -94,6 +94,14 @@ class MethodInfo:
     self.columnNumber = columnNumber
     self.fileName = fileName
 
+  def __str__(self):
+    return "class name: {0}, method name: {1}, line number: {2}, columnNumber: {3}, file name: {4}".format(self.className, self.methodName, self.lineNumber, self.columnNumber, self.fileName)
+
+  def __repr__(self):
+    return "class name: {0}, method name: {1}, line number: {2}, columnNumber: {3}, file name: {4}".format(self.className, self.methodName, self.lineNumber, self.columnNumber, self.fileName)
+
+
+
 class CallChainItem:
   def __init__(self, className, methodName):
     self.className = className
@@ -601,20 +609,28 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
 def getFileAndMethodWithProblem(callChains, projectDir):
   #removing the first item from the call chain because it's often the failing method
   #and not the location of the failing method
-  for chainItem in callChains[0][1:]:
-    print(chainItem)
+  #the call chain seems reversed in getActivity. Maybe I need to make them ordered
+  #the same way
+  innerClassWithProblem = None
+  for chainItem in list(reversed(callChains[0]))[1:]:
     if not chainItem.className.startswith('android.app'):
       classToGetMethodFrom = chainItem.className
       methodWithProblem = chainItem.methodName
       break
+  print('editing method with problem')
   methodWithProblem = re.sub(r'^[^ ]+\.','',methodWithProblem)
   methodWithProblem = re.sub(r'\w[\w\.]+\.','',methodWithProblem)
   methodWithProblem = re.sub(r'\(.*','',methodWithProblem)
   methodWithProblem = methodWithProblem + '('
+  print('method with problem after editing: {0}'.format(methodWithProblem))
   classItems = classToGetMethodFrom.split('.')
   fileBaseName = classItems[-1]
   if '$' in fileBaseName:
-    fileBaseName=fileBaseName[:fileBaseName.index('$')]
+    nameItems = fileBaseName.split('$')
+    fileBaseName=nameItems[0]
+    innerClassWithProblem = nameItems[1]
+
+  print('file base name: {0}'.format(fileBaseName))
   fileToGetMethodFrom = fileBaseName+".java"
   print(fileToGetMethodFrom)
   fullFileName = ''
@@ -622,12 +638,13 @@ def getFileAndMethodWithProblem(callChains, projectDir):
     for f in filenames:
       if f == fileToGetMethodFrom:
         fullFileName = os.path.join(dirpath, f)
+        print('found full file name: {0}'.format(fullFileName))
         break
   if fullFileName == '':
     print('error finding the file name for file {0} in directory {1}'.format(fileToGetMethodFrom, projectDir))
     sys.exit(1)
   else:
-    return fullFileName, methodWithProblem
+    return fullFileName, methodWithProblem, innerClassWithProblem
 
 #this method tries to extract the lines in the file needed to make the lineToMove
 #compile in a new method, but does so heuristically, so it's not perfect
@@ -712,6 +729,17 @@ def getLineToMoveDependencies(fullFileName, lineToMove):
     print(finalLineList)
     return finalLineList
 
+#the method with problem string is really messed up for methods in nested classes
+#for example the onCreate method in MyPreferenceFragment is
+#lambda$onCreate$0$SettingsActivity$MyPreferenceFragment
+#just extract the onCreate part and the inner class name
+def cleanMethodWithProblem(methodWithProblem):
+  if '$' in methodWithProblem:
+    methodItems = methodWithProblem.split('$')
+    #the inner class name, then the method
+    return methodItems[-1] + '$' + methodItems[1]
+  else:
+    return methodWithProblem
 
   
 
@@ -725,17 +753,33 @@ def getLineToMoveDependencies(fullFileName, lineToMove):
 def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   print('in move line to new method')
   print('current project dir: {0}'.format(projectDir))
-  fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
+  fullFileName, methodWithProblem, innerClassWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
+  print('before clean method to watch')
+  #I think I should move this functionality to getFileAndMethod
+  #methodWithProblem = cleanMethodWithProblem(methodWithProblem)
+  #if '$' in methodWithProblem:
+  #  methodItems = methodWithProblem.split('$')
+  #  methodWithProblem = methodItems[1]
+  #  innerClassWithProblem = methodItems[0]
+  #else:
+  #  innerClassWithProblem = None
+  print('after setting clean method stuff')
   #print(fullFileName)
   #currently heuristically assuming that the next method call of the method of 
   #interest after seeing the method declaration is the wrong call
   foundMethodWithProblem = False
+  foundInnerClassWithProblem = False
   fileWithoutLineToMove = []
   lineToMove = None
+  print('trying to open: {0}'.format(fullFileName))
+  print('innerClassWithProblem: {0}'.format(innerClassWithProblem))
+  input('stopping here to watch')
   with open(fullFileName,'r') as fin:
-    for line in fin:
-      if foundMethodWithProblem:
+    for lineCount, line in enumerate(fin):
+      print(line)
+      if foundMethodWithProblem and (innerClassWithProblem is None or foundInnerClassWithProblem):
         if methodToMove in line:
+          print('found method to move ({0}) in line: {1}'.format(methodToMove, lineCount))
           lineToMove = line
         else:
           fileWithoutLineToMove.append(line)
@@ -748,6 +792,8 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           #ends and method declarations since I only want the method declaration
           if ';' not in line:
             foundMethodWithProblem = True
+        if (not innerClassWithProblem is None) and innerClassWithProblem in line:
+          foundInnerClassWithProblem = True
   if lineToMove is None:
     print('error: never found method to move {0} in file {1}'.format(methodToMove, fullFileName))
     input('stop to check this error')
@@ -767,7 +813,9 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   #TODO SOON: this next line isn't working for some reason; or the file is 
   #not being correctly overwritten
   #contentsOfFileWithAddedLine.insert(int(moveLocationObj.lineNumber) + 1, lineToMove)
-  insertLocation = int(moveLocationObj.lineNumber) + 1
+  #making it two to give room for longer function declarations - might eventually want
+  #to count how long the function declaration is and adjust later
+  insertLocation = int(moveLocationObj.lineNumber) + 2
   contentsOfFileWithAddedLine[insertLocation: insertLocation] = lineToMoveWithDependencies
   with open(moveLocationObj.fileName, 'w') as fout:
     for line in contentsOfFileWithAddedLine:
@@ -821,7 +869,7 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
   print('method to move at start: {0}'.format(methodToMove))
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  fullFileName, methodWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
+  fullFileName, methodWithProblem, innerClassWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
   fileLines = []
@@ -938,8 +986,11 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     classWithProblem=callChains[0][-2].className.split('.')[-1]
     #try to handle nested classes - although I'm not sure what I'm doing at the 
     #moment will fully support them or if this will just die later
+    innerClassWithProblem = None
     if '$' in classWithProblem:
-      classWithProblem = classWithProblem.split('$')[0]
+      classItems = classWithProblem.split('$')
+      classWithProblem = classItems[0]
+      innerClassWithProblem = classItems[1]
   except IndexError:
     #print(callChains)
     #input('stopping to check call chain error')
@@ -971,8 +1022,14 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
         #alteredCallChains is not used; but I have to catch the return value
         currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
         return currentProblemCount, alteredCallChains
+      print('class name to look for: {0}'.format(classWithProblem))
+      print('methodObjList: {0}'.format(methodObjList))
       methodsInFileWithProblem = [ m for m in methodObjList if m.className == classWithProblem]
+      if innerClassWithProblem is not None:
+        methodsInInnerClass = [m for m in methodObjList if m.className == innerClassWithProblem]
+        methodsInFileWithProblem.extend(methodsInInnerClass)
       print("methods in problematic file: {0}".format(len(methodsInFileWithProblem)))
+      input('stopping to check this filtering')
       if len(methodsInFileWithProblem) < 1:
         print('error: unable to find methods in problematic file: {0}'.format(classWithProblem))
         input('stopping to check error')

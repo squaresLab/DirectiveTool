@@ -145,6 +145,7 @@ def extractOriginalMethodsOfInterest(projectDir, methodDeclarationStringToCompar
   print('project dir: {0}'.format(projectDir))
   fileToExtractFrom = getFilesFullPath(projectDir, fileToChange)
   print('file to extract from: {0}'.format(fileToExtractFrom))
+  input('confirming that file extracted from is the one injected into')
   #print('file to extract from: {0}'.format(fileToExtractFrom))
   extractedFileList = []
   with open(fileToExtractFrom,'r') as fin:
@@ -350,9 +351,6 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
 def createNewCopyOfTestProgram(originalFolder):
   #create a new directory if necessary
   #path is the location of the program to copy from
-  print('original folder: {0}'.format(originalFolder))
-  print('experiment folder: {0}'.format(experimentFolder))
-  input('stopping to check copy test program')
   if os.path.exists(experimentFolder):
     shutil.rmtree(experimentFolder)
   #try: 
@@ -959,7 +957,11 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
                   foundMethodOfInterest = False
             #trying to avoid deleting the second line of a two line method declaration with
             #nestingCountZeroAtStart
-            if not(line.strip() == '{' or line.strip() == '}') and not nestingCountZeroAtStart:
+            #print(nestingCountZeroAtStart = )
+            #I think there I meant to use foundMethodOfInterest instead of nestingCountAtStart;
+            #test to see
+            #if not(line.strip() == '{' or line.strip() == '}') and not nestingCountZeroAtStart:
+            if not(line.strip() == '{' or line.strip() == '}') and foundMethodOfInterest:
               incrementLineCountInMethodOfInterest = True
             if indexOfMethodStart == -1:
               indexOfMethodStart = len(newFileContents)
@@ -1033,6 +1035,7 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             print('length of new file contents at this point: {0}'.format(len(newFileContents)))
             lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
             changesToLine = [ i for i in changeItemList if i[2] == lineCountInMethodOfInterest]
+            print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
             #if there are no changes to the line, just keep it in the file
             if len(changesToLine) < 1:
               newFileContents.append(line)

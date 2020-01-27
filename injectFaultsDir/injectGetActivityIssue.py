@@ -78,6 +78,10 @@ def findPossibleInjectionRepos(dirListToCheck):
 
 
 def addToastImport(fullFilename):
+  #added filesToSkip for debugging
+  filesToSkip = ['OnboardingActivity.java', 'OnboardingActivity.java']
+  if os.path.basename(fullFilename) in filesToSkip:
+    return False
   importToastLine = 'import android.widget.Toast;\n'
   foundToastImportLine = False
   fileContents = []
