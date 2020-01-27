@@ -809,7 +809,6 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   with open(moveLocationObj.fileName,'r') as fin:
     for line in fin:
       contentsOfFileWithAddedLine.append(line)
-  print('moving |{0}| to line number {1} (method: {2}) in file: {3}'.format(lineToMove, int(moveLocationObj.lineNumber) + 1, moveLocationObj.methodName, moveLocationObj.fileName))
   #TODO SOON: this next line isn't working for some reason; or the file is 
   #not being correctly overwritten
   #contentsOfFileWithAddedLine.insert(int(moveLocationObj.lineNumber) + 1, lineToMove)
@@ -844,7 +843,6 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
           #
 def getInstantiationLines(fullFileName, projectDir, instantiationString):
   #first check if the fix can be moved to a method in the current file
-  print('first checking {0}'.format(fullFileName))
   with open(fullFileName, 'r') as fin:
     for lineCount, line in enumerate(fin):
       if instantiationString in line:
@@ -855,7 +853,6 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
   for root, dirnames, filenames in os.walk(projectDir):
     for filename in [os.path.join(root,f) for f in filenames if f.endswith(".java")]:
       if filename != fullFileName:
-        print('now checking: {0}'.format(filename))
         with open(filename, 'r') as fin:
           for lineCount, line in enumerate(fin):
             if instantiationString in line:
@@ -866,7 +863,6 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
  
 
 def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSourceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
-  print('method to move at start: {0}'.format(methodToMove))
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
   fullFileName, methodWithProblem, innerClassWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
@@ -874,7 +870,6 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
   instantiationString = "new {0}(".format(className)
   fileLines = []
   lineToMove = None
-  print('instantiation line: {0}'.format(instantiationString))
   for (changeLine, changeFile, varName) in getInstantiationLines(fullFileName, projectDir, instantiationString):
     with open(changeFile, 'r') as fin:
       for line in fin:
@@ -887,7 +882,6 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
       input('stopping to check if this is an error or not')
       return False
     lineToMove=lineToMove.lstrip()
-    print('line to move: {0}'.format(lineToMove))
     lineToMoveWithDependencies = getLineToMoveDependencies(changeFile, lineToMove)
     for lCount, l in enumerate(lineToMoveWithDependencies):
       if methodToMove in l:
@@ -931,7 +925,6 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #the method call to the first place the class is instantiated (maybe check for 
   #other places). After that, try to move the method to all the methods for the
   #class of the object.
-  print('method of interest 1 at beginning of move call repair: {0}'.format(methodOfInterest1))
   methodObjList = []
   testFolder = createNewCopyOfTestProgram(originalSourceFolder)
   apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
@@ -948,10 +941,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     #print(' '.join(commandList ))
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     for line in commandOutput.stderr.decode('utf-8').splitlines():
-      print(line)
-    print('start of method information')
     for line in commandOutput.stdout.decode('utf-8').splitlines():
-      print(line)
       if line.strip() is not '':
         m = re.match(r"(.+), (.+), \(line (\d+),col (\d+)\), (.+)", line)
         if m:
@@ -960,8 +950,6 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
           print('saving item to method obj list')
         else:
           print('line did not match: {0}'.format(line))
-    print('finished saving all the method information')
-    print('found {0} method objs'.format(len(methodObjList)))
   except:
     pass
   print('calling execute and get call chains')
@@ -979,7 +967,6 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #  print("call chain class: {0}, method {1}".format(c.className, c.methodName))
   #sys.exit(0)
   try:
-    print(callChains)
     #the first call is always the exact failing method, but I want the location
     #where the failing method occurred. Also, the list is assumed to be ordered 
     #where the failing method call is at the end.
@@ -1017,25 +1004,18 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
       def testMethodObj(m, apkLocation):
         testFolder = createNewCopyOfTestProgram(originalSourceFolder)
         apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-        print('calling move line to new method')
         moveLineToNewMethod(testFolder, methodOfInterest1, m, callChains)
         #alteredCallChains is not used; but I have to catch the return value
         currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
         return currentProblemCount, alteredCallChains
-      print('class name to look for: {0}'.format(classWithProblem))
-      print('methodObjList: {0}'.format(methodObjList))
       methodsInFileWithProblem = [ m for m in methodObjList if m.className == classWithProblem]
       if innerClassWithProblem is not None:
         methodsInInnerClass = [m for m in methodObjList if m.className == innerClassWithProblem]
         methodsInFileWithProblem.extend(methodsInInnerClass)
-      print("methods in problematic file: {0}".format(len(methodsInFileWithProblem)))
-      input('stopping to check this filtering')
       if len(methodsInFileWithProblem) < 1:
         print('error: unable to find methods in problematic file: {0}'.format(classWithProblem))
         input('stopping to check error')
-      print('trying to move to {0} methods in file'.format(len(methodsInFileWithProblem)))
       for m in methodsInFileWithProblem:
-        print('*** moving to {0} in {1}'.format(m.methodName, m.className))
         currentProblemCount, alteredCallChains = testMethodObj(m,apkLocation)
         if currentProblemCount == 0:
           break
