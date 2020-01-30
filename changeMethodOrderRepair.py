@@ -245,127 +245,16 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
         print(line, end="", file=fout)
   return foundChangeInFile
 
-#This can probably be combined with the method call executeTestOfChangedApp but
-#I'm unsure how at the moment and eventually decided it wasn't worth thinking 
-#about any more
-def executeTestOfChangedAppAndGetCallChains(repairItem):
-  #TODO: figure out a reasonable return value for the number of problems in 
-  #this case
-  print('in execute test and get call chains')
-  failedExecuteProblemCount = -1
-  currentDir = os.getcwd()
-  os.chdir(repairItem.testFolder)
-  print("current directory: {0}".format(os.getcwd()))
-  commandList = ['./gradlew','assembleDebug']
-  currentProblems = 0
-  try: 
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
-    #print(commandOutput.stdout)
-    #print(commandOutput.stderr)
-  except:
-    #try out the next change
-    print('command failed ({0}); run again in debug mode to get output'.format(commandList))
-    print("debugging directory: {0}".format(os.getcwd()))
-    #commandList = ['./gradlew','assembleDebug','--debug']
-    #commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
-    #commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
-    #print(commandOutput.stdout)
-    os.chdir(currentDir)
-    return failedExecuteProblemCount, []
-  # I need to split by space but not on quoted parts of the string
-  unquotedAndQuotedList = runFlowDroidCommand.split('"')
-  print('creating execute command')
-  commandList = []
-  for index, item in enumerate(unquotedAndQuotedList):
-    if index % 2 == 0:
-      #these should be the unquoted parts of the command
-      commandList.extend(item.strip().split(' '))
-    else:
-      commandList.append("{0}".format(item))
-  checkerToRun = 'analysis.{0}'.format(repairItem.checkerToRun)
-  commandList.append(checkerToRun)
-  if os.path.exists(repairItem.apkLocation):
-    commandList.append(repairItem.apkLocation)
-  else:
-    apkLocation = levenshteinDistance.findAPKInRepo(repairItem.testFolder, repairItem.apkLocation)
-    commandList.append(apkLocation)
-  #print(commandList)
-  try: 
-    print("current directory for command: {0}".format(os.getcwd()))
-    os.chdir(checkerRootDir)
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    if printingDebugInfo:
-      for line in commandOutput.stderr.decode('utf-8').splitlines():
-        print(line)
-    #input('press enter when looking at output')
-    #print(commandOutput)
-    #print(commandOutput.stderr)
-    #for line in commandOutput.stderr.decode('utf-8').splitlines():
-      #print(line)
-    savingLines = False
-    chainsInfo = []
-    currentChain = []
-    print('starting to create call chains')
-    #handle either the multiple line print out case or the single List print out
-    #case
-    for line in commandOutput.stdout.decode('utf-8').splitlines():
-      print('line from output: {0}'.format(line))
-      if line.startswith('total number of caught problems:'):
-        lineItems = line.split(' ')
-        currentProblems = int(lineItems[-1])
-      elif line.startswith('start of call chain'):
-        savingLines = True
-        currentChain = []
-      elif line.startswith('end of call chain'):
-        currentChain.reverse()
-        #if not currentChain in chainsInfo:
-        chainsInfo.append(currentChain.copy())
-        print('length of chain added: {0}'.format(len(currentChain)))
-        currentChain = []
-        print('length of new call chain: {0}'.format(len(currentChain)))
-        savingLines = False
-      elif savingLines:
-        m = re.match(r"<(.+): (.+)> .*", line)
-        if m:
-          currentChain.append(CallChainItem(m.group(1), m.group(2)))
-        else:
-            print("call chain line did not match: {0}".format(line))
-      elif line.startswith('@@@@@ Found a problem:'):
-        print('found problem line: {0}'.format(line))
-        listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
-        if listSequenceMatch:
-          print('found list: {0}'.format(listSequenceMatch.group(1)))
-          callitems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
-          for c in callitems:
-            #print(c)
-            itemsInCall = c.split(':')
-            currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
-            print('|{0}|'.format(chainsInfo))
-          #currentChain.reverse()
-          #if not currentChain in chainsInfo:
-          print('length of new call chain: {0}'.format(len(currentChain)))
-          chainsInfo.append(currentChain.copy())
-          print('length of chain added: {0}'.format(len(currentChain)))
-          currentChain = []
-          #sys.exit(0)
-    print('finished creating call chains')
-    print('final problem count: {0}'.format(currentProblems))
-    #if int(currentProblems) == 0:
-    #  input('check to see if this is what you want')
-  except Exception as e: 
-    print(e)
-    pass
-  #print(chainsInfo)
-  os.chdir(currentDir)
-  #print("succeeded - change: {0}, method {1}".format(change, method))
-  print(chainsInfo)
-  print(len(chainsInfo))
-  input('stopping to check the current chain items')
-  return currentProblems, chainsInfo
+def extractProblemCountFromTestContents(testResultLines):
+  #print(line)
+  for line in testResultLines:
+    if line.startswith('total number of caught problems:'):
+      print(line)
+      lineItems = line.split(' ')
+      return int(lineItems[-1])
+  return None
 
-#I think I need to remove this, since now I need to test if the problem count 
-#has decreased, but I'll come back to this later
-def executeTestOfChangedApp(repairItem):
+def buildAppWithGradle(repairItem):
   print("before build")
   currentDir = os.getcwd()
   os.chdir(repairItem.testFolder)
@@ -388,7 +277,11 @@ def executeTestOfChangedApp(repairItem):
     #print(commandOutput.stdout)
     os.chdir(currentDir)
     return False
+  return True
+
+def runCheckerAndGetOutput(repairItem):
   # I need to split by space but not on quoted parts of the string
+  originalDir = os.getcwd()
   unquotedAndQuotedList = runFlowDroidCommand.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
@@ -418,18 +311,104 @@ def executeTestOfChangedApp(repairItem):
     #print(commandOutput.stderr)
     #for line in commandOutput.stderr.decode('utf-8').splitlines():
       #print(line)
+    testResultLines = []
     for line in commandOutput.stdout.decode('utf-8').splitlines():
+      testResultLines.append(line)
+  except Exception as e: 
+    print(e)
+    testResultLines = []
+  os.chdir(originalDir)
+  return testResultLines
+
+def parseCallChains(testResultLines):
+  savingLines = False
+  chainsInfo = []
+  currentChain = []
+  print('starting to create call chains')
+  #handle either the multiple line print out case or the single List print out
+  #case
+  for line in commandOutput.stdout.decode('utf-8').splitlines():
+    print('line from output: {0}'.format(line))
+    if line.startswith('total number of caught problems:'):
+      lineItems = line.split(' ')
+      currentProblems = int(lineItems[-1])
+    elif line.startswith('start of call chain'):
+      savingLines = True
+      currentChain = []
+    elif line.startswith('end of call chain'):
+      currentChain.reverse()
+      #if not currentChain in chainsInfo:
+      chainsInfo.append(currentChain.copy())
+      print('length of chain added: {0}'.format(len(currentChain)))
+      currentChain = []
+      print('length of new call chain: {0}'.format(len(currentChain)))
+      savingLines = False
+    elif savingLines:
+      m = re.match(r"<(.+): (.+)> .*", line)
+      if m:
+        currentChain.append(CallChainItem(m.group(1), m.group(2)))
+      else:
+          print("call chain line did not match: {0}".format(line))
+    elif line.startswith('@@@@@ Found a problem:'):
+      print('found problem line: {0}'.format(line))
+      listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
+      if listSequenceMatch:
+        print('found list: {0}'.format(listSequenceMatch.group(1)))
+        callitems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
+        for c in callitems:
+          #print(c)
+          itemsInCall = c.split(':')
+          currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
+          print('|{0}|'.format(chainsInfo))
+        #currentChain.reverse()
+        #if not currentChain in chainsInfo:
+        print('length of new call chain: {0}'.format(len(currentChain)))
+        chainsInfo.append(currentChain.copy())
+        print('length of chain added: {0}'.format(len(currentChain)))
+        currentChain = []
+        #sys.exit(0)
+  print('finished creating call chains')
+  print('final problem count: {0}'.format(currentProblems))
+  return chainsInfo
+
+#This can probably be combined with the method call executeTestOfChangedApp but
+#I'm unsure how at the moment and eventually decided it wasn't worth thinking 
+#about any more
+def executeTestOfChangedAppAndGetCallChains(repairItem):
+  #TODO: figure out a reasonable return value for the number of problems in 
+  #this case
+  print('in execute test and get call chains')
+  failedExecuteProblemCount = -1
+  buildSucceeded = buildAppWithGradle(repairItem)
+  if not buildSucceeded:
+    return failedExecuteProblemCount, []
+  testResultLines = runCheckerAndGetOutput(repairItem)
+    #input('press enter when looking at output')
+    #print(commandOutput)
+    #print(commandOutput.stderr)
+    #for line in commandOutput.stderr.decode('utf-8').splitlines():
       #print(line)
-      if line.startswith('total number of caught problems:'):
-        print(line)
-        lineItems = line.split(' ')
-        if int(lineItems[-1]) == 0:
-          commandSucceeded = True
-  except: 
-    pass
+  chainsInfo = parseCallChains(testResultLines)
   os.chdir(currentDir)
   #print("succeeded - change: {0}, method {1}".format(change, method))
-  return commandSucceeded
+  print(chainsInfo)
+  print(len(chainsInfo))
+  input('stopping to check the current chain items')
+  return currentProblems, chainsInfo
+
+def executeTestOfChangedApp(repairItem):
+  buildSucceeded = buildAppWithGradle(repairItem)
+  if not buildSucceeded:
+    return False
+  testResultLines = runCheckerAndGetOutput(repairItem)
+  problemCount = extractProblemCountFromTestContents(testResultLines)
+  #I'll need to change this so that it can determine a fix for problem
+  #counts greater than 1
+  if problemCount == 0:
+    #The problem was fixed!!
+    return True
+  else:
+    return False
  #add the change to the method call of the copied app
  #run the application and see if it still produces the problem
  #if the application does not produce the problem, then print the change
