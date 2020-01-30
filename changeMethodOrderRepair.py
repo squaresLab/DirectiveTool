@@ -368,7 +368,7 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
 def executeTestOfChangedApp(repairItem):
   print("before build")
   currentDir = os.getcwd()
-  os.chdir(repairItem.checkerRootDir)
+  os.chdir(repairItem.testFolder)
   print("current directory: {0}".format(os.getcwd()))
 
   commandList = ['./gradlew','assembleDebug']
@@ -397,16 +397,16 @@ def executeTestOfChangedApp(repairItem):
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
-  checkerToRun = 'analysis.{0}'.format(checkerToRun)
+  checkerToRun = 'analysis.{0}'.format(repairItem.checkerToRun)
   commandList.append(checkerToRun)
-  if os.path.exists(apkLocation):
-    commandList.append(apkLocation)
+  if os.path.exists(repairItem.apkLocation):
+    commandList.append(repairItem.apkLocation)
   else:
-    apkLocation = levenshteinDistance.findAPKInRepo(path, apkLocation)
-    commandList.append(apkLocation)
+    repairItem.apkLocation = levenshteinDistance.findAPKInRepo(repairItem.testFolder, repairItem.apkLocation)
+    commandList.append(repairItem.apkLocation)
   try: 
     print("current directory for command: {0}".format(os.getcwd()))
-    print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, apkLocation))
+    print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, repairItem.apkLocation))
     os.chdir(checkerRootDir)
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if printingDebugInfo:
@@ -437,7 +437,7 @@ def executeTestOfChangedApp(repairItem):
 
 def repairTestThenResetInitializer(testFunction):
   def repairTestThenReset(repairItem, fileToTest):
-    foundAPossibleFix = testFunction(fileToTest, repairItem.method1, repairItem.method2)
+    foundAPossibleFix = testFunction(fileToTest, repairItem.methodOfInterest1, repairItem.methodOfInterest2)
     if foundAPossibleFix:
       print('testing: {0}'.format(fileToTest))
       isFixed = executeTestOfChangedApp(repairItem)
@@ -448,7 +448,7 @@ def repairTestThenResetInitializer(testFunction):
         #print('testing file: {0} failed'.format(fileToTest))
         #sys.exit(0)
         print('failed to fix with move before')
-        testFolder = createNewCopyOfTestProgram(repairItem)
+        createNewCopyOfTestProgram(repairItem)
         return False
   return repairTestThenReset
 
@@ -456,6 +456,7 @@ def repairTestThenResetInitializer(testFunction):
 def testFileWithProblemOrFilesInRepo(repairItem, testMethod):
   repairTestThenResetCall = repairTestThenResetInitializer(testMethod)
   if repairItem.fileWithProblem is None:
+    testedFiles = {}
     for dirpath, dirnames, filenames in os.walk(repairItem.testFolder):
       for filename in [f for f in filenames if f.endswith(".java")]:
         fileToTest = os.path.join(dirpath, filename)  
@@ -482,6 +483,7 @@ def tryMoveAfter(repairItem):
   return testFileWithProblemOrFilesInRepo(repairItem, moveFrontMethodAfterBackMethod)
   
 def tryDeleteSecondCall(repairItem): 
+  testedFiles = {}
   print('in try to delete second call')
   everFoundAChange = False
   for dirpath, dirnames, filenames in os.walk(repairItem.testFolder):
@@ -510,9 +512,9 @@ def tryDeleteSecondCall(repairItem):
                 elif c == "}":
                   indentationCount = indentationCount - 1
                   checkIndentationCountAndResetForNewMethods()
-            if method1LineNumber is None and repairItem.method1 in nonCommentPartOfLine:
+            if method1LineNumber is None and repairItem.methodOfInterest1 in nonCommentPartOfLine:
               method1LineNumber = lineCount
-            elif method2LineNumber is None and repairItem.method2 in nonCommentPartOfLine:
+            elif method2LineNumber is None and repairItem.methodOfInterest2 in nonCommentPartOfLine:
               method2LineNumber = lineCount
             if method1LineNumber is not None and method2LineNumber is not None:
               if method1LineNumber > method2LineNumber:
@@ -639,8 +641,7 @@ def performMethodOrderRepair(repairItem):
   #if that doesn't work, move the originally first method after the second method
 
   print('in method order repair')
-  repairItem.testFolder = createNewCopyOfTestProgram(repairItem)
-  testedFiles = {}
+  createNewCopyOfTestProgram(repairItem)
   print('trying move before')
   #try moving the back method before the original first method
   isFixed = tryMoveBefore(repairItem)
@@ -649,13 +650,11 @@ def performMethodOrderRepair(repairItem):
     #original last method
     #testFolder = createNewCopyOfTestProgram(originalSourceFolder)
     #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-    testedFiles = {}
     print('trying move after')
     isFixed = tryMoveAfter(repairItem)
   if not isFixed:
     #testFolder = createNewCopyOfTestProgram(originalSourceFolder)
     #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-    testedFiles = {}
     print('trying to delete the second method call')
     isFixed = tryDeleteSecondCall(repairItem)
   if isFixed:
