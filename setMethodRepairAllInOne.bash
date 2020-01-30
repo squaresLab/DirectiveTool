@@ -14,7 +14,7 @@
 #.  and deleting lines, so the line count may not be exactly correct)
 #9. Might need to change all the paths in repairMethodFromExample.. to your path settings
 #10. Delete the savedGitHubSearches folder unless the search query remained the same 
-#.   or you can reuse the old results
+#   or you can reuse the old results
 #11. repairMethodExampleOnGitHub.. is now ready to run
 
 #call with the file to save the check results to as the first parameter
@@ -78,7 +78,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=3
+currentCheckerNumber=2
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -102,7 +102,7 @@ currentCheckerNumber=3
        methodOfInterest1=getActivity
        repairType=Method;;
     #works for missing setHasOptionsMenu(true); haven't successfully repaired
-    #missing onCreateOptionsMenu
+    #missing onCreateOptionsMenuDefinition - Need to create a new repair for it
     3) gitBranch=FAULT_017_SO_29115050
        checker=DetectMissingSetHasOptionsMenu
        appName=Application

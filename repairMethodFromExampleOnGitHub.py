@@ -935,17 +935,20 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         #because I've changed it so all () are on the same line when checking 
         #the type differences
         lineCount = 0
+        hasOpenParensBetweenLines = False
         for line in fileContents:
+          if line.strip() == '':
+            newFileContents.append(line)
+            continue
           #print(line)
           incrementLineCountInMethodOfInterest = False
-          #This public void declaration might be too specific
           if foundMethodOfInterest or nestingCount > 0:
             #use nesting count if they are both true
-            if nestingCount == 0:
-              nestingCountZeroAtStart = True
-            else:
-              nestingCountZeroAtStart = False
             everFoundMethodOfInterest = True
+            #use the previous line's nesting count for the current line - 
+            #otherwise lines that open up the function get deleted
+            if nestingCount == 1:
+              incrementLineCountInMethodOfInterest = True
             if nestingCount > 0:
               foundMethodOfInterest = False
             for c in line:
@@ -961,8 +964,8 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
             #I think there I meant to use foundMethodOfInterest instead of nestingCountAtStart;
             #test to see
             #if not(line.strip() == '{' or line.strip() == '}') and not nestingCountZeroAtStart:
-            if not(line.strip() == '{' or line.strip() == '}') and foundMethodOfInterest:
-              incrementLineCountInMethodOfInterest = True
+            #if not(line.strip() == '{' or line.strip() == '}') and foundMethodOfInterest:
+            
             if indexOfMethodStart == -1:
               indexOfMethodStart = len(newFileContents)
           elif not everFoundMethodOfInterest and methodDeclaration in line:
@@ -1007,8 +1010,9 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
               try:
                 lineToChange = ''
                 linesBack = 1
-                while lineToChange == '':
+                while lineToChange == '' and linesBack < len(newFileContents) + 1:
                   lineToChange = newFileContents[-linesBack].strip()
+                  linesBack += 1
                 if lineToChange.split()[0] != "return":
                   newFileContents[-linesBack] = "return " + newFileContents[-linesBack] 
               except IndexError as e:
@@ -1054,9 +1058,11 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
 
               #delete the line if it should be deleted, otherwise, keep the line
               #and remove any returns
+              deletedLine = None
               if len(deleteItems) > 0:
                 print('deleting line: {0}'.format(line))
                 deletedLineList.append(line)
+                deletedLine = line
                 deletedLineCount = deletedLineCount  + 1
               else:
                 line = line.replace('return ','')
@@ -1079,15 +1085,23 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
               if len(addItems) > 0:
                 addedLine = linesToAddDict[lineCountInMethodOfInterest] 
                 addedLine = addedLine.replace('return ', '')
+                #try to replace the part of the deleted line if the deleted line contained it
+                if not deletedLine is None:
+                    addedLineContents = addedLine.strip()
+                    addedMethodCallItems = addedLineContents.split('(')
+                    replacePosition = deletedLine.find(addedMethodCallItems[0]+'(')
+                    if replacePosition > 1:
+                      addedLine = deletedLine[:replacePosition] + addedLine
+                      input('stopping to confirm new added line: {0}'.format(addedLine))
                 print('length of new file contents before adding 2: {0}'.format(len(newFileContents)))
                 newFileContents.append(addedLine)
                 print('length of new file contents after adding 2: {0}'.format(len(newFileContents)))
                 print('added line 2: {0}'.format(addedLine))
                 addedLineCount = addedLineCount + 1
                 addedLineList.append(addedLine)
-                if 'inflate' in addedLine and ('false)' in addedLine or 'false )' in addedLine):
-                  print('addedLine: {0}'.format(addedLine))
-                  input('stopping to check added line that might fix the problem')
+                #if 'inflate' in addedLine and ('false)' in addedLine or 'false )' in addedLine):
+                  #print('addedLine: {0}'.format(addedLine))
+                  #input('stopping to check added line that might fix the problem')
           else: 
             newFileContents.append(line)
       if len(newFileContents) < 3:
@@ -1123,9 +1137,10 @@ def addAndDeleteTypeDifferences(originalFileName, downloadedFileTree, mismatchLi
         for line in newFileContents:
           fout.write(line)
           fout.write('\n')
-      commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFileToChange))
-      subprocess.run(commandList)
-      input('stopping to check changed file')
+      if addedLineCount > 0 and deletedLineCount > 0:
+        commandList = shlex.split('open -a "Sublime Text" {0}'.format(fullFileToChange))
+        subprocess.run(commandList)
+        input('stopping to check changed file')
       wasFixed = executeTestOfChangedApp(runFlowDroidCommand, path, checkerToRun, fileToChange, methodDeclarationStringToCompare, newAPKLocation)
     ##containsFalse = False
     #if foundFixOfInterest:
@@ -1337,7 +1352,7 @@ def main(runFlowDroidCommand, checkerToRun, savedDataDirectory, methodDeclaratio
                   #input('stopping to check found file')
                   reposComparedCount += 1
                   hasSucceeded = handleAndTestAdvancedDiff(runFlowDroidCommand, checkerToRun, fileToChange, projectDir, methodDeclarationStringToCompare, newAPKLocation)
-                  input('stop after test of repo')
+                  #input('stop after test of Github repo')
                   if hasSucceeded:
                     print('repos compared to produce a fix: {0}'.format(reposComparedCount))
                     print('found a successful repair!')

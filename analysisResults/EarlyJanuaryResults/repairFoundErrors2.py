@@ -26,7 +26,7 @@ copyRepoLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryRe
 #I may need to convert them to using gradlew instead of gradle wrapper
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
-errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/rerunFDroidCheckResults.txt'
+errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedAPKsFile = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/triedFixes.txt'
 
@@ -255,6 +255,7 @@ def main():
           else:
             debuggingResultList.append('the tests failed after trying to repair the app/apps')
             print('failed tests')
+        input('stop before moving to next repo')
         totalAttemptedFixCount += attemptedFixCount
         totalSuccessfulRepairCount += successfulRepairCount
       errorCount +=1

@@ -114,6 +114,41 @@ class CallChainItem:
     return "class name: {0}, method name: {1}".format(self.className, self.methodName)
 
 
+#I don't use this at the moment - I'm debating on refactoring the code so that 
+#most of the method arguments are passed around in this object. However, I also
+#need to figure out how to make the repair work on only one instance of the problem, 
+#so maybe this is the way to do it.
+class RunMethodOrderRepairItem:
+  #This class stores the information required to run the method order repair
+  #maybe it would make sense to break this information up, but I haven't figured
+  #out the right way at the moment
+  def __init__(self, checkerToRun, runFlowDroidCommand, originalSourceFolder, 
+    apkLocation, methodOfInterest1, fileWithProblem = None, 
+    methodOfInterest2 = None, 
+    requiresObjectReferences = None, 
+    #I think I have something like a line or method with problem; I need to look
+    #into the best way to do it.
+    lineWithProblem = None,
+    methodWithProblem = None
+     ):
+    self.checkerToRun = checkerToRun
+    self.runFlowDroidCommand = runFlowDroidCommand
+    self.originalSourceFolder = originalSourceFolder
+    self.apkLocation = apkLocation
+    self.methodOfInterest1 = methodOfInterest1
+    self.fileWithProblem = fileWithProblem
+    self.methodOfInterest2 = methodOfInterest2
+    self.requiresObjectReferences = requiresObjectReferences
+    self.lineWithProblem = lineWithProblem
+    self.methodWithProblem = methodWithProblem
+    #if the testFolder is set, this will be the location where copies of the 
+    #program is made and altered. If it is not set initially, it will get set to
+    #edittingFolder at a later point in the code
+    self.testFolder = None
+    #I might eventually make this a parameter, but I'm currently leaving it to
+    #get the value from the global variable
+    self.checkerRootDir = checkerRootDir
+
 def getNonComments(line, inBlockComments):
   #return the part of the string that is the not the comment
   #and if the code is currently in a block comment
@@ -213,13 +248,13 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
 #This can probably be combined with the method call executeTestOfChangedApp but
 #I'm unsure how at the moment and eventually decided it wasn't worth thinking 
 #about any more
-def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerToRun, apkLocation):
+def executeTestOfChangedAppAndGetCallChains(repairItem):
   #TODO: figure out a reasonable return value for the number of problems in 
   #this case
   print('in execute test and get call chains')
   failedExecuteProblemCount = -1
   currentDir = os.getcwd()
-  os.chdir(path)
+  os.chdir(repairItem.testFolder)
   print("current directory: {0}".format(os.getcwd()))
   commandList = ['./gradlew','assembleDebug']
   currentProblems = 0
@@ -247,12 +282,12 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
-  checkerToRun = 'analysis.{0}'.format(checkerToRun)
+  checkerToRun = 'analysis.{0}'.format(repairItem.checkerToRun)
   commandList.append(checkerToRun)
-  if os.path.exists(apkLocation):
-    commandList.append(apkLocation)
+  if os.path.exists(repairItem.apkLocation):
+    commandList.append(repairItem.apkLocation)
   else:
-    apkLocation = levenshteinDistance.findAPKInRepo(path, apkLocation)
+    apkLocation = levenshteinDistance.findAPKInRepo(repairItem.testFolder, repairItem.apkLocation)
     commandList.append(apkLocation)
   #print(commandList)
   try: 
@@ -283,7 +318,11 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
         currentChain = []
       elif line.startswith('end of call chain'):
         currentChain.reverse()
-        chainsInfo.append(currentChain)
+        #if not currentChain in chainsInfo:
+        chainsInfo.append(currentChain.copy())
+        print('length of chain added: {0}'.format(len(currentChain)))
+        currentChain = []
+        print('length of new call chain: {0}'.format(len(currentChain)))
         savingLines = False
       elif savingLines:
         m = re.match(r"<(.+): (.+)> .*", line)
@@ -303,7 +342,11 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
             currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
             print('|{0}|'.format(chainsInfo))
           #currentChain.reverse()
-          chainsInfo.append(currentChain)
+          #if not currentChain in chainsInfo:
+          print('length of new call chain: {0}'.format(len(currentChain)))
+          chainsInfo.append(currentChain.copy())
+          print('length of chain added: {0}'.format(len(currentChain)))
+          currentChain = []
           #sys.exit(0)
     print('finished creating call chains')
     print('final problem count: {0}'.format(currentProblems))
@@ -315,12 +358,17 @@ def executeTestOfChangedAppAndGetCallChains(path, runFlowDroidCommand, checkerTo
   #print(chainsInfo)
   os.chdir(currentDir)
   #print("succeeded - change: {0}, method {1}".format(change, method))
+  print(chainsInfo)
+  print(len(chainsInfo))
+  input('stopping to check the current chain items')
   return currentProblems, chainsInfo
 
-def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation):
+#I think I need to remove this, since now I need to test if the problem count 
+#has decreased, but I'll come back to this later
+def executeTestOfChangedApp(repairItem):
   print("before build")
   currentDir = os.getcwd()
-  os.chdir(path)
+  os.chdir(repairItem.checkerRootDir)
   print("current directory: {0}".format(os.getcwd()))
 
   commandList = ['./gradlew','assembleDebug']
@@ -387,55 +435,56 @@ def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation
  #if the application does not produce the problem, then print the change
  #that fixed the issue and stop
 
+def repairTestThenResetInitializer(testFunction):
+  def repairTestThenReset(repairItem, fileToTest):
+    foundAPossibleFix = testFunction(fileToTest, repairItem.method1, repairItem.method2)
+    if foundAPossibleFix:
+      print('testing: {0}'.format(fileToTest))
+      isFixed = executeTestOfChangedApp(repairItem)
+      if isFixed:
+        #don't reset if it is fixed so we can save the successful repair
+        return True
+      else: 
+        #print('testing file: {0} failed'.format(fileToTest))
+        #sys.exit(0)
+        print('failed to fix with move before')
+        testFolder = createNewCopyOfTestProgram(repairItem)
+        return False
+  return repairTestThenReset
 
-def tryMoveBefore(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+
+def testFileWithProblemOrFilesInRepo(repairItem, testMethod):
+  repairTestThenResetCall = repairTestThenResetInitializer(testMethod)
+  if repairItem.fileWithProblem is None:
+    for dirpath, dirnames, filenames in os.walk(repairItem.testFolder):
+      for filename in [f for f in filenames if f.endswith(".java")]:
+        fileToTest = os.path.join(dirpath, filename)  
+        #print('found a file: {0}'.format(fileToTest))
+        if not fileToTest in testedFiles:
+          #print('file not in tested files: {0}'.format(fileToTest))
+          testedFiles[fileToTest] = True
+          isFixed = repairTestThenResetCall(repairItem, fileToTest)
+          if isFixed:
+            return True
+            #print('ending early')
+    #sys.exit(0)
+    return False
+  else:
+    return repairTestThenResetCall(repairItem, repairItem.fileWithProblem)
+
+
+def tryMoveBefore(repairItem): 
   print('in try move before')
-  for dirpath, dirnames, filenames in os.walk(projectDir):
-    for filename in [f for f in filenames if f.endswith(".java")]:
-      fileToTest = os.path.join(dirpath, filename)  
-      #print('found a file: {0}'.format(fileToTest))
-      if not fileToTest in testedFiles:
-        #print('file not in tested files: {0}'.format(fileToTest))
-        testedFiles[fileToTest] = True
-        foundAPossibleFix = moveBackMethodBeforePreviousMethod(fileToTest, method1, method2)
-        if foundAPossibleFix:
-          print('testing: {0}'.format(fileToTest))
-          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
-          if isFixed:
-            return True
-          else: 
-            #print('testing file: {0} failed'.format(fileToTest))
-            #sys.exit(0)
-            print('failed to fix with move before')
-            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  #print('ending early')
-  #sys.exit(0)
-  return False
+  return testFileWithProblemOrFilesInRepo(repairItem, moveBackMethodBeforePreviousMethod)
 
-def tryMoveAfter(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+def tryMoveAfter(repairItem): 
   print('in try move after')
-  for dirpath, dirnames, filenames in os.walk(projectDir):
-    for filename in [f for f in filenames if f.endswith(".java")]:
-      fileToTest = os.path.join(dirpath, filename)  
-      if not fileToTest in testedFiles:
-        testedFiles[fileToTest] = True
-        foundAPossibleFix = moveFrontMethodAfterBackMethod(fileToTest, method1, method2)
-        if foundAPossibleFix:
-          print('testing: {0}'.format(fileToTest))
-          isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
-          if isFixed:
-            return True
-          else:
-            print('failed to fix with move after')
-            testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-            apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  return False
-
-def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, method1, method2, testedFiles, checkerToRun, apkLocation): 
+  return testFileWithProblemOrFilesInRepo(repairItem, moveFrontMethodAfterBackMethod)
+  
+def tryDeleteSecondCall(repairItem): 
   print('in try to delete second call')
   everFoundAChange = False
-  for dirpath, dirnames, filenames in os.walk(projectDir):
+  for dirpath, dirnames, filenames in os.walk(repairItem.testFolder):
     for filename in [f for f in filenames if f.endswith(".java")]:
       fileToTest = os.path.join(dirpath, filename)  
       if not fileToTest in testedFiles:
@@ -461,9 +510,9 @@ def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, m
                 elif c == "}":
                   indentationCount = indentationCount - 1
                   checkIndentationCountAndResetForNewMethods()
-            if method1LineNumber is None and method1 in nonCommentPartOfLine:
+            if method1LineNumber is None and repairItem.method1 in nonCommentPartOfLine:
               method1LineNumber = lineCount
-            elif method2LineNumber is None and method2 in nonCommentPartOfLine:
+            elif method2LineNumber is None and repairItem.method2 in nonCommentPartOfLine:
               method2LineNumber = lineCount
             if method1LineNumber is not None and method2LineNumber is not None:
               if method1LineNumber > method2LineNumber:
@@ -489,7 +538,7 @@ def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, m
 
   if everFoundAChange:
     print('testing: {0}'.format(fileToTest))
-    isFixed = executeTestOfChangedApp(edittingFolder, runFlowDroidCommand, checkerToRun, apkLocation)
+    isFixed = executeTestOfChangedApp(repairItem)
     if isFixed:
       return True
     else:
@@ -497,16 +546,28 @@ def tryDeleteSecondCall(projectDir, runFlowDroidCommand, originalSourceFolder, m
       input('stopping to see why delete failed')
             #I think I recopy the test program twice now; I should go through
             #the logic and test again.
-      testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-      apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+      createNewCopyOfTestProgram(repairItem)
   return False
 
+def updateRepairItemForNewCopy(repairItem):
+  repairItem.apkLocaiton = repairItem.apkLocation.replace(repairItem.originalSourceFolder, repairItem.testFolder)
+  if not repairItem.fileWithProblem is None:
+    repairItem.fileWithProblem = repairItem.fileWithProblem.replace(repairItem.originalSourceFolder, repairItem.testFolder)
 
-def createNewCopyOfTestProgram(originalSourceFolder):
+
+def createNewCopyOfTestProgram(repairItem, newTestFolder = None):
   #create a new directory if necessary
   #path is the location of the program to copy from
-  if os.path.exists(edittingFolder):
-    shutil.rmtree(edittingFolder)
+
+  #assume that if newTestFolder is defined, we want to make it the new
+  #test folder in the future
+  if not newTestFolder is None:
+    repairItem.testFolder = newTestFolder
+  if repairItem.testFolder is None:
+    repairItem.testFolder = edittingFolder
+
+  if os.path.exists(repairItem.testFolder):
+    shutil.rmtree(repairItem.testFolder)
   #try: 
   #  os.makedirs(path)
   #except OSError as e:
@@ -515,8 +576,9 @@ def createNewCopyOfTestProgram(originalSourceFolder):
   #  sys.exit(1)
   #distutils.dir_util.copy_tree("/Users/zack/git/DirectiveTool/testFolder/",path)
   #copy the application to the new directory
-  shutil.copytree(originalSourceFolder, edittingFolder)
-  resultFolder = edittingFolder
+  shutil.copytree(repairItem.originalSourceFolder, repairItem.testFolder)
+  #make sure the repairItem's testFolder is in the right format
+  resultFolder = repairItem.testFolder
   #make sure the return matches the style that originalSourceFolder was provided in
   if originalSourceFolder[-1] == os.path.sep and edittingFolder[-1] != os.path.sep:
     #add the path seperator
@@ -524,7 +586,9 @@ def createNewCopyOfTestProgram(originalSourceFolder):
   elif originalSourceFolder[-1] != os.path.sep and edittingFolder[-1] == os.path.sep:
     #remove the path seperator
     resultFolder = resultFolder[:-1]
-  return resultFolder
+  repairItem.testFolder = resultFolder
+  updateRepairItemForNewCopy(repairItem)
+
 
 
 def extractMethodInformation(sourceFile):
@@ -566,7 +630,7 @@ def extractMethodInformation(sourceFile):
 
 
 
-def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, apkLocation, methodOfInterest1, methodOfInterest2):
+def performMethodOrderRepair(repairItem):
   #get code to edit
   #run directive check on it
   #either determine methods in the check or get them from a manual source
@@ -575,12 +639,11 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
   #if that doesn't work, move the originally first method after the second method
 
   print('in method order repair')
-  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  repairItem.testFolder = createNewCopyOfTestProgram(repairItem)
   testedFiles = {}
   print('trying move before')
   #try moving the back method before the original first method
-  isFixed = tryMoveBefore(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+  isFixed = tryMoveBefore(repairItem)
   if not isFixed:
     #if the application is not fixed, then revert and move the first method behind the 
     #original last method
@@ -588,13 +651,13 @@ def performMethodOrderRepair(checkerName, checkerCommand, originalSourceFolder, 
     #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying move after')
-    isFixed = tryMoveAfter(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+    isFixed = tryMoveAfter(repairItem)
   if not isFixed:
     #testFolder = createNewCopyOfTestProgram(originalSourceFolder)
     #apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
     testedFiles = {}
     print('trying to delete the second method call')
-    isFixed = tryDeleteSecondCall(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodOfInterest2, testedFiles, checkerName, apkLocation)
+    isFixed = tryDeleteSecondCall(repairItem)
   if isFixed:
     print('Successfully fixed the problem')
     return True
@@ -862,18 +925,19 @@ def getInstantiationLines(fullFileName, projectDir, instantiationString):
 
  
 
-def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSourceFolder, methodToMove, moveLocationObjList, callChains, checkerName, apkLocation):
-  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-  fullFileName, methodWithProblem, innerClassWithProblem = getFileAndMethodWithProblem(callChains, projectDir)
+def moveMethodToObjectInstantiation(repairItem, callChains):
+  createNewCopyOfTestProgram(repairItem)
+  
+  #might eventually save these returns into the repairItem
+  fullFileName, methodWithProblem, innerClassWithProblem = getFileAndMethodWithProblem(callChains, repairItem.testDir)
   className = fullFileName.split(os.path.sep)[-1].split('.')[-2]
   instantiationString = "new {0}(".format(className)
   fileLines = []
   lineToMove = None
-  for (changeLine, changeFile, varName) in getInstantiationLines(fullFileName, projectDir, instantiationString):
+  for (changeLine, changeFile, varName) in getInstantiationLines(fullFileName, repairItem.testDir, instantiationString):
     with open(changeFile, 'r') as fin:
       for line in fin:
-        if methodToMove in line:
+        if repairItem.methodOfInterest1 in line:
           lineToMove = line
         else:
           fileLines.append(line)
@@ -894,18 +958,25 @@ def moveMethodToObjectInstantiation(projectDir, runFlowDroidCommand, originalSou
     #test the newly created file and break with a success if the test succeeds
     print('changed file: {0}'.format(changeFile))
     input('stop to check file changed with object instance added')
-    appWasFixed = executeTestOfChangedApp(projectDir, runFlowDroidCommand, checkerName, apkLocation)
-    #def executeTestOfChangedApp(path, runFlowDroidCommand, checkerToRun, apkLocation):
+    appWasFixed = executeTestOfChangedApp(repairItem)
     print('app was fixed: {0}'.format(appWasFixed))
     #sys.exit(0)
     if appWasFixed:
       return True
   return False
 
-  
+#I might eventually move callChains into the repairItem object. So I'll need
+#to refactor this method at that time if I do 
+def testMethodObj(repairItem, m, callChains):
+  createNewCopyOfTestProgram(repairItem)
+  moveLineToNewMethod(repairItem.testFolder, repairItem.methodOfInterest1, m, callChains)
+  #alteredCallChains is not used; but I have to catch the return value
+  currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(repairItem)
+  return currentProblemCount, alteredCallChains
+ 
 
 
-def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apkLocation, methodOfInterest1, requiresAddingReference):
+def performMoveCallRepair(repairItem):
   #first I need to decide how much information the method repair has - should I 
   #implement a random method test? Or should I try to use information about the 
   #lifecycle. I also need to decide if I am only moving the method or the 
@@ -926,8 +997,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
   #other places). After that, try to move the method to all the methods for the
   #class of the object.
   methodObjList = []
-  testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-  apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
+  createNewCopyOfTestProgram(repairItem)
   unquotedAndQuotedList = runGetMethodLocations.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
@@ -936,7 +1006,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
       commandList.extend(item.strip().split(' '))
     else:
       commandList.append("{0}".format(item))
-  commandList.append(testFolder)
+  commandList.append(repairItem.testFolder)
   try: 
     #print(' '.join(commandList ))
     commandOutput = subprocess.run(commandList, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
@@ -953,7 +1023,7 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     pass
   print('calling execute and get call chains')
   #later, implement a way to handle multiple caught problems at the same time
-  currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
+  currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(repairItem)
   #I could probably later change this to use the method of interest to get the class with problem
   #if I wanted
   if callChains == []:
@@ -994,19 +1064,12 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
     #print('length of call chains: {0}'.format(len(callChains)))
     #print(requiresAddingReference)
     #input('stopping to see this value')
-    if requiresAddingReference:
-      print('method of interest1 before call: {0}'.format(methodOfInterest1))
-      result = moveMethodToObjectInstantiation(testFolder, checkerCommand, originalSourceFolder, methodOfInterest1, methodObjList, callChains, checkerName, apkLocation)
+    if repairItem.requiresObjectReferences:
+      print('method of interest1 before call: {0}'.format(repairItem.methodOfInterest1))
+      result = moveMethodToObjectInstantiation(repairItem, callChains)
       if result:
         currentProblemCount = 0
     else:
-      def testMethodObj(m, apkLocation):
-        testFolder = createNewCopyOfTestProgram(originalSourceFolder)
-        apkLocation = apkLocation.replace(originalSourceFolder,testFolder)
-        moveLineToNewMethod(testFolder, methodOfInterest1, m, callChains)
-        #alteredCallChains is not used; but I have to catch the return value
-        currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(testFolder, checkerCommand, checkerName, apkLocation)
-        return currentProblemCount, alteredCallChains
       methodsInFileWithProblem = [ m for m in methodObjList if m.className == classWithProblem]
       if innerClassWithProblem is not None:
         methodsInInnerClass = [m for m in methodObjList if m.className == innerClassWithProblem]
@@ -1015,13 +1078,13 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
         print('error: unable to find methods in problematic file: {0}'.format(classWithProblem))
         input('stopping to check error')
       for m in methodsInFileWithProblem:
-        currentProblemCount, alteredCallChains = testMethodObj(m,apkLocation)
+        currentProblemCount, alteredCallChains = testMethodObj(repairItem, m, callChains)
         if currentProblemCount == 0:
           break
       if currentProblemCount != 0:
         methodsInFileWithOutProblem = [ m for m in methodObjList if m.className != classWithProblem]
         for m in methodsInFileWithOutProblem:
-          currentProblemCount, alteredCallChains = testMethodObj(m, apkLocation)
+          currentProblemCount, alteredCallChains = testMethodObj(repairItem, m, callChains)
           if currentProblemCount == 0:
             break
     if currentProblemCount == 0:
@@ -1042,6 +1105,8 @@ def performMoveCallRepair(checkerName, checkerCommand, originalSourceFolder, apk
 #          wouldn't be unreasonable to use the lifecycle information in the repair
 #         if methodOfInterest1 in line:
 
+#eventually need to expand this with an arg parser to add the possible options for
+#running the repair
 if __name__ == "__main__":
   print('number of arguments: {0}'.format(len(sys.argv)))
   if len(sys.argv) < 5:
@@ -1067,11 +1132,21 @@ if __name__ == "__main__":
   if methodOfInterest2 is not None:
     print('last argument: {0}'.format(methodOfInterest2))
     if methodOfInterest2 == 'REQUIRES_ADDING_OBJ_REF':
-      result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, True)
+      #reference constructor for the repair items
+      #self, checkerToRun, runFlowDroidCommand, originalSourceFolder, 
+    #apkLocation, methodOfInterest1, fileWithProblem, 
+    #methodOfInterest2 = None, 
+    #requiresObjectReferences = None, 
+    #lineWithProblem = None,
+    #methodWithProblem = None
+      repairItem = RunMethodOrderRepairItem(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, requiresObjectReferences = True)
+      result = performMoveCallRepair(repairItem)
     else:
-      result = performMethodOrderRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, methodOfInterest2)
+      repairItem = RunMethodOrderRepairItem(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, methodOfInterest2= methodOfInterest2)
+      result = performMethodOrderRepair(repairItem)
   else:
-    result = performMoveCallRepair(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, False)
+    repairItem = RunMethodOrderRepairItem(checkerToRun, runFlowDroidCommand, originalSourceFolder, apkLocation, methodOfInterest1, requiresObjectReferences = False)
+    result = performMoveCallRepair(repairItem)
   if result:
     print('repair ended with application fixed')
     sys.exit(0)

@@ -19,6 +19,8 @@ object JarMain {
         case "DetectInvalidSetTheme" => DetectInvalidSetTheme.runAnalysis(newArgs)
         case "DetectInvalidInflateCallMain" => DetectInvalidInflateCallMain.runAnalysis(newArgs)
         case "DetectMissingSetHasOptionsMenu" => DetectMissingSetHasOptionsMenu.runAnalysis(newArgs)
+        case "DetectMissingSetHasOptionsMenu" => DetectMissingSetHasOptionsMenu.runAnalysis(newArgs)
+        case "DetectMissingOptionsMenuDefinition" => DetectMissingOptionsMenuDefinition.runAnalysis(newArgs)
         case "DetectSetArgumentsMain" => DetectSetArgumentsMain.runAnalysis(newArgs)
         case "DetectSetSelectorSetPackageProblem" => DetectSetSelectorSetPackageProblem.runAnalysis(newArgs)
         case anyString => println(s"${anyString} not a currently implemented detector")

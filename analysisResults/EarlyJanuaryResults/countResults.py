@@ -12,6 +12,7 @@ jarLocation = '/Users/zack/git/DirectiveTool/FlowDroidTest/out/artifacts/Multipl
 currentAppFolder = '/Users/zack/git/DirectiveTool/appsFromFDroid/'
 #outputFileName = '/Users/zack/git/DirectiveTool/runResults.txt'
 androidJarLocation = '/Users/zack/git/DirectiveTool/runCheckerPackage/android.jar'
+fileToCount = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
 
 successDict = {}
 errorDict = {}
@@ -50,7 +51,7 @@ def runChecker(checker, filename):
 
 
 
-with open('twoCheckerResults.txt','r') as fin:
+with open(fileToCount,'r') as fin:
   for line in fin:
     line = line.strip()
     if line.startswith('success!'):
