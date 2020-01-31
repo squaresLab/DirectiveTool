@@ -249,7 +249,7 @@ def extractProblemCountFromTestContents(testResultLines):
   #print(line)
   for line in testResultLines:
     if line.startswith('total number of caught problems:'):
-      print(line)
+      #print(line)
       lineItems = line.split(' ')
       return int(lineItems[-1])
   return None
@@ -257,6 +257,7 @@ def extractProblemCountFromTestContents(testResultLines):
 def buildAppWithGradle(repairItem):
   print("before build")
   currentDir = os.getcwd()
+  print('build folder: {0}'.format(repairItem.testFolder))
   os.chdir(repairItem.testFolder)
   print("current directory: {0}".format(os.getcwd()))
 
@@ -271,12 +272,14 @@ def buildAppWithGradle(repairItem):
     #try out the next change
     print('command failed ({0}); run again in debug mode to get output'.format(commandList))
     print("debugging directory: {0}".format(os.getcwd()))
+    input('stop to see why build failed')
     #commandList = ['./gradlew','assembleDebug','--debug']
     #commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
     #commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
     #print(commandOutput.stdout)
     os.chdir(currentDir)
     return False
+  os.chdir(currentDir)
   return True
 
 def runCheckerAndGetOutput(repairItem):
@@ -298,9 +301,10 @@ def runCheckerAndGetOutput(repairItem):
     repairItem.apkLocation = levenshteinDistance.findAPKInRepo(repairItem.testFolder, repairItem.apkLocation)
     commandList.append(repairItem.apkLocation)
   try: 
-    print("current directory for command: {0}".format(os.getcwd()))
-    print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, repairItem.apkLocation))
+    #print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, repairItem.apkLocation))
     os.chdir(checkerRootDir)
+    print("current directory for checker command: {0}".format(os.getcwd()))
+    print('apk location: {0}'.format(repairItem.apkLocation))
     commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if printingDebugInfo:
       for line in commandOutput.stderr.decode('utf-8').splitlines():
@@ -327,8 +331,8 @@ def parseCallChains(testResultLines):
   print('starting to create call chains')
   #handle either the multiple line print out case or the single List print out
   #case
-  for line in commandOutput.stdout.decode('utf-8').splitlines():
-    print('line from output: {0}'.format(line))
+  for line in testResultLines:
+    #print('line from output: {0}'.format(line))
     if line.startswith('total number of caught problems:'):
       lineItems = line.split(' ')
       currentProblems = int(lineItems[-1])
@@ -339,9 +343,9 @@ def parseCallChains(testResultLines):
       currentChain.reverse()
       #if not currentChain in chainsInfo:
       chainsInfo.append(currentChain.copy())
-      print('length of chain added: {0}'.format(len(currentChain)))
+      #print('length of chain added: {0}'.format(len(currentChain)))
       currentChain = []
-      print('length of new call chain: {0}'.format(len(currentChain)))
+      #print('length of new call chain: {0}'.format(len(currentChain)))
       savingLines = False
     elif savingLines:
       m = re.match(r"<(.+): (.+)> .*", line)
@@ -350,25 +354,25 @@ def parseCallChains(testResultLines):
       else:
           print("call chain line did not match: {0}".format(line))
     elif line.startswith('@@@@@ Found a problem:'):
-      print('found problem line: {0}'.format(line))
+      #print('found problem line: {0}'.format(line))
       listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
       if listSequenceMatch:
-        print('found list: {0}'.format(listSequenceMatch.group(1)))
+        #print('found list: {0}'.format(listSequenceMatch.group(1)))
         callitems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
         for c in callitems:
           #print(c)
           itemsInCall = c.split(':')
           currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
-          print('|{0}|'.format(chainsInfo))
+          #print('|{0}|'.format(chainsInfo))
         #currentChain.reverse()
         #if not currentChain in chainsInfo:
-        print('length of new call chain: {0}'.format(len(currentChain)))
+        #print('length of new call chain: {0}'.format(len(currentChain)))
         chainsInfo.append(currentChain.copy())
-        print('length of chain added: {0}'.format(len(currentChain)))
+        #print('length of chain added: {0}'.format(len(currentChain)))
         currentChain = []
         #sys.exit(0)
-  print('finished creating call chains')
-  print('final problem count: {0}'.format(currentProblems))
+  #print('finished creating call chains')
+  #print('final problem count: {0}'.format(currentProblems))
   return chainsInfo
 
 #This can probably be combined with the method call executeTestOfChangedApp but
@@ -389,11 +393,13 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
     #for line in commandOutput.stderr.decode('utf-8').splitlines():
       #print(line)
   chainsInfo = parseCallChains(testResultLines)
-  os.chdir(currentDir)
+  currentProblems = extractProblemCountFromTestContents(testResultLines)
+  input('stopping after running uxecute test of changed app and get call chains')
+
+  #print(line)
   #print("succeeded - change: {0}, method {1}".format(change, method))
   print(chainsInfo)
   print(len(chainsInfo))
-  input('stopping to check the current chain items')
   return currentProblems, chainsInfo
 
 def executeTestOfChangedApp(repairItem):
@@ -402,6 +408,7 @@ def executeTestOfChangedApp(repairItem):
     return False
   testResultLines = runCheckerAndGetOutput(repairItem)
   problemCount = extractProblemCountFromTestContents(testResultLines)
+  input('stopping after running execute test of changed app')
   #I'll need to change this so that it can determine a fix for problem
   #counts greater than 1
   if problemCount == 0:
@@ -531,7 +538,7 @@ def tryDeleteSecondCall(repairItem):
   return False
 
 def updateRepairItemForNewCopy(repairItem):
-  repairItem.apkLocaiton = repairItem.apkLocation.replace(repairItem.originalSourceFolder, repairItem.testFolder)
+  repairItem.apkLocation = repairItem.apkLocation.replace(repairItem.originalSourceFolder, repairItem.testFolder)
   if not repairItem.fileWithProblem is None:
     repairItem.fileWithProblem = repairItem.fileWithProblem.replace(repairItem.originalSourceFolder, repairItem.testFolder)
 
@@ -814,10 +821,8 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   lineToMove = None
   print('trying to open: {0}'.format(fullFileName))
   print('innerClassWithProblem: {0}'.format(innerClassWithProblem))
-  input('stopping here to watch')
   with open(fullFileName,'r') as fin:
     for lineCount, line in enumerate(fin):
-      print(line)
       if foundMethodWithProblem and (innerClassWithProblem is None or foundInnerClassWithProblem):
         if methodToMove in line:
           print('found method to move ({0}) in line: {1}'.format(methodToMove, lineCount))
@@ -861,7 +866,6 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
     for line in contentsOfFileWithAddedLine:
       fout.write(line)
   print('rewrote {0}'.format(moveLocationObj.fileName))
-  input('stop to check the rewrite')
 
 
 
