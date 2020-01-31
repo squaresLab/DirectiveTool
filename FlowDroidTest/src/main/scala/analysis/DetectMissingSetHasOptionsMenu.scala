@@ -151,7 +151,7 @@ object DetectMissingSetHasOptionsMenu {
               System.exit(1)
             }
           }
-          problemCount = checkForProblemFunction(problemCount, currentClass, containsHasSetOptionsMenu, containsOnCreateOptionsMenu)
+          problemCount = checkForProblemFunction(problemCount, cl, containsHasSetOptionsMenu, containsOnCreateOptionsMenu)
         }
       }
       println(s"total number of caught problems: ${problemCount}")
@@ -165,18 +165,17 @@ object DetectMissingSetHasOptionsMenu {
   def checkForProblem(problemCount: Int, cl: SootClass, containsHasSetOptionsMenu: Boolean, containsOnCreateOptionsMenu: Boolean):Int = {
     var newProblemCount = problemCount
     if (containsOnCreateOptionsMenu && !containsHasSetOptionsMenu){
-      val errorString = "@@@@ Found a problem: setHasOptionsMenu(true) must " +
-        s"be called in the onCreate method of ${cl.getName} to display the " +
-        "OptionsMenu"
+      val errorString = "@@@@@ Found a problem: setHasOptionsMenu(true) must " +
+        s"be called in the onCreate method to display the OptionsMenu in ${cl.getName}"
       newProblemCount = notifyOfProblem(problemCount, cl.getName, errorString)
     }
     return newProblemCount
   }
 
   def notifyOfProblem(problemCount: Int, className: String, errorString: String): Int = {
-    println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
-    System.err.println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
-    println()
+    //println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
+    //System.err.println("@@@@@ Found a problem:  the options menu is incorrectly configured in " + className)
+    //println()
     println(errorString)
     System.out.flush()
     System.err.println(errorString)

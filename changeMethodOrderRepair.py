@@ -282,7 +282,7 @@ def buildAppWithGradle(repairItem):
 def runCheckerAndGetOutput(repairItem):
   # I need to split by space but not on quoted parts of the string
   originalDir = os.getcwd()
-  unquotedAndQuotedList = runFlowDroidCommand.split('"')
+  unquotedAndQuotedList = repairItem.runFlowDroidCommand.split('"')
   commandList = []
   for index, item in enumerate(unquotedAndQuotedList):
     if index % 2 == 0:

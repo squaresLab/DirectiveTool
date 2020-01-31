@@ -26,8 +26,8 @@ object DetectMissingOptionsMenuDefinition {
   def checkForProblem(problemCount: Int, cl: SootClass, containsHasSetOptionsMenu: Boolean, containsOnCreateOptionsMenu: Boolean): Int = {
     var newProblemCount = problemCount
     if (containsHasSetOptionsMenu && !containsOnCreateOptionsMenu) {
-      val errorString = "@@@@ Found a problem: onCreateOptionMenu must " +
-        s"be overridden in ${cl.getName} to display the OptionsMenu"
+      val errorString = "@@@@@ Found a problem: onCreateOptionMenu must " +
+        s"be overridden to display the OptionsMenu in ${cl.getName}"
       newProblemCount = DetectMissingSetHasOptionsMenu.notifyOfProblem(problemCount, cl.getName, errorString)
 
     }
