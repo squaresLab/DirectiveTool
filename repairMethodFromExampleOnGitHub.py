@@ -553,7 +553,7 @@ def executeTestOfChangedApp(repairItem):
   checkerResultLines = executeChecker(repairItem)
   importantLines = utilitiesForRepair.extractImportantCheckerLines(checkerResultLines)
   problemCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantLines)
-  if problemCount < len(repairItem.problemInfoList)
+  if problemCount < len(repairItem.problemInfoList):
     #print("succeeded - change: {0}, method {1}".format(change, method))
     return True
   else:
