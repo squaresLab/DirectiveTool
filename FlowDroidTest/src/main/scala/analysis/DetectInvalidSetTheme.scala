@@ -149,18 +149,20 @@ object DetectInvalidSetTheme {
                           problemCount = problemCount + 1
                         }
                       }
+                        /* This check isn't supported yet
                       else if (methodInStatement.getName == "setContentView") {
                         println("found set content view")
                         hasSetContentView = true
                         hasSetContentViewInOnCreate = true
                         if (hasSetThemeInMethodOtherThanOnCreate) {
-                          println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
+                          println(s"@@@@@ problem: set theme is called after setContentView in ${methodSetThemeIsCalledIn} of class ${methodInStatementOption.getOrElse()} )
                           System.out.flush()
-                          System.err.println("@@@@@ Found a problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
+                          System.err.println("@@@@@ problem: set theme is called after setContentView in " + methodSetThemeIsCalledIn)
                           System.err.flush();
                           problemCount = problemCount + 1
                         }
                       }
+                      */
                       /*else{
                         println(s"method was not found: ${methodInStatement.getName}")
                       }*/
@@ -175,6 +177,7 @@ object DetectInvalidSetTheme {
 
               //println("")
             }
+              /* This part of the check isn't supported yet
             else {
               for (stmt <- m.getActiveBody.getUnits.asScala) {
                 val methodInStatementOption = DetectionUtils.extractMethodCallInStatement(stmt)
@@ -197,7 +200,7 @@ object DetectInvalidSetTheme {
                     ()
                 }
               }
-            }
+            } */
           }
         }
       }

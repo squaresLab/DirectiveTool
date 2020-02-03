@@ -94,7 +94,7 @@ experimentFolder = "/Users/zack/git/DirectiveTool/temporaryTestOfChange"
 runFlowDroidFolder = "/Users/zack/git/DirectiveTool/FlowDroidTest"
 
 class GitHubRepairItem:
-  def __init__(self,runFlowDroidCommand, checkerToRun, methodDeclarationStringToCompare, originalFolder, fileToChange, newAPKLocation, termsOfInterest, savedDataDirectory = None, testFolder = None):
+  def __init__(self,runFlowDroidCommand, checkerToRun, methodDeclarationStringToCompare, originalFolder, fileToChange, newAPKLocation, termsOfInterest, savedDataDirectory = None, testFolder = None, problemInfoList = None):
     self.runFlowDroidCommand = runFlowDroidCommand
     self.checkerToRun = checkerToRun
     self.methodDeclarationStringToCompare = methodDeclarationStringToCompare
@@ -107,6 +107,7 @@ class GitHubRepairItem:
     self.testFolder = testFolder
     #eventually create a way to set this
     self.runFlowDroidFolder = runFlowDroidFolder
+    self.problemInfoList = problemInfoList
 
 #TODO: some of these parameter lists are getting large. I should probably group
 #them into an object to reduce the line sizes and improve readability
@@ -491,16 +492,6 @@ def buildAppWithGradle(testFolder):
   os.chdir(originalDir)
   return True
 
-
-def extractProblemCountFromTestContents(testResultLines):
-  #print(line)
-  for line in testResultLines:
-    if line.startswith('total number of caught problems:'):
-      lineItems = line.split(' ')
-      print(line)
-      return int(lineItems[-1])
-  return None
-
 def executeChecker(repairItem):
   originalDir = os.getcwd()
   unquotedAndQuotedList = repairItem.runFlowDroidCommand.split('"')
@@ -560,10 +551,9 @@ def executeTestOfChangedApp(repairItem):
   if not buildSuccessful:
     return False
   checkerResultLines = executeChecker(repairItem)
-  problemCount = extractProblemCountFromTestContents(checkerResultLines)
-  #I'll have to change how this problemCount works later to have the 
-  #repair handle multiple instances
-  if problemCount == 0:
+  importantLines = utilitiesForRepair.extractImportantCheckerLines(checkerResultLines)
+  problemCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantLines)
+  if problemCount < len(repairItem.problemInfoList)
     #print("succeeded - change: {0}, method {1}".format(change, method))
     return True
   else:

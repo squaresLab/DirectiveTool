@@ -14,6 +14,7 @@ import soot.options.Options
 import soot.toolkits.graph.ExceptionalUnitGraph
 
 import scala.collection.JavaConverters._
+import util.control.Breaks._
 
 object DetectSetSelectorSetPackageProblem {
   @throws[IOException]
@@ -117,26 +118,34 @@ object DetectSetSelectorSetPackageProblem {
           }
         }*/
         for (m: SootMethod <- cl.getMethods().asScala) {
-          if (!m.hasActiveBody){
-            m.retrieveActiveBody()
-          }
-          if (m.hasActiveBody && m.isConcrete) {
-            if (!m.getName.contains("dummyMainMethod")) {
-              //consider adding a check to see if setPackage or setSelector is even in the
-              //method instead of running dataflow analysis on all methods
-              //println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
+          breakable {
+            if (!m.hasActiveBody) {
               try {
-                val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
-                if (s.getCaughtProblems() > 0) {
-                  println(s"@@@@@ problem in class ${cl.getName()} in method ${m.getName()}")
-                }
-                if (s.getCaughtProblems() > 0) {
-                  println(s"caught problems: ${s.getCaughtProblems()}")
-                }
-                problemCount += s.getCaughtProblems()
+                m.retrieveActiveBody()
               } catch {
                 case r: RuntimeException => {
-                  //println("caught analysis timing out")
+                  break()
+                }
+              }
+            }
+            if (m.hasActiveBody && m.isConcrete) {
+              if (!m.getName.contains("dummyMainMethod")) {
+                //consider adding a check to see if setPackage or setSelector is even in the
+                //method instead of running dataflow analysis on all methods
+                //println(s"running analysis class: ${cl.getName()} method: ${m.getName()}")
+                try {
+                  val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(m.getActiveBody))
+                  if (s.getCaughtProblems() > 0) {
+                    println(s"@@@@@ problem: setSelectorSetPackage problem in method ${m.getName()} of class ${cl.getName()}")
+                  }
+                  if (s.getCaughtProblems() > 0) {
+                    println(s"caught problems: ${s.getCaughtProblems()}")
+                  }
+                  problemCount += s.getCaughtProblems()
+                } catch {
+                  case r: RuntimeException => {
+                    //println("caught analysis timing out")
+                  }
                 }
               }
             }

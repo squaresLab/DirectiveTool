@@ -20,6 +20,7 @@ import timeout_decorator
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import runAllRepairs
 import extractRepoInfo
+import utilitiesForRepair
 
 getRepoFolderCommand =  shlex.split('git rev-parse --show-toplevel')
 copyRepoLocation = '/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/'
@@ -31,10 +32,10 @@ testAppCommand = shlex.split('./gradlew test')
 permissionCommand = shlex.split('chmod +x gradlew')
 runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=56329:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.7-sources.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.7-sources.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/soot/target/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow-cmd/build/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/axml-2.0.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-api-1.7.5.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar analysis.{0} {1}'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithSuccessfulTests.txt'
-#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
+workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidInflateCallMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectInvalidSetTheme.txt'
-workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
+#workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectIncorrectGetActivityMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/singleGetActivityInjectionRepos.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetArgumentsMain.txt'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithZeroErrors.txt'
@@ -245,79 +246,95 @@ def runTestOfApp(checkerName, app, debuggingResultList, repoDir):
   os.chdir('/Users/zack/git/DirectiveTool/FlowDroidTest')
   debuggingResultList.append('testing application: {0}'.format(app))
   checkerCommand = shlex.split(runCheckerTemplate.format(checkerName, app))
-  checkerResult = subprocess.run(checkerCommand, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-  fileWithProblem = None
+  checkerResult = subprocess.run(checkerCommand, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
   isAppToFix = False
   errorCount = None
   foundLineOfInterest = False
+  checkerOutputLines = []
   for line in checkerResult.stdout.decode('utf-8').splitlines():
     line = line.strip()
-    print(line)
+    checkerOutputLines.append(line)
+    #print(line)
     #if line.startswith('total') and not line.startswith('total time'):
-    if line.startswith('total number of caught problems'):
-      print('found line we cared about')
-      errorCount = int(line.split()[-1])
-      print(errorCount)
-      if errorCount > 0:
-        print('greater than 0')
-        if errorCount == 1:
-          print('error count equals 1')
-          debuggingResultList.append(line)
-          isAppToFix = True
-        else:
-          #isAppToFix = True
-          print('found {0} errors in application {1}'.format(errorCount, app))
-          input('stopping to see the multiple error case for repo: {0}'.format(repoDir))
-          debuggingResultList.append('found too many errors in application')
-          print('found too many errors - currently unable to repair multiple errors in an application')
-          print(line)
-          print('found {0} errors in app'.format(errorCount))
-      else:
-        print('found no errors in the application {0}'.format(app))
-        debuggingResultList.append('found no errors in application')
+  importantCheckerLines = utilitiesForRepair.extractImportantCheckerLines(checkerOutputLines)
+  problemList = utilitiesForRepair.extractProblemInfoFromCheckerOutput(importantCheckerLines)  
+  errorCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantCheckerLines)
+  if len(problemList) != errorCount:
+    outputFile = os.path.join(os.getcwd(), 'debuggingCheckerOutputFile.txt')
+    with open(outputFile, 'w') as fout:
+      for line in checkerOutputLines:
+        print(line, file=fout)
+      print('-------end of full output; starting important lines ------', file=fout)
+      for line in importantCheckerLines:
+        print(line, file=fout)
+      print('#######checker error lines########', file=fout)
+      for line in checkerResult.stderr.decode('utf-8').splitlines():
+        print(line, file=fout, end='')
+      print('******command to run checker*****', file=fout)
+      print(' '.join(checkerCommand), file=fout)
+
+    print('saved checker output to {0} for debugging'.format(outputFile))
+    print('error: problem count is not equal to error count')
+    print('app with error: {0}'.format(app))
+    print('problem list: {0}'.format(problemList))
+    print('error count: {0}'.format(errorCount))
+    sys.exit(1)
+  if errorCount > 0:
+    print('greater than 0')
+    if errorCount == 1:
+      print('error count equals 1')
+      debuggingResultList.append(line)
+      print('skipping when error count equals 1 for now - remove the skip later')
+      #isAppToFix = True
+    else:
+      isAppToFix = True
+      print('found {0} errors in application {1}'.format(errorCount, app))
+      #input('stopping to see the multiple error case for repo: {0}'.format(repoDir))
+      debuggingResultList.append('found {0} errors in application {1}'.format(errorCount, app))
+      #print('found too many errors - currently unable to repair multiple errors in an application')
+      #print(line)
+      #print('found {0} errors in app'.format(errorCount))
+  else:
+    print('found no errors in the application {0}'.format(app))
+    debuggingResultList.append('found no errors in application')
+    #I need to get the file to fix from the first item in the problem list
         #removing because the setArguments injection doesn't always inject a 
         #problem; it just injects into a guessed location
         #input('stopping to debug this case')
         #with open(reposWithZeroErrorsFile,'a') as fout:
         #  print(repoDir, file=fout)
-    elif line.startswith('@@@@@'):
-      foundLineOfInterest = True
-      #classWithProblemWithFullNamespace = 
-      lineItems = line.split()
-      classWithProblemWithFullNamespace = None
-      print('found line with problem')
-      print(line)
-      #I think I can change previous logic to only checking the last word in the
+    #commenting out this way of getting the class name to try a new one. Leaving
+    #it commented out to 
+    #elif line.startswith('@@@@@'):
+      #foundLineOfInterest = True
+      #lineItems = line.split()
+      #classWithProblemWithFullNamespace = None
+      #print('found line with problem')
+      #print(line)
+      ##I think I can change previous logic to only checking the last word in the
       #line, but I'll leave it here in case I need to revert
-      for l in lineItems:
-        periodCount = 0
-        for c in l:
-          if c == '.':
-            periodCount += 1
-            if periodCount > 1:
-              classWithProblemWithFullNamespace = l
-              break
-        if classWithProblemWithFullNamespace:
-          break
-      if classWithProblemWithFullNamespace: 
-        fileWithProblem = '{0}.java'.format(classWithProblemWithFullNamespace.split('.')[-1])
-    elif line.startswith('@@'):
-      foundLineOfInterest = True
-      print(line)
+      #for l in lineItems:
+        #periodCount = 0
+        #for c in l:
+          #if c == '.':
+            #periodCount += 1
+            #if periodCount > 1:
+              #classWithProblemWithFullNamespace = l
+              #break
+        #if classWithProblemWithFullNamespace:
+          #break
+  
   #if foundLineOfInterest: 
     #input('stopping to allow check of line of interest')
   if not isAppToFix:
     debuggingResultList.append('never found problem to fix')
   #only print out the file problem if the problem was found because the 
   #case where they both occur is obvious and add unnecessary print statements
-  else:
-    if fileWithProblem is None:
-      debuggingResultList.append('never found file with problem - this is ok for certain repairs')
       #for line in checkerResult.stdout.decode('utf-8').splitlines():
       #  print(line)
       #input('stopping to see this case')
   os.chdir(originalDir)
-  return isAppToFix, fileWithProblem, debuggingResultList
+  return isAppToFix, problemList, debuggingResultList
 
 def tryToRepairApps(currentChecker, appBuilds, debuggingResultList, currentTestRepo, repoDir):
   attemptedFixCount = 0
@@ -326,12 +343,12 @@ def tryToRepairApps(currentChecker, appBuilds, debuggingResultList, currentTestR
   print('number of app builds: {0}'.format(len(appBuilds)))
   originalDir = os.getcwd()
   for app in appBuilds:
-    isAppToFix, fileWithProblem, debuggingResultList = runTestOfApp(currentChecker, app, debuggingResultList, repoDir)
+    isAppToFix, problemList, debuggingResultList = runTestOfApp(currentChecker, app, debuggingResultList, repoDir)
     #if isAppToFix and fileWithProblem:
     if isAppToFix:
       attemptedFixCount += 1
       try:
-        repairResult = runAllRepairs.runRepairOptions(currentChecker, app, fileWithProblem, currentTestRepo)
+        repairResult = runAllRepairs.runRepairOptions(currentChecker, app, problemList, currentTestRepo)
       except timeout_decorator.TimeoutError as t:
         repairResult = None
         debuggingResultList.append('repair attempted timed out')
@@ -387,7 +404,7 @@ def main():
   ##issues - first one can only inject into a nested class (whose repair isn't supported) and
   #second one only injects into methods that aren't called directly (I could make those errors, but 
   #that would probably open up even more false positives)
-  injectorInstanceList.append(InjectionDispatch('DetectIncorrectGetActivityMain', isRepoOfInterestInitializer(injectGetActivityIssue.isPossibleInjectionRepo), injectGetActivityIssue.injectInRepo))
+  #injectorInstanceList.append(InjectionDispatch('DetectIncorrectGetActivityMain', isRepoOfInterestInitializer(injectGetActivityIssue.isPossibleInjectionRepo), injectGetActivityIssue.injectInRepo))
   #injectorInstance = InjectionDispatch('DetectInvalidGetResources', injectGetResourcesIssue.findPossibleInjectionRepos, injectGetResourcesIssue.injectInRepo)
   #injectorInstance = InjectionDispatch('DetectSetArgumentsMain', filterRepoInitializer(injectSetArgumentsProblem.isRepoOfInterest), injectInRepoInitializer(injectSetArgumentsProblem.injectSetArgumentsProblem))
   #injectorInstance = InjectionDispatch('DetectInvalidSetTheme', injectSetThemeIssue.findPossibleInjectionRepos, injectSetThemeIssue.injectInRepo)
@@ -400,7 +417,7 @@ def main():
   #doesn't have enough instances - only two contain either, 1 compiles but doesn't parse in Flowdroid, the other one has the section commented out
   #tries to fix 0 apps
   #injectorInstanceList.append(InjectionDispatch('DetectIncorrectSetInitialSavedState', isRepoOfInterestInitializer(injectSetInitialSavedStateProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetInitialSavedStateProblem.injectSetInitialSavedStateProblem)))
-  #injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
+  injectorInstanceList.append(InjectionDispatch('DetectSetSelectorSetPackageProblem', isRepoOfInterestInitializer(injectSetPackageSetSelectorProblem.isPossibleInjectionRepo), injectInRepoInitializer(injectSetPackageSetSelectorProblem.injectSetPackageSetSelectorProblem)))
   #injectorInstanceList.append(InjectionDispatch('DetectInvalidInflateCallMain', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.determineInjectionInfoForInflateRepo), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectInflateProblemWithoutComby)))
   #set options menu works now for 
   #injectorInstanceList.append(InjectionDispatch('DetectMissingSetHasOptionsMenu', isRepoOfInterestInitializer(injectInflateAndOptionsMenuIssues.canInjectSetHasOptionsMenuProblem), injectInRepoInitializer(injectInflateAndOptionsMenuIssues.injectSetHasOptionsMenuProblem)))
@@ -525,7 +542,8 @@ def main():
               newAttemptedFixCount, newSuccessfulRepairCount, repairedApps, debuggingResultList = tryToRepairApps(injectorInstance.checkerName, appBuilds, debuggingResultList, copyRepoLocation, repoDir )
           if newAttemptedFixCount < 1:
             debuggingResultList.append('never tried to fix any of the apps - was unable to find the problem with the checker or found too many problems after injecting the problem')
-            input('stopping to debug the failed injection case')
+            #input('stopping to debug the failed injection case')
+            print('never attempted to repair')
           elif len(repairedApps) < 1:
             debuggingResultList.append('was never able to successfully repair an app')
           else:
@@ -551,6 +569,7 @@ def main():
           totalSuccessfulRepairCount += newSuccessfulRepairCount
         else:
           debuggingResultList.append('{0} was determined not to be a possible repo for injection'.format(debuggingResultList))
+          print('failed the test that it is an injection repo')
         input('stopping after each injection to see what happened')
       repoCount +=1
       print('number of checked repos: {0}'.format(repoCount))

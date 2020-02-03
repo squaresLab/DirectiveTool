@@ -122,6 +122,8 @@ object DetectInvalidInflateCallMain {
                     //at the moment, the whole call chain isn't needed, just the failing method
                     println(s"${m.toString}   ${m.getDeclaringClass.toString}")
                     println("end of call chain")
+                    //The two classes that are printed here are often the same class
+                    // - I don't remember when they are different; maybe the two should be replaced with one
                     println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)
                     System.out.flush()
                     System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)

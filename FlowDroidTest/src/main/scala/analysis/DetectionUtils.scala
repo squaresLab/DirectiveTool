@@ -231,7 +231,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/org.xapek.andiodine_6.apk"
       //return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
       //return "/Users/zack/git/DirectiveTool/apkWithError.apk"
-    return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
+    return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/app-debug.apk"
     }
   }
 }

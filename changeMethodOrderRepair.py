@@ -8,6 +8,7 @@ import subprocess
 import re
 import traceback
 
+import utilitiesForRepair
 
 import levenshteinDistance
 #checkerToRun = sys.argv[1]
@@ -101,19 +102,6 @@ class MethodInfo:
     return "class name: {0}, method name: {1}, line number: {2}, columnNumber: {3}, file name: {4}".format(self.className, self.methodName, self.lineNumber, self.columnNumber, self.fileName)
 
 
-
-class CallChainItem:
-  def __init__(self, className, methodName):
-    self.className = className
-    self.methodName = methodName 
-
-  def __str__(self):
-    return "class name: {0}, method name: {1}".format(self.className, self.methodName)
-
-  def __repr__(self):
-    return "class name: {0}, method name: {1}".format(self.className, self.methodName)
-
-
 #I don't use this at the moment - I'm debating on refactoring the code so that 
 #most of the method arguments are passed around in this object. However, I also
 #need to figure out how to make the repair work on only one instance of the problem, 
@@ -129,7 +117,8 @@ class RunMethodOrderRepairItem:
     #I think I have something like a line or method with problem; I need to look
     #into the best way to do it.
     lineWithProblem = None,
-    methodWithProblem = None
+    methodWithProblem = None, 
+    problemInfoList = None
      ):
     self.checkerToRun = checkerToRun
     self.runFlowDroidCommand = runFlowDroidCommand
@@ -148,6 +137,7 @@ class RunMethodOrderRepairItem:
     #I might eventually make this a parameter, but I'm currently leaving it to
     #get the value from the global variable
     self.checkerRootDir = checkerRootDir
+    self.problemInfoList = problemInfoList
 
 def getNonComments(line, inBlockComments):
   #return the part of the string that is the not the comment
@@ -245,15 +235,6 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
         print(line, end="", file=fout)
   return foundChangeInFile
 
-def extractProblemCountFromTestContents(testResultLines):
-  #print(line)
-  for line in testResultLines:
-    if line.startswith('total number of caught problems:'):
-      #print(line)
-      lineItems = line.split(' ')
-      return int(lineItems[-1])
-  return None
-
 def buildAppWithGradle(repairItem):
   print("before build")
   currentDir = os.getcwd()
@@ -270,9 +251,9 @@ def buildAppWithGradle(repairItem):
     #print(commandOutput.stderr)
   except:
     #try out the next change
-    print('command failed ({0}); run again in debug mode to get output'.format(commandList))
-    print("debugging directory: {0}".format(os.getcwd()))
-    input('stop to see why build failed')
+    print('build command failed ({0}); run again in debug mode to get output'.format(commandList))
+    print("debugging directory for build: {0}".format(os.getcwd()))
+    #input('stop to see why build failed')
     #commandList = ['./gradlew','assembleDebug','--debug']
     #commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
     #commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
@@ -324,56 +305,7 @@ def runCheckerAndGetOutput(repairItem):
   os.chdir(originalDir)
   return testResultLines
 
-def parseCallChains(testResultLines):
-  savingLines = False
-  chainsInfo = []
-  currentChain = []
-  print('starting to create call chains')
-  #handle either the multiple line print out case or the single List print out
-  #case
-  for line in testResultLines:
-    #print('line from output: {0}'.format(line))
-    if line.startswith('total number of caught problems:'):
-      lineItems = line.split(' ')
-      currentProblems = int(lineItems[-1])
-    elif line.startswith('start of call chain'):
-      savingLines = True
-      currentChain = []
-    elif line.startswith('end of call chain'):
-      currentChain.reverse()
-      #if not currentChain in chainsInfo:
-      chainsInfo.append(currentChain.copy())
-      #print('length of chain added: {0}'.format(len(currentChain)))
-      currentChain = []
-      #print('length of new call chain: {0}'.format(len(currentChain)))
-      savingLines = False
-    elif savingLines:
-      m = re.match(r"<(.+): (.+)> .*", line)
-      if m:
-        currentChain.append(CallChainItem(m.group(1), m.group(2)))
-      else:
-          print("call chain line did not match: {0}".format(line))
-    elif line.startswith('@@@@@ Found a problem:'):
-      #print('found problem line: {0}'.format(line))
-      listSequenceMatch = re.match(r'.+List\((.+)\).*', line)
-      if listSequenceMatch:
-        #print('found list: {0}'.format(listSequenceMatch.group(1)))
-        callitems = re.findall(r'<([^>]+)>',listSequenceMatch.group(1))
-        for c in callitems:
-          #print(c)
-          itemsInCall = c.split(':')
-          currentChain.append(CallChainItem(itemsInCall[0], itemsInCall[1]))
-          #print('|{0}|'.format(chainsInfo))
-        #currentChain.reverse()
-        #if not currentChain in chainsInfo:
-        #print('length of new call chain: {0}'.format(len(currentChain)))
-        chainsInfo.append(currentChain.copy())
-        #print('length of chain added: {0}'.format(len(currentChain)))
-        currentChain = []
-        #sys.exit(0)
-  #print('finished creating call chains')
-  #print('final problem count: {0}'.format(currentProblems))
-  return chainsInfo
+
 
 #This can probably be combined with the method call executeTestOfChangedApp but
 #I'm unsure how at the moment and eventually decided it wasn't worth thinking 
@@ -385,29 +317,53 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
   failedExecuteProblemCount = -1
   buildSucceeded = buildAppWithGradle(repairItem)
   if not buildSucceeded:
-    return failedExecuteProblemCount, []
+    return False
   testResultLines = runCheckerAndGetOutput(repairItem)
     #input('press enter when looking at output')
     #print(commandOutput)
     #print(commandOutput.stderr)
     #for line in commandOutput.stderr.decode('utf-8').splitlines():
       #print(line)
-  chainsInfo = parseCallChains(testResultLines)
-  currentProblems = extractProblemCountFromTestContents(testResultLines)
-  input('stopping after running uxecute test of changed app and get call chains')
+  importantLines = utilitiesForRepair.extractImportantCheckerLines(testResultLines)
+  print('length of important lines: {0}'.format(len(importantLines)))
+  chainsInfo = utilitiesForRepair.parseCallChains(importantLines)
+  currentProblems = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantLines)
+  #input('stopping after running execute test of changed app and get call chains')
+  if currentProblems != len(chainsInfo):
+    outputFile = os.path.join(os.getcwd(), 'debuggingCheckerOutputFile.txt')
+    with open(outputFile, 'w') as fout:
+      for line in testResultLines:
+        print(line, file=fout)
+      print('-------end of full output; starting important lines ------', file=fout)
+      for line in importantLines:
+        print(line, file=fout)
+    print('saved checker output to {0} for debugging'.format(outputFile))
+    print('error: chainsInfo length ({0}) is not equal to problem count ({1})'.format(chainsInfo, currentProblems))
+    sys.exit(1)
+  #if the chains item is none, then we are saving the information for the first time;
+  #otherwise, leave the chains info as is, so we can compare to the original number of
+  #problems
+  if repairItem.problemInfoList is None:
+    repairItem.problemInfoList = utilitiesForRepair.extractProblemInfoFromCheckerOutput(importantLines)
+  #I'm not sure the best way to check for a fix; currently doing the number of
+  #problem chains.
+  if len(chainsInfo) < len(repairItem.problemInfoList):
+    wasFixed = True
+  else:
+    wasFixed = False
+  return wasFixed
 
   #print(line)
   #print("succeeded - change: {0}, method {1}".format(change, method))
-  print(chainsInfo)
-  print(len(chainsInfo))
-  return currentProblems, chainsInfo
+  #return currentProblems, chainsInfo
 
 def executeTestOfChangedApp(repairItem):
   buildSucceeded = buildAppWithGradle(repairItem)
   if not buildSucceeded:
     return False
   testResultLines = runCheckerAndGetOutput(repairItem)
-  problemCount = extractProblemCountFromTestContents(testResultLines)
+  importantLines = utilitiesForRepair.extractImportantCheckerLines(testResultLines)
+  problemCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantLines)
   input('stopping after running execute test of changed app')
   #I'll need to change this so that it can determine a fix for problem
   #counts greater than 1
@@ -568,10 +524,10 @@ def createNewCopyOfTestProgram(repairItem, newTestFolder = None):
   #make sure the repairItem's testFolder is in the right format
   resultFolder = repairItem.testFolder
   #make sure the return matches the style that originalSourceFolder was provided in
-  if originalSourceFolder[-1] == os.path.sep and edittingFolder[-1] != os.path.sep:
+  if repairItem.originalSourceFolder[-1] == os.path.sep and repairItem.testFolder[-1] != os.path.sep:
     #add the path seperator
     resultFolder += os.path.sep
-  elif originalSourceFolder[-1] != os.path.sep and edittingFolder[-1] == os.path.sep:
+  elif repairItem.originalSourceFolder[-1] != os.path.sep and repairItem.testFolder[-1] == os.path.sep:
     #remove the path seperator
     resultFolder = resultFolder[:-1]
   repairItem.testFolder = resultFolder
@@ -654,17 +610,28 @@ def performMethodOrderRepair(repairItem):
 #    moveBackMethodBeforePreviousMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
 #    moveFrontMethodAfterBackMethod(fin.readlines(), methodOfInterest1, methodOfInterest2)
 
+def getChainItemWithProblem(callChains):
+  for chain in callChains:
+    for chainItem in list(reversed(chain))[1:]:
+      if not chainItem.className.startswith('android.app') and \
+        not chainItem.className.startswith('com.google'):
+          return chainItem
+  return None
+      
+
+
 def getFileAndMethodWithProblem(callChains, projectDir):
   #removing the first item from the call chain because it's often the failing method
   #and not the location of the failing method
   #the call chain seems reversed in getActivity. Maybe I need to make them ordered
   #the same way
   innerClassWithProblem = None
-  for chainItem in list(reversed(callChains[0]))[1:]:
-    if not chainItem.className.startswith('android.app'):
-      classToGetMethodFrom = chainItem.className
-      methodWithProblem = chainItem.methodName
-      break
+  chainItemWithProblem = getChainItemWithProblem(callChains)
+  if chainItemWithProblem is None:
+    print('error: was unable to find the call chain item')
+    sys.exit(1)
+  classToGetMethodFrom = chainItemWithProblem.className
+  methodWithProblem = chainItemWithProblem.methodName
   print('editing method with problem')
   methodWithProblem = re.sub(r'^[^ ]+\.','',methodWithProblem)
   methodWithProblem = re.sub(r'\w[\w\.]+\.','',methodWithProblem)
@@ -953,8 +920,8 @@ def testMethodObj(repairItem, m, callChains):
   createNewCopyOfTestProgram(repairItem)
   moveLineToNewMethod(repairItem.testFolder, repairItem.methodOfInterest1, m, callChains)
   #alteredCallChains is not used; but I have to catch the return value
-  currentProblemCount, alteredCallChains = executeTestOfChangedAppAndGetCallChains(repairItem)
-  return currentProblemCount, alteredCallChains
+  wasFixed = executeTestOfChangedAppAndGetCallChains(repairItem)
+  return wasFixed
  
 
 
@@ -998,14 +965,18 @@ def performMoveCallRepair(repairItem):
         if m:
           #print('{0}, {1}, {2}, {3}'.format(m.group(1), m.group(2), m.group(3), m.group(4)))
           methodObjList.append(MethodInfo(m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)))
-          print('saving item to method obj list')
         else:
           print('line did not match: {0}'.format(line))
   except:
     pass
   print('calling execute and get call chains')
   #later, implement a way to handle multiple caught problems at the same time
-  currentProblemCount, callChains = executeTestOfChangedAppAndGetCallChains(repairItem)
+  if repairItem.problemInfoList is None:
+    #this only occurs if the current problem count is 0, so don't check the 
+    #return to see if the app was fixed
+    executeTestOfChangedAppAndGetCallChains(repairItem)
+  currentProblemCount = len(repairItem.problemInfoList)
+  callChains = [c.chainsInfo for c in repairItem.problemInfoList if not c.chainsInfo is None]
   #I could probably later change this to use the method of interest to get the class with problem
   #if I wanted
   if callChains == []:
@@ -1021,7 +992,11 @@ def performMoveCallRepair(repairItem):
     #the first call is always the exact failing method, but I want the location
     #where the failing method occurred. Also, the list is assumed to be ordered 
     #where the failing method call is at the end.
-    classWithProblem=callChains[0][-2].className.split('.')[-1]
+    chainItemWithProblem = getChainItemWithProblem(callChains)
+    if chainItemWithProblem is None:
+      print('error: chain item should not be none')
+      sys.exit(1)
+    classWithProblem=chainItemWithProblem.className.split('.')[-1]
     #try to handle nested classes - although I'm not sure what I'm doing at the 
     #moment will fully support them or if this will just die later
     innerClassWithProblem = None
@@ -1046,6 +1021,7 @@ def performMoveCallRepair(repairItem):
     #print('length of call chains: {0}'.format(len(callChains)))
     #print(requiresAddingReference)
     #input('stopping to see this value')
+    wasFixed = False
     if repairItem.requiresObjectReferences:
       print('method of interest1 before call: {0}'.format(repairItem.methodOfInterest1))
       result = moveMethodToObjectInstantiation(repairItem, callChains)
@@ -1057,19 +1033,21 @@ def performMoveCallRepair(repairItem):
         methodsInInnerClass = [m for m in methodObjList if m.className == innerClassWithProblem]
         methodsInFileWithProblem.extend(methodsInInnerClass)
       if len(methodsInFileWithProblem) < 1:
+        print('current call chains: {0}'.format(callChains))
         print('error: unable to find methods in problematic file: {0}'.format(classWithProblem))
+        print('extracted methods from: {0}'.format(repairItem.testFolder))
         input('stopping to check error')
       for m in methodsInFileWithProblem:
-        currentProblemCount, alteredCallChains = testMethodObj(repairItem, m, callChains)
-        if currentProblemCount == 0:
+        wasFixed = testMethodObj(repairItem, m, callChains)
+        if wasFixed:
           break
       if currentProblemCount != 0:
         methodsInFileWithOutProblem = [ m for m in methodObjList if m.className != classWithProblem]
         for m in methodsInFileWithOutProblem:
-          currentProblemCount, alteredCallChains = testMethodObj(repairItem, m, callChains)
-          if currentProblemCount == 0:
+          wasFixed = testMethodObj(repairItem, m, callChains)
+          if wasFixed:
             break
-    if currentProblemCount == 0:
+    if wasFixed:
       print('successfully finished the repair!')
       return True
     else:
