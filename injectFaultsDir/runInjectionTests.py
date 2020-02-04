@@ -27,9 +27,7 @@ copyRepoLocation = '/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInj
 #I may need to convert them to using gradlew instead of gradle wrapper
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
-buildAppCommand = shlex.split('./gradlew assembleDebug')
 testAppCommand = shlex.split('./gradlew test')
-permissionCommand = shlex.split('chmod +x gradlew')
 runCheckerTemplate = '/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/bin/java "-javaagent:/Applications/IntelliJ IDEA CE.app/Contents/lib/idea_rt.jar=56329:/Applications/IntelliJ IDEA CE.app/Contents/bin" -Dfile.encoding=UTF-8 -classpath /Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/cldrdata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jaccess.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/nashorn.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jfxswt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/packager.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home/lib/tools.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/target/scala-2.12/classes:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.7.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.7-sources.jar:/Users/zack/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.7-sources.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/ca.mcgill.sable.soot:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/test:/Users/zack/git/soot/target/classes:/Users/zack/git/soot/src/main/target/scala-2.12/classes:/Users/zack/git/heros/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/arrayclone:/Users/zack/git/FlowDroid/soot-infoflow-android/target/scala-2.12/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/out/production/axml:/Users/zack/git/FlowDroid/soot-infoflow-summaries/target/scala-2.12/classes:/Users/zack/git/FlowDroid/soot-infoflow-cmd/build/classes:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/axml-2.0.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-api-1.7.5.jar:/Users/zack/git/DirectiveTool/FlowDroidTest/libraries/slf4j-simple-1.7.5.jar:/Users/zack/.ivy2/cache/xerces/xmlParserAPIs/jars/xmlParserAPIs-2.6.2.jar:/Users/zack/.ivy2/cache/xmlpull/xmlpull/jars/xmlpull-1.1.3.4d_b4_min.jar:/Users/zack/.ivy2/cache/com.google.guava/guava/bundles/guava-18.0.jar:/Users/zack/.ivy2/cache/org.smali/dexlib2/jars/dexlib2-2.2.5.jar:/Users/zack/.m2/repository/commons-io/commons-io/2.6/commons-io-2.6.jar:/Users/zack/.ivy2/cache/org.ow2.asm/asm-debug-all/jars/asm-debug-all-5.2.jar:/Users/zack/.ivy2/cache/net.sf.trove4j/trove4j/jars/trove4j-3.0.3.jar analysis.{0} {1}'
 #workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/reposWithSuccessfulTests.txt'
 workingReposFile = '/Users/zack/git/DirectiveTool/injectFaultsDir/successfulInjectionReposDetectSetSelectorSetPackageProblem.txt'
@@ -98,54 +96,6 @@ def getTestResultsOfRepo(repoDir):
   #input('stopping to see test results')
   os.chdir(originalDir)
   return testsSucceeded
-
-def buildApp(repoDir):
-  originalDir = os.getcwd()
-  os.chdir(repoDir)
-  if not os.path.exists('./gradlew'):
-    print('unable to find the gradle build file in directory: {0}'.format(repoDir))
-    os.chdir(originalDir)
-    return []
-  try:
-    buildResult = subprocess.run(buildAppCommand, capture_output=True)
-    print('built app')
-  except PermissionError as p:
-    subprocess.run(permissionCommand, capture_output=True)
-    buildResult = subprocess.run(buildAppCommand, capture_output=True)
-  #for line in buildResult.stdout.decode('utf-8').splitlines():
-    #print(line)
-  possibleBuildFiles = []
-  buildFilesToCheck = []
-  print('finding apks in : {0}'.format(os.getcwd()))
-  for root, dirs, files in os.walk('.', topdown=False):
-    for f in files:
-      if f.endswith('.apk'):
-        possibleBuildFiles.append(os.path.join(os.getcwd(), root,f))
-  if len(possibleBuildFiles) < 1:
-    print('error: no successful builds')
-    #input('stopping to inspect the error')
-  elif len(possibleBuildFiles) > 1:
-    for b in possibleBuildFiles:
-      if 'x86_64' in b:
-        buildFilesToCheck.append(b)
-    if len(buildFilesToCheck) < 1:
-      for b in possibleBuildFiles:
-        if 'universal' in b:
-          buildFilesToCheck.append(b)
-    if len(buildFilesToCheck) < 1:
-      for b in possibleBuildFiles:
-        if 'debug' in b:
-          buildFilesToCheck.append(b)
-    if len(buildFilesToCheck) < 1:
-      print('error: unable to find a valid build')
-      print('builds:')
-      for b in possibleBuildFiles:
-        print(b)
-      input('stopping to check error')
-  else:
-    buildFilesToCheck.append(possibleBuildFiles[0])
-  os.chdir(originalDir)
-  return buildFilesToCheck
 
 def clearAPKS(dirToClear):
   for root, dirs, files in os.walk(dirToClear, topdown=False):
@@ -241,6 +191,7 @@ def injectInRepoWithDirectoriesInitializer(injectIssueMethod):
         break
   return injectInRepo
 
+
 def runTestOfApp(checkerName, app, debuggingResultList, repoDir):
   originalDir = os.getcwd()
   os.chdir('/Users/zack/git/DirectiveTool/FlowDroidTest')
@@ -260,25 +211,30 @@ def runTestOfApp(checkerName, app, debuggingResultList, repoDir):
   problemList = utilitiesForRepair.extractProblemInfoFromCheckerOutput(importantCheckerLines)  
   errorCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantCheckerLines)
   if len(problemList) != errorCount:
-    outputFile = os.path.join(os.getcwd(), 'debuggingCheckerOutputFile.txt')
-    with open(outputFile, 'w') as fout:
-      for line in checkerOutputLines:
-        print(line, file=fout)
-      print('-------end of full output; starting important lines ------', file=fout)
-      for line in importantCheckerLines:
-        print(line, file=fout)
-      print('#######checker error lines########', file=fout)
-      for line in checkerResult.stderr.decode('utf-8').splitlines():
-        print(line, file=fout, end='')
-      print('******command to run checker*****', file=fout)
-      print(' '.join(checkerCommand), file=fout)
+    if utilitiesForRepair.checkForSootError(checkerResult):
+      problemList = []
+      errorCount = 0
+      print('soot had an error')
+    else:
+      outputFile = os.path.join(os.getcwd(), 'debuggingCheckerOutputFile.txt')
+      with open(outputFile, 'w') as fout:
+        for line in checkerOutputLines:
+          print(line, file=fout)
+        print('-------end of full output; starting important lines ------', file=fout)
+        for line in importantCheckerLines:
+          print(line, file=fout)
+        print('#######checker error lines########', file=fout)
+        for line in checkerResult.stderr.decode('utf-8').splitlines():
+          print(line, file=fout, end='')
+        print('******command to run checker*****', file=fout)
+        print(' '.join(checkerCommand), file=fout)
 
-    print('saved checker output to {0} for debugging'.format(outputFile))
-    print('error: problem count is not equal to error count')
-    print('app with error: {0}'.format(app))
-    print('problem list: {0}'.format(problemList))
-    print('error count: {0}'.format(errorCount))
-    sys.exit(1)
+      print('saved checker output to {0} for debugging'.format(outputFile))
+      print('error: problem count is not equal to error count')
+      print('app with error: {0}'.format(app))
+      print('problem list: {0}'.format(problemList))
+      print('error count: {0}'.format(errorCount))
+      sys.exit(1)
   if errorCount > 0:
     print('greater than 0')
     if errorCount == 1:
@@ -510,7 +466,7 @@ def main():
             print('problem copying repo')
             continue
           clearAPKS(copyRepoLocation)
-          appBuilds = buildApp(copyRepoLocation)
+          appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
           if len(appBuilds) < 1:
             print('there was a problem building the app. Aborting before injecting problem.')
             debuggingResultList.append("couldn't build the app")
@@ -533,7 +489,7 @@ def main():
               print('injecting problem')
               injectorInstance.injectIssue(copyRepoLocation)
               clearAPKS(copyRepoLocation)
-              appBuilds = buildApp(copyRepoLocation)
+              appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
               if len(appBuilds) < 1:
                 print('there was a problem building the app. Aborting before checking for injected problem.')
                 debuggingResultList.append('there was a problem building the app with the injected problem')

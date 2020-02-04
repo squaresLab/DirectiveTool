@@ -1,6 +1,6 @@
 package analysis
 
-class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int]) {
+class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int], var instanceType:Option[String] = None) {
 
 
 

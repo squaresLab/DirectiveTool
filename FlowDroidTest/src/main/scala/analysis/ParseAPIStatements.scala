@@ -14,8 +14,8 @@ object ParseAPIStatements {
     //Done:
     //val statementToParse: String =  "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstMustOccurBeforeSecond(\"setContentView\", \"findViewById\")"
     //val statementToParse: String = "checkSubclassOf(\"AsyncTask\").checkClassesWithOuterClassThatSubclassOf(\"Fragment\").absent(\"getResources\")"
-    //val statementToParse: String = "exclusiveOrInstance(\"setPackage\", \"setSelector\")"
-    //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
+    //val statementToParse: String = "instanceOf(\"Intent\").exclusiveOrInstance(\"setPackage\", \"setSelector\")"
+    val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
@@ -29,7 +29,7 @@ object ParseAPIStatements {
 
     //new statements to test
     //for the statement below, need to add something about the first parameter being the same and null doesn't count
-    val statementToParse: String = "if(methodToCheck(\"onResume\").contains(\"Context.registerReceiver\").firstParameterMustMatch() then (methodToCheck(\"onPause\").contains(\"Context.unregisterReceiver\").firstParameterMustMatch())"
+    //val statementToParse: String = "if(methodToCheck(\"onResume\").contains(\"Context.registerReceiver\").firstParameterMustMatch() then (methodToCheck(\"onPause\").contains(\"Context.unregisterReceiver\").firstParameterMustMatch())"
 
     val methodShorthandToFullDeclaration: Map[String, String] = Map("getResources" -> "android.content.res.Resources getResources()")
 
@@ -123,7 +123,18 @@ object ParseAPIStatements {
 
         parsingObj.codeResult = Some(classFilterWrapper(parsingObj.codeResult.get.asInstanceOf[SootClass => Int], classOfInterest))
         println(s"fourth: ${parsingObj.stringToParse}")
+        //Coming back to this after a while, I think this should be updatedParsingObj.
+        // I'll need to investigate
         return parsingObj
+      }
+      else if (parsingObj.stringToParse.startsWith("instanceOf(")) {
+        val endString = "\")."
+        val endLoc = parsingObj.stringToParse.indexOf(endString)
+        parsingObj.instanceType = Some(parsingObj.stringToParse.substring("instanceOf(".length() + 1, endLoc))
+        parsingObj.stringToParse = parsingObj.stringToParse.substring(endLoc+endString.length)
+        println(s"string to parse after checkSubclassOf: ${parsingObj.stringToParse}")
+        val updatedParsingObj = parseStatement(parsingObj)
+        return updatedParsingObj
       }
       else if (parsingObj.stringToParse.startsWith("methodToCheck(")) {
         val endLoc = parsingObj.stringToParse.indexOf(')')
@@ -157,18 +168,18 @@ object ParseAPIStatements {
           println(s"statement at end of first must occur before second: ${parsingObj.stringToParse}")
         }
           //this one throws an error only if second happens and then first happens (second by itself is fine)
-        else if(methodModifier.startsWith("secondCannotOccurBeforeFirst(")){
+        else if(methodModifier.startsWith("firstCannotFollowSecond(")){
           val commaLoc = methodModifier.indexOf(',')
-          val method1 = methodModifier.substring("secondCannotOccurBeforeFirst(".length() + 1, commaLoc - 1)
+          val method1 = methodModifier.substring("firstCannotFollowSecond(".length() + 1, commaLoc - 1)
           val modifierEndLoc = methodModifier.indexOf(')')
           val method2 = methodModifier.substring(commaLoc + 3, modifierEndLoc - 1)
           println(s"method 1: ${method1}")
           println(s"method 2: ${method2}")
-          def cannotOccurBeforeWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
-            def cannotOccurBefore (m: SootMethod): Int = {
+          def cannotFollowWrapper(analysisMethod1: String, analysisMethod2: String): SootMethod => Int = {
+            def cannotFollow (m: SootMethod): Int = {
               var problemCount: Int = 0
               //var foundMethod1: Boolean = false
-              var foundMethod2: Boolean = false
+              var foundMethod1: Boolean = false
               //TODO: I don't think this check pays attention to different paths; update later
               for (stmt <- m.getActiveBody.getUnits.asScala) {
                 println(stmt)
@@ -177,7 +188,12 @@ object ParseAPIStatements {
                   case Some(methodInStatement) =>
                     if (methodInStatement.getName == analysisMethod1) {
                       println(s"found ${analysisMethod1}")
-                      if (foundMethod2) {
+                      foundMethod1 = true
+
+                    }
+                    else if (methodInStatement.getName == analysisMethod2) {
+                      println(s"found method 2: ${analysisMethod2}")
+                      if (foundMethod1) {
                         println(s"@@@@@ Found a problem: ${analysisMethod1} is called after ${analysisMethod2} in " + m.getDeclaringClass.getName)
                         System.out.flush()
                         System.err.println(s"@@@@@ Found a problem: ${analysisMethod1} is called after ${analysisMethod2} in" + m.getDeclaringClass.getName)
@@ -185,18 +201,15 @@ object ParseAPIStatements {
                         problemCount = problemCount + 1
                       }
                     }
-                    else if (methodInStatement.getName == analysisMethod2) {
-                      foundMethod2 = true
-                    }
                   case None =>
                     ()
                 }
               }
               return problemCount
             }
-            return cannotOccurBefore
+            return cannotFollow
           }
-          parsingObj.codeResult = Some(cannotOccurBeforeWrapper(method1, method2))
+          parsingObj.codeResult = Some(cannotFollowWrapper(method1, method2))
           parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
           println(s"statement at end of first must occur before second: ${parsingObj.stringToParse}")
         }
@@ -225,7 +238,11 @@ object ParseAPIStatements {
           }
           return filterMethod
         }
-        parsingObj.codeResult = Some(filterMethodWrapper(parsingObj.codeResult.get.asInstanceOf[SootMethod => Int], methodOfInterest))
+        if (parsingObj.codeResult.isDefined) {
+          parsingObj.codeResult = Some(filterMethodWrapper(parsingObj.codeResult.get.asInstanceOf[SootMethod => Int], methodOfInterest))
+        }else{
+
+        }
         println(s"statement at end of method to check: ${parsingObj.stringToParse}")
         return parsingObj
       }else if (parsingObj.stringToParse.startsWith("absent(")) {
@@ -299,7 +316,7 @@ object ParseAPIStatements {
           }
           return exclusiveOrInstance
         }
-        parsingObj.codeResult = Some(exclusiveOrInstanceWrapper("Intent", "setSelector", "setPackage"))
+        parsingObj.codeResult = Some(exclusiveOrInstanceWrapper(parsingObj.instanceType.get, method1String, method2String))
         parsingObj.stringToParse = stringToParse.substring(endLoc + 1)
         return parsingObj
       }

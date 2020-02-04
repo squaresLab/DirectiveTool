@@ -3,6 +3,11 @@
 import re
 import os
 import sys
+import shlex
+import subprocess
+
+buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug')
+permissionCommand = shlex.split('chmod +x gradlew')
 
 class CallChainItem:
   def __init__(self, className, methodName):
@@ -64,6 +69,17 @@ class ProblemInfo:
       #outputs; currently some checkers don't define problem files in the output
       #since knowledge of the problem file isn't needed to repair that issue
       return None
+
+def checkForSootError(checkerResult):
+  for line in checkerResult.stderr.decode('utf-8').splitlines():
+    if line.startswith('[main] ERROR soot'):
+      return True
+    if 'ERROR soot' in line:
+      print(line)
+      input('stop to see the error line')
+  print('did not find a soot error')
+  return False
+
 
 def getChainListFromLine(line):
   currentChain = []
@@ -202,5 +218,55 @@ def extractImportantCheckerLines(checkerOutputLines):
     elif line.startswith('@@@@@ problem:'):
       importantLines.append(line)
   return importantLines
+
+
+#If you are getting an error, you might need to 
+def buildApp(repoDir):
+  originalDir = os.getcwd()
+  os.chdir(repoDir)
+  if not os.path.exists('./gradlew'):
+    print('unable to find the gradle build file in directory: {0}'.format(repoDir))
+    os.chdir(originalDir)
+    return []
+  try:
+    buildResult = subprocess.run(buildAppCommand, capture_output=True)
+    print('built app')
+  except PermissionError as p:
+    subprocess.run(permissionCommand, capture_output=True)
+    buildResult = subprocess.run(buildAppCommand, capture_output=True)
+  #for line in buildResult.stdout.decode('utf-8').splitlines():
+    #print(line)
+  possibleBuildFiles = []
+  buildFilesToCheck = []
+  print('finding apks in : {0}'.format(os.getcwd()))
+  for root, dirs, files in os.walk('.', topdown=False):
+    for f in files:
+      if f.endswith('.apk'):
+        possibleBuildFiles.append(os.path.join(os.getcwd(), root,f))
+  if len(possibleBuildFiles) < 1:
+    print('error: no successful builds')
+    #input('stopping to inspect the error')
+  elif len(possibleBuildFiles) > 1:
+    for b in possibleBuildFiles:
+      if 'x86_64' in b:
+        buildFilesToCheck.append(b)
+    if len(buildFilesToCheck) < 1:
+      for b in possibleBuildFiles:
+        if 'universal' in b:
+          buildFilesToCheck.append(b)
+    if len(buildFilesToCheck) < 1:
+      for b in possibleBuildFiles:
+        if 'debug' in b:
+          buildFilesToCheck.append(b)
+    if len(buildFilesToCheck) < 1:
+      print('error: unable to find a valid build')
+      print('builds:')
+      for b in possibleBuildFiles:
+        print(b)
+      input('stopping to check error')
+  else:
+    buildFilesToCheck.append(possibleBuildFiles[0])
+  os.chdir(originalDir)
+  return buildFilesToCheck
 
 

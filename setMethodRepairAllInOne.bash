@@ -84,7 +84,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=1
+currentCheckerNumber=8
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -186,6 +186,9 @@ currentCheckerNumber=1
   #exit 0
   cd $originalAppDir
   git checkout $gitBranch
+  #added this stop in for testing - remove later
+  echo "stopping after git checkout"
+  read n
   rm -rf $testDir
   cp -r $originalAppDir $testDir
 

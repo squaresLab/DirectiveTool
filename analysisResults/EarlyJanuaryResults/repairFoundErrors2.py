@@ -13,6 +13,7 @@ import re
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import runAllRepairs
 import extractRepoInfo
+import utilitiesForRepair
 
 #TODO: I should probably move the functions that these two files share - doesn't make
 #sense to keep them in the runInjectionTests file when both need them
@@ -208,16 +209,18 @@ def main():
         print('had an error changing to the right repo and commit')
         errorCount += 1
         print(apkName, file=fout)
+        input('stop before moving to next repo')
         continue
       wasSuccessful = copyRepo(repoDir, copyRepoLocation, debuggingResultList)
       if not wasSuccessful:
         print('error copying repo')
         errorCount += 1
         print(apkName, file=fout)
+        input('stop before moving to next repo')
         continue
       runInjectionTests.clearAPKS(copyRepoLocation)
       print('trying to build apps in: {0}'.format(copyRepoLocation))
-      appBuilds = runInjectionTests.buildApp(copyRepoLocation)
+      appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
       print('built apps: {0}'.format(appBuilds))
       if len(appBuilds) < 1:
         print('there was a problem building the app. Aborting before injecting problem.')
@@ -225,6 +228,7 @@ def main():
         #print(repoDir, file=fout)
         errorCount += 1
         print(apkName, file=fout)
+        input('stop before moving to next repo')
         continue
       else: 
         attemptedFixCount, successfulRepairCount, repairedApps, debuggingResultList = runInjectionTests.tryToRepairApps(checkerName, appBuilds, debuggingResultList, copyRepoLocation, repoDir)
@@ -255,9 +259,10 @@ def main():
           else:
             debuggingResultList.append('the tests failed after trying to repair the app/apps')
             print('failed tests')
-        input('stop before moving to next repo')
         totalAttemptedFixCount += attemptedFixCount
         totalSuccessfulRepairCount += successfulRepairCount
+
+      input('stop before moving to next repo')
       errorCount +=1
       print('number of checked errors: {0}'.format(errorCount))
       print(apkName, file=fout)

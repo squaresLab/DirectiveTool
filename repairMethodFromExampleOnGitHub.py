@@ -462,35 +462,6 @@ def ensureMethodOfInterestWasntDeleted(repairItem):
           nestingCount = nestingCount - 1
   return False
 
-def buildAppWithGradle(testFolder):
-  print("before build")
-  originalDir = os.getcwd()
-  os.chdir(testFolder)
-  print("current directory: {0}".format(os.getcwd()))
-
-  commandList = ['./gradlew','assembleDebug']
-  try: 
-    print('trying command: {0}'.format(commandList))
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
-    #print(commandOutput.stdout)
-    #print(commandOutput.stderr)
-  except:
-    #try out the next change
-    print('command failed ({0}); run again in debug mode to get output'.format(commandList))
-    #input('press enter to continue')
-    os.chdir(originalDir)
-  #  if tempDebuggingBool:
-  #    tempDebuggingBool = False
-  #    print('set tempDebuggingBool to false due to failed compilation!!!!!!!!!!!!!!!!!!!!!!!!!!')
-  #    inputValue = input("press enter to continue")
-    #if containsFalse:
-    #  input('stopping here to see result')
-    return False
-  if printingDebugInfo:
-    for line in commandOutput.stdout.decode('utf-8').splitlines():
-      print(line)
-  os.chdir(originalDir)
-  return True
 
 def executeChecker(repairItem):
   originalDir = os.getcwd()
@@ -547,7 +518,11 @@ def executeTestOfChangedApp(repairItem):
   #  input('stopping to see contains false before testing')
   if not ensureMethodOfInterestWasntDeleted(repairItem):
     return False
-  buildSuccessful = buildAppWithGradle(repairItem.testFolder)
+  builds = utilitiesForRepair.buildApp(repairItem.testFolder)
+  if len(builds) > 0:
+    buildSuccessful = True
+  else:
+    buildSuccessful = False
   if not buildSuccessful:
     return False
   checkerResultLines = executeChecker(repairItem)

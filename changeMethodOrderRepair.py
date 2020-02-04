@@ -235,34 +235,6 @@ def moveMethodsInSingleMethod(fileToTest, method1, method2, getMoveLocations):
         print(line, end="", file=fout)
   return foundChangeInFile
 
-def buildAppWithGradle(repairItem):
-  print("before build")
-  currentDir = os.getcwd()
-  print('build folder: {0}'.format(repairItem.testFolder))
-  os.chdir(repairItem.testFolder)
-  print("current directory: {0}".format(os.getcwd()))
-
-  commandList = ['./gradlew','assembleDebug']
-  commandSucceeded = False
-  try: 
-    print('trying command: {0}'.format(commandList))
-    commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
-    #print(commandOutput.stdout)
-    #print(commandOutput.stderr)
-  except:
-    #try out the next change
-    print('build command failed ({0}); run again in debug mode to get output'.format(commandList))
-    print("debugging directory for build: {0}".format(os.getcwd()))
-    #input('stop to see why build failed')
-    #commandList = ['./gradlew','assembleDebug','--debug']
-    #commandList = ['./gradlew','assembleDebug','--debug', '--stacktrace']
-    #commandOutput = subprocess.run(commandList, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True)
-    #print(commandOutput.stdout)
-    os.chdir(currentDir)
-    return False
-  os.chdir(currentDir)
-  return True
-
 def runCheckerAndGetOutput(repairItem):
   # I need to split by space but not on quoted parts of the string
   originalDir = os.getcwd()
@@ -315,7 +287,11 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
   #this case
   print('in execute test and get call chains')
   failedExecuteProblemCount = -1
-  buildSucceeded = buildAppWithGradle(repairItem)
+  builds = utilitiesForRepair.buildApp(repairItem)
+  if len(builds) > 0:
+    buildSucceeded = True
+  else:
+    buildSucceeded = False
   if not buildSucceeded:
     return False
   testResultLines = runCheckerAndGetOutput(repairItem)
@@ -358,7 +334,11 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
   #return currentProblems, chainsInfo
 
 def executeTestOfChangedApp(repairItem):
-  buildSucceeded = buildAppWithGradle(repairItem)
+  builds = utilitiesForRepair.buildApp(repairItem)
+  if len(builds) > 0:
+    buildSucceeded = True
+  else:
+    buildSucceeded = False
   if not buildSucceeded:
     return False
   testResultLines = runCheckerAndGetOutput(repairItem)
