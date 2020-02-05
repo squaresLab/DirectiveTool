@@ -65,6 +65,8 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       classIsSubClassOfFragment(c)
     } else if (possibleParentClassName == "AsyncTask" || possibleParentClassName == "android.os.AsyncTask"){
       classIsSubClassOfAsyncTask(c)
+    } else if (possibleParentClassName == "DialogFragment"){
+      classIsSubClassOfDialogFragment(c)
     } else {
       throw new RuntimeException(s"unexpected parent class ${c} and possibleParentClassName ${possibleParentClassName}. Please create a handler for it")
     }
