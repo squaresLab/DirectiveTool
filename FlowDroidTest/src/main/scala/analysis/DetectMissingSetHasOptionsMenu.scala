@@ -132,6 +132,7 @@ object DetectMissingSetHasOptionsMenu {
             }
             val (classesSetHasOptionsMenu, classesOnCreateDefinition) = checkMethodsInClass(currentClass)
             if (classesSetHasOptionsMenu) {
+              //maybe I should move the Fragment check to the while loop
               if(cl.toString().contains("Fragment")) {
                 println(s"class where setHasoptionsMenu was found: {currentClass}")
               }

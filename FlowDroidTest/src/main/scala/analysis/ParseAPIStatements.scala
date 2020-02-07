@@ -17,12 +17,12 @@ object ParseAPIStatements {
     //val statementToParse: String = "checkSubclassOf(\"AsyncTask\").checkClassesWithOuterClassThatSubclassOf(\"Fragment\").absent(\"getResources\")"
     //val statementToParse: String = "instanceOf(\"Intent\").exclusiveOrInstance(\"setPackage\", \"setSelector\")"
     //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
-    val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").contains(\"inflate(*,*,false)\")"
+    //val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").contains(\"inflate(*,*,false)\")"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
     //val statementToParse: String  = "and(and(method(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
-    //val statementToParse: String = "if(subClass(Fragment), defined(“onCreateOptionsMenu”)) then (methodToCheck(“onCreate”).contains(“setHasOptionsMenu(true))"
+    val statementToParse: String = "checkSubclassOf(\"Fragment\").if(contains(\"onCreateOptionsMenu\")) then (methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true)\")"
 
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
     //one occurs without the first. Might want to change name to firstMustBeBeforeSecond.
@@ -106,12 +106,51 @@ object ParseAPIStatements {
             }
 
        */
+      else if (parsingObj.stringToParse.startsWith("contains(")) {
+        val modifierEndLoc = getPositionOfEndingParenthesisInNestedString(parsingObj.stringToParse).get
+        var methodToCheckFor = parsingObj.stringToParse.substring("contains(".length() + 1, modifierEndLoc)
+        methodToCheckFor = methodToCheckFor.replaceAll("\"","")
+        var methodName = methodToCheckFor
+        if (methodToCheckFor.contains('(')) {
+          val methodItems = methodToCheckFor.substring(0, methodToCheckFor.length).split('(')
+          methodName = methodItems(0)
+          val paramList = methodItems(1).split(',')
+        }
+
+        //eventually I need to add handling of the paramList
+        def checkContainsWrapper(methodToCheckForString: String): (SootClass) => Int = {
+          def checkContains(cl: SootClass): Int = {
+            println(methodToCheckForString)
+            //maybe figure out a way to extract the error messages from these functions
+            var problemCount = 0
+            for (m: SootMethod <- cl.getMethods().asScala) {
+              println(s"method name: ${m.getName}, is concrete: ${m.isConcrete}, has active body: ${m.hasActiveBody}")
+              if (!m.hasActiveBody) {
+                m.retrieveActiveBody()
+              }
+              if (m.isConcrete && m.hasActiveBody) {
+                println(s"passed the first two checks, is equal ${m.getName == methodToCheckForString}")
+                if (m.getName == methodToCheckForString) {
+                  print(s"found ${methodToCheckForString} in ${m.getName}")
+                  problemCount += 1
+                }
+              }
+            }
+            return problemCount
+          }
+          return checkContains
+        }
+        parsingObj.stringToParse = parsingObj.stringToParse.substring(modifierEndLoc + 1)
+        parsingObj.codeResult = Some(checkContainsWrapper(methodToCheckFor))
+        parsingObj.checkEndOfContexts()
+        return parsingObj
+      }
       else if (parsingObj.stringToParse.startsWith("checkSubclassOf(")) {
         val endString = "\")"
         var endLoc = parsingObj.stringToParse.indexOf(endString)
         val classOfInterest = parsingObj.stringToParse.substring("checkSubclassOf(".length() + 1, endLoc)
         println(parsingObj.stringToParse(endLoc + endString.length))
-        if (parsingObj.stringToParse(endLoc + endString.length)== '.' ){
+        if (parsingObj.stringToParse(endLoc + endString.length) == '.') {
           endLoc += 1
         }
         parsingObj.stringToParse = parsingObj.stringToParse.substring(endLoc + endString.length)
@@ -132,7 +171,7 @@ object ParseAPIStatements {
             }
             else {
               if (DetectionUtils.classIsSubClass(cl, filterClass)) {
-                  caughtProblems = innerFunc(cl) + caughtProblems
+                caughtProblems = innerFunc(cl) + caughtProblems
               }
             }
             return caughtProblems
@@ -180,7 +219,43 @@ object ParseAPIStatements {
         val updatedParsingObj = parseStatement(parsingObj)
         return updatedParsingObj
       }
+      else if (parsingObj.stringToParse.startsWith("if(")) {
+        parsingObj.stringToParse = parsingObj.stringToParse.substring("if(".length())
+        val tempParsingObj = new ParseCodeObj(parsingObj.stringToParse, None)
+        tempParsingObj.addToContexts("if")
+        val ifParsingObj = parseStatement(tempParsingObj)
+        if (ifParsingObj.stringToParse.startsWith("then(")){
+          ifParsingObj.stringToParse = ifParsingObj.stringToParse.substring("then(".length())
+        }else{
+          println(s"parsing error for ${ifParsingObj.stringToParse}. It should be on the then( segment")
+          sys.exit(1)
+        }
+        val secondParsingObj = new ParseCodeObj(ifParsingObj.stringToParse, None)
+        secondParsingObj.addToContexts("then")
+        val thenParsingObj = parseStatement(secondParsingObj)
 
+        //not sure if I should add a context here or not, try without it and check later
+        //parsingObj.addToCodeResult(s"if(DetectionUtils.classIsSubClass(cl,$classOfInterest)){\n", "}\n")
+        def ifHandlerWrapper(ifFunc: SootClass => Int, thenFunc: SootClass => Int): SootClass => Int = {
+          def ifHandler(cl: SootClass): Int = {
+            var caughtProblems = 0
+            //convert the count returns to booleans
+            println(s"class: ${cl.getName}")
+            println(s"if func result: ${ifFunc(cl)}, then func result: ${thenFunc(cl)}")
+            if (ifFunc(cl) > 0 && thenFunc(cl) < 1) {
+              //how do I define the error message print out?
+              caughtProblems += 1
+            }
+            return caughtProblems
+          }
+
+          return ifHandler
+        }
+
+        parsingObj.codeResult = Some(ifHandlerWrapper(ifParsingObj.codeResult.get.asInstanceOf[SootClass => Int], thenParsingObj.codeResult.get.asInstanceOf[SootClass => Int]))
+        parsingObj.stringToParse = thenParsingObj.stringToParse
+        return parsingObj
+      }
       else if (parsingObj.stringToParse.startsWith("methodToCheck(")) {
         val endLoc = parsingObj.stringToParse.indexOf(')')
         //remove the quotes on the ends
@@ -226,12 +301,13 @@ object ParseAPIStatements {
             if (methodName == "inflate" && paramList.slice(0, paramList.length - 1).forall(_ == "*")
               && paramList(paramList.length - 1) == "false") {
               println("in inflate param is false")
+
               def checkLastInflateParamIsFalseWrapper(): (SootClass) => Int = {
                 def checkLastInflateParamIsFalse(cl: SootClass): Int = {
                   //maybe figure out a way to extract the error messages from these functions
                   var problemCount = 0
                   for (m: SootMethod <- cl.getMethods().asScala) {
-                    if(!m.hasActiveBody){
+                    if (!m.hasActiveBody) {
                       m.retrieveActiveBody()
                     }
                     if (m.isConcrete && m.hasActiveBody) {
@@ -261,9 +337,43 @@ object ParseAPIStatements {
 
                 return checkLastInflateParamIsFalse
               }
-              parsingObj.stringToParse = methodModifier.substring(modifierEndLoc)
+
+              parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
               parsingObj.codeResult = Some(checkLastInflateParamIsFalseWrapper())
-            }else{
+            }
+            else if(methodName == "setHasOptionsMenu" && paramList.size == 1 && paramList(0) == "true"){
+              println("in inflate param is false")
+
+              //I can easily use variables for checking setHasOptionsMenu, but checking that
+              //the parameter is true, is harder
+              def checkSetHasOptionsMenuTrueWrapper(): (SootClass) => Int = {
+                def checkSetHasOptionsMenuTrue(cl: SootClass): Int = {
+                  //maybe figure out a way to extract the error messages from these functions
+                  var problemCount = 0
+                  for (m: SootMethod <- cl.getMethods().asScala) {
+                    if (!m.hasActiveBody) {
+                      m.retrieveActiveBody()
+                    }
+                    if (m.isConcrete && m.hasActiveBody) {
+                      for (stmt <- m.getActiveBody.getUnits.asScala) {
+                        val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
+                        if (invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"
+                          && DetectionUtils.isTrue(invokeCall.get.getArg(0))) {
+                          println(s"found setHasOptionsMenu in ${m.getName}")
+                          problemCount += 1
+                        }
+                      }
+                    }
+                  }
+                  return problemCount
+                }
+                return checkSetHasOptionsMenuTrue
+              }
+
+              parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
+              parsingObj.codeResult = Some(checkSetHasOptionsMenuTrueWrapper())
+              parsingObj.checkEndOfContexts()
+            } else {
               println(s"current method is not handled: ${methodToCheckFor}. Please create code to do so")
               sys.exit(1)
             }
@@ -446,7 +556,8 @@ object ParseAPIStatements {
       }
     }
 
-    val p = new ParseCodeObj(statementToParse, None)
+    val cleanedStatementToParse = statementToParse.replaceAll(" ", "")
+    val p = new ParseCodeObj(cleanedStatementToParse, None)
     val result = parseStatement(p)
     println(s"result parse string: ${result.stringToParse}")
     //println(s"result code result: ${result.codeResult}")

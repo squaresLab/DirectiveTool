@@ -30,6 +30,9 @@ class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int], va
       println(s"new string to parse: ${stringToParse}")
       if(contextToHandle == "not") {
         inNot = false
+      }else if(contextToHandle == "if" || contextToHandle == "then"){
+       //pass for now, since the context is already removed; but don't throw an error
+        //for these cases, since they are expected
       }else{
         println(s"error: context ${contextToHandle} is not implemented yet")
         sys.exit(1)
@@ -41,6 +44,13 @@ class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int], va
     if(newContext == "not"){
       inNot = true
       contexts = newContext::contexts
+    } else if (newContext == "if"){
+      contexts = newContext::contexts
+    } else if (newContext == "then") {
+      contexts = newContext :: contexts
+    }else{
+      println(s"error: context - ${newContext} is not supported")
+      sys.exit(1)
     }
   }
 
