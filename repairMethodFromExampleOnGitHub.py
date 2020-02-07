@@ -11,13 +11,14 @@ import urllib
 import os
 import os.path
 import itertools
-import distutils.dir_util
+#import distutils.dir_util
 import shutil
 import determineMethodDifferences
 import operator
 import traceback
 import levenshteinDistance
 import shlex
+import utilitiesForRepair
 
 #GitHub seems to require me to log in now to search the repos
 #def loginToGitHub(session):
@@ -114,7 +115,6 @@ class GitHubRepairItem:
 
 def saveLines(linesToSave, nestingCount, line): 
   linesToSave.append(line)
-  savingLines = True
   for c in line:
     if c == '{':
       nestingCount = nestingCount + 1
@@ -123,11 +123,17 @@ def saveLines(linesToSave, nestingCount, line):
   return (linesToSave, nestingCount)
 
 def getFilesFullPath(projectDir, fileBaseName):
+  originalFileNameForDebugging = fileBaseName
   if fileBaseName.startswith(os.path.sep):
     #assume that the file is already a full path
     return fileBaseName
   if "$" in fileBaseName:
     fileBaseName = fileBaseName.split("$")[0]
+  if '.' in fileBaseName:
+    fileItems = fileBaseName.split('.')
+    fileBaseName = fileItems[-1]
+    if fileBaseName == 'java':
+      fileBaseName = '.'.join(fileItems[-2:])
   if not fileBaseName.endswith('.java'):
     fileBaseName='{0}.java'.format(fileBaseName)
   #print('file base name: {0}'.format(fileBaseName))
@@ -138,7 +144,7 @@ def getFilesFullPath(projectDir, fileBaseName):
       if filename == fileBaseName:
         return os.path.join(dirpath, filename)  
   #shouldn't reach this point
-  print('error getting file path for {0} in {1}'.format(fileBaseName, projectDir))
+  print('error getting file path for {0} in {1} (original file name: {2})'.format(fileBaseName, projectDir, originalFileNameForDebugging))
   traceback.print_exc(file=sys.stdout) 
   input('stop to see this error')
 
@@ -170,7 +176,6 @@ def extractOriginalMethodsOfInterest(repairItem):
   print('file to extract from: {0}'.format(repairItem.fileToChange))
   #input('confirming that file extracted from is the one injected into')
   #print('file to extract from: {0}'.format(fileToExtractFrom))
-  extractedFileList = []
   with open(repairItem.fileToChange,'r') as fin:
     nestingCountWasGreaterThanZero = False
     nestingCount = 0
@@ -205,9 +210,10 @@ def extractOriginalMethodsOfInterest(repairItem):
             #- tested and doesn't seem to be necessary here
             #fout.write('\n')
         linesToSave = []
-        extractedFileList.append(methodName)
-  #I think the return isn't useful anymore; I'll remove it then test and see
-  #return extractedFileList
+  #print('reading methods from file: {0}'.format(repairItem.fileToChange))
+  #print(repairItem.methodsToCompare)
+  #input('stopping to check original methods to compare')
+
 
 #newAPKLoation originally points to the apk location in the provided repo;
 #if we copy the repo to create a new test file, we need to update the repo
@@ -325,7 +331,6 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
   fullFileToChange = getFilesFullPath(projectDir, fileToChange)
   resultLines = []
   deletedALine = False
-  everFoundMethod = False
   with open(fullFileToChange, 'r') as fin:
     nestingCount = 0
     foundMethodOfInterestInLine = False
@@ -333,7 +338,6 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
       #not sure of the best way to check if we are in the method of interest
       #or not
       if methodToFindTheCall in line:
-        everFoundMethod = True
         foundMethodOfInterestInLine = True
         nestingCount = adjustNestingCountForLine(nestingCount, line)
       if nestingCount > 0 or foundMethodOfInterestInLine:
@@ -346,7 +350,6 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
           print('deleting line: {0} - {1}'.format(lineCount, line))
           #if 'setPackage' in line or 'setSelector' in line:
           #  input('deleting line of interest')
-          deletedALine=True
       else:
         resultLines.append(line)
   if len(resultLines) < 3:
@@ -513,7 +516,6 @@ def executeChecker(repairItem):
 #consider changing later
 def executeTestOfChangedApp(repairItem):
   global tempDebuggingBool
-  commandSucceeded = False
   #if containsFalse:
   #  input('stopping to see contains false before testing')
   if not ensureMethodOfInterestWasntDeleted(repairItem):
@@ -565,7 +567,7 @@ def testAddingOrRemovingMethodCalls(repairItem):
     print('comparing method: {0}'.format(method))
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
-    print('downloaded file: {0}'.format(downloadedFileName))
+    print('downloaded file: {0}'.format(os.path.join(os.getcwd(), downloadedFileName)))
     with open(downloadedFileName,'r') as fin:
       print('file contents: {0}'.format(fin.read()))
     #input('stopping to check downloaded file')
@@ -589,7 +591,7 @@ def testAddingOrRemovingMethodCalls(repairItem):
             #renaming the variable to make the use of the variable more obvious
             #in this context
             methodCallToDelete = missingMethodName
-            methodToFindTheCall = methodDeclarationStringToCompare
+            methodToFindTheCall = repairItem.methodDeclarationStringToCompare
             deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, repairItem.fileToChange, repairItem.testFolder)
           elif listNumber == 2:
             with open(downloadedFileName,'r') as fin:
@@ -1115,7 +1117,7 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
         print('error: did not add or delete any lines')
         print(lineListToAdd)
         print(changeItemList)
-        print('method declaration to look for: {0}'.format(methodDeclaration))
+        print('method declaration to look for: {0}'.format(repairItem.methodDeclarationStringToCompare))
         print('ever found declaration of interest: {0}'.format(everFoundMethodOfInterest))
         print('line count: {0}'.format(lineCountInMethodOfInterest))
         print('file to change: {0}'.format(fullFileToChange))
@@ -1342,6 +1344,7 @@ def main(repairItem):
                       print(linesToSave)
                       sys.exit(1)
                     with open(newFileName,'w') as fout:
+                      print('writing to download file: {0}'.format(os.path.join(os.getcwd(), newFileName)))
                       for line in linesToSave:
                         if len(linesToSave) < 3:
                           print('error: method is too short, likely parsing error')

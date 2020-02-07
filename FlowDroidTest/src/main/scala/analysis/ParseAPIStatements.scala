@@ -17,11 +17,12 @@ object ParseAPIStatements {
     //val statementToParse: String = "checkSubclassOf(\"AsyncTask\").checkClassesWithOuterClassThatSubclassOf(\"Fragment\").absent(\"getResources\")"
     //val statementToParse: String = "instanceOf(\"Intent\").exclusiveOrInstance(\"setPackage\", \"setSelector\")"
     //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
-    val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").isDefined(\"inflate(*,*,false)\")"
+    val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").contains(\"inflate(*,*,false)\")"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
     //val statementToParse: String  = "and(and(method(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
+    //val statementToParse: String = "if(subClass(Fragment), defined(“onCreateOptionsMenu”)) then (methodToCheck(“onCreate”).contains(“setHasOptionsMenu(true))"
 
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
     //one occurs without the first. Might want to change name to firstMustBeBeforeSecond.
@@ -211,9 +212,9 @@ object ParseAPIStatements {
           parsingObj.stringToParse = methodModifier.substring(modifierEndLoc + 1)
           println(s"statement at end of first must occur before second: ${parsingObj.stringToParse}")
         }
-        else if (methodModifier.startsWith("isDefined(")) {
+        else if (methodModifier.startsWith("contains(")) {
           val modifierEndLoc = getPositionOfEndingParenthesisInNestedString(methodModifier).get
-          val methodToCheckFor = methodModifier.substring("isDefined(".length() + 1, modifierEndLoc)
+          val methodToCheckFor = methodModifier.substring("contains(".length() + 1, modifierEndLoc)
           if (methodToCheckFor.contains('(')) {
             val methodItems = methodToCheckFor.substring(0, methodToCheckFor.length).split('(')
             val methodName = methodItems(0)

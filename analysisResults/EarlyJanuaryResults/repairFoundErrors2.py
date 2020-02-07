@@ -27,7 +27,8 @@ copyRepoLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryRe
 #I may need to convert them to using gradlew instead of gradle wrapper
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
-errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
+#errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
+errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/rerunFDroidCheckResults.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedAPKsFile = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/triedFixes.txt'
 
@@ -35,7 +36,9 @@ def extractErrorList(fileToExtractFrom):
   errorList = []
   with open(fileToExtractFrom,'r') as fin:
     for line in fin:
+      print('read line: {0}'.format(line))
       if line.startswith('success!'):
+        print('found success line!!!!')
         lineItems = line.split()
         apkName = lineItems[-1]
         checkerName = lineItems[5]
@@ -45,7 +48,7 @@ def extractErrorList(fileToExtractFrom):
 def filterErrorList(checkersList, alreadyTestedAPKsDict, errorList):
   newErrorList = []
   for e in errorList:
-    if len(checkersList) > 0 and (checkersList[0] == 'all' or e[0] in checkersList):
+    if len(checkersList) > 0 and ((checkersList[0] == 'all' or e[0] in checkersList)):
       if not e[1] in alreadyTestedAPKsDict:
         newErrorList.append(e)
   return newErrorList
@@ -152,7 +155,8 @@ def main():
 
   #the checkers to run the repairs for; allows only running the repair on 
   #specific checkers; use 'all' if you want to run on all cases
-  checkersList = ['DetectMissingSetHasOptionsMenu']
+  #checkersList = ['DetectMissingSetHasOptionsMenu']
+  checkersList = ['DetectIncorrectGetActivityMain','DetectInvalidInflateCallMainn']
   errorList = extractErrorList(errorListLocation)
   print('error list size: {0}'.format(len(errorList)))
 
@@ -167,6 +171,7 @@ def main():
 
   apkSourceInfo = extractRepoInfo.extractRepoInfo()
   apkInfoDict = {}
+  skippedBecauseOfBuildCount = 0
   for a in apkSourceInfo:
     #convert a list of appBaseName, repoName, commitHash to a dict
     #with key appBaseName and value repoName, commitHash 
@@ -202,21 +207,21 @@ def main():
         print(apkName, file=fout)
         errorCount +=1
         debuggingResultList.append('unable to find in apkInfoDict - no source for apk')
-        input('stop to see this case')
+        #input('stop to see this case')
         continue 
       repoDir = changeToRepoAndCommit(repoName, commitHash)
       if repoDir is None:
         print('had an error changing to the right repo and commit')
         errorCount += 1
         print(apkName, file=fout)
-        input('stop before moving to next repo')
+        #input('stop before moving to next repo')
         continue
       wasSuccessful = copyRepo(repoDir, copyRepoLocation, debuggingResultList)
       if not wasSuccessful:
         print('error copying repo')
         errorCount += 1
         print(apkName, file=fout)
-        input('stop before moving to next repo')
+        #input('stop before moving to next repo')
         continue
       runInjectionTests.clearAPKS(copyRepoLocation)
       print('trying to build apps in: {0}'.format(copyRepoLocation))
@@ -227,8 +232,10 @@ def main():
         debuggingResultList.append("couldn't build the app")
         #print(repoDir, file=fout)
         errorCount += 1
+        skippedBecauseOfBuildCount += 1
+        print("skipped because of build count: {0} ({1})".format(skippedBecauseOfBuildCount, (skippedBecauseOfBuildCount/errorCount)))
         print(apkName, file=fout)
-        input('stop before moving to next repo')
+        #input('stop before moving to next repo')
         continue
       else: 
         attemptedFixCount, successfulRepairCount, repairedApps, debuggingResultList = runInjectionTests.tryToRepairApps(checkerName, appBuilds, debuggingResultList, copyRepoLocation, repoDir)
@@ -240,7 +247,7 @@ def main():
           print('was never able to repair an app')
           debuggingResultList.append('was never able to successfully repair an app')
         else:
-          input('stopping to see successful fix case')
+          input('stopping to see successful fix case for {0} with checker {1}'.format(apkName, checkerName))
           #I'm not sure if running the tests should be before or after running the checker
           #to see if the application contains an error - I don't think it matters, but I'll
           #have to test it and see
@@ -262,7 +269,7 @@ def main():
         totalAttemptedFixCount += attemptedFixCount
         totalSuccessfulRepairCount += successfulRepairCount
 
-      input('stop before moving to next repo')
+      #input('stop before moving to next repo')
       errorCount +=1
       print('number of checked errors: {0}'.format(errorCount))
       print(apkName, file=fout)

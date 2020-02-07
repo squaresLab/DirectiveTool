@@ -209,6 +209,9 @@ def runTestOfApp(checkerName, app, debuggingResultList, repoDir):
     #if line.startswith('total') and not line.startswith('total time'):
   importantCheckerLines = utilitiesForRepair.extractImportantCheckerLines(checkerOutputLines)
   problemList = utilitiesForRepair.extractProblemInfoFromCheckerOutput(importantCheckerLines)  
+  print("problem list in runTestOfApp: {0}".format(problemList))
+  for p in problemList:
+    print(p)
   errorCount = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantCheckerLines)
   if len(problemList) != errorCount:
     if utilitiesForRepair.checkForSootError(checkerResult):
@@ -240,8 +243,8 @@ def runTestOfApp(checkerName, app, debuggingResultList, repoDir):
     if errorCount == 1:
       print('error count equals 1')
       debuggingResultList.append(line)
-      print('skipping when error count equals 1 for now - remove the skip later')
-      #isAppToFix = True
+      #print('skipping when error count equals 1 for now - remove the skip later')
+      isAppToFix = True
     else:
       isAppToFix = True
       print('found {0} errors in application {1}'.format(errorCount, app))
@@ -526,7 +529,7 @@ def main():
         else:
           debuggingResultList.append('{0} was determined not to be a possible repo for injection'.format(debuggingResultList))
           print('failed the test that it is an injection repo')
-        input('stopping after each injection to see what happened')
+        #input('stopping after each injection to see what happened')
       repoCount +=1
       print('number of checked repos: {0}'.format(repoCount))
       print(repoDir, file=fout)

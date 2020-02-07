@@ -234,6 +234,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/eu.mrogalski.saidit_13.apk"
       //return "/Users/zack/git/DirectiveTool/apkWithError.apk"
       //return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/tempRepoForRepair/app/build/outputs/apk/debug/ammx-2019.02.24.1-debug.apk"
     }
   }
 }

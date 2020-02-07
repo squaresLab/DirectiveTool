@@ -287,7 +287,7 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
   #this case
   print('in execute test and get call chains')
   failedExecuteProblemCount = -1
-  builds = utilitiesForRepair.buildApp(repairItem)
+  builds = utilitiesForRepair.buildApp(repairItem.testFolder)
   if len(builds) > 0:
     buildSucceeded = True
   else:

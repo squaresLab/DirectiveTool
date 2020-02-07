@@ -144,8 +144,7 @@ def extractProblemCountFromCheckerOutput(checkerOutputLines):
 def extractProblemInfoFromEndOfLine(line):
   pi = ProblemInfo()
   lineItems = line.split(' ') 
-  className = lineItems[-1]
-  pi.clasName = className
+  pi.className = lineItems[-1]
   return pi
 
 #This tries to extract whatever information can be found from the different
