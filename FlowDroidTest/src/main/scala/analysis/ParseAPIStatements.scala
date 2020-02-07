@@ -24,6 +24,7 @@ object ParseAPIStatements {
     //val statementToParse: String  = "and(and(method(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
     val statementToParse: String = "checkSubclassOf(\"Fragment\").if(contains(\"onCreateOptionsMenu\")) then (methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true)\")"
 
+    val setHasOptionsMenuErrorTemplate = "@@@@@ Found a problem: setHasOptionsMenu(true) must be called in the onCreate method to display the OptionsMenu in %s"
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
     //one occurs without the first. Might want to change name to firstMustBeBeforeSecond.
     //I also don't know if not in the specification language makes sense; you can't invert and int return
@@ -73,7 +74,6 @@ object ParseAPIStatements {
           throw new RuntimeException("missing comma in and statement")
         }
         val secondPartOfStmt = middleOfStmt.substring(1)
-        println(s"second part of statement: ${secondPartOfStmt}")
         parsingObj.stringToParse = secondPartOfStmt
         val partiallyUpdatedParsingObj = parseStatement(parsingObj)
         //I'm not sure if this next check is really helping and it currently messes up when
@@ -120,18 +120,14 @@ object ParseAPIStatements {
         //eventually I need to add handling of the paramList
         def checkContainsWrapper(methodToCheckForString: String): (SootClass) => Int = {
           def checkContains(cl: SootClass): Int = {
-            println(methodToCheckForString)
             //maybe figure out a way to extract the error messages from these functions
             var problemCount = 0
             for (m: SootMethod <- cl.getMethods().asScala) {
-              println(s"method name: ${m.getName}, is concrete: ${m.isConcrete}, has active body: ${m.hasActiveBody}")
               if (!m.hasActiveBody) {
                 m.retrieveActiveBody()
               }
               if (m.isConcrete && m.hasActiveBody) {
-                println(s"passed the first two checks, is equal ${m.getName == methodToCheckForString}")
                 if (m.getName == methodToCheckForString) {
-                  print(s"found ${methodToCheckForString} in ${m.getName}")
                   problemCount += 1
                 }
               }
@@ -240,10 +236,10 @@ object ParseAPIStatements {
           def ifHandler(cl: SootClass): Int = {
             var caughtProblems = 0
             //convert the count returns to booleans
-            println(s"class: ${cl.getName}")
-            println(s"if func result: ${ifFunc(cl)}, then func result: ${thenFunc(cl)}")
             if (ifFunc(cl) > 0 && thenFunc(cl) < 1) {
-              //how do I define the error message print out?
+              //how do I define the error message print out? For now, I'm going to hard code the
+              //choice but I need to later make a way to chose the right one for the right situation
+              println(setHasOptionsMenuErrorTemplate.format(cl.getName))
               caughtProblems += 1
             }
             return caughtProblems
@@ -359,7 +355,6 @@ object ParseAPIStatements {
                         val invokeCall = DetectionUtils.extractInvokeStmtInStmt(stmt)
                         if (invokeCall.isDefined && invokeCall.get.getMethod.getName == "setHasOptionsMenu"
                           && DetectionUtils.isTrue(invokeCall.get.getArg(0))) {
-                          println(s"found setHasOptionsMenu in ${m.getName}")
                           problemCount += 1
                         }
                       }
