@@ -29,7 +29,15 @@ What would I need to check for this directive?:
 - Tab is referenced in setArguments
 */
 
+
+
 object DetectIncorrectGetActivityMain {
+
+  //for memoizing some calculations - used in parse api statements
+  var savedStartingTuples:Map[String, Tuple2[Option[SootMethod], mutable.Map[String, ListBuffer[SootMethod]]]] = Map()
+  var savedCallChainMap:Map[String, ListBuffer[ControlFlowChain]] = Map()
+
+
   def main(args: Array[String]): Unit = {
     runAnalysis(args)
   }
@@ -114,6 +122,30 @@ object DetectIncorrectGetActivityMain {
       }
     }
   }
+
+  //added to simplify the logic in parsing api statements - might be able to remove with some refactoring
+  def createCallChainWithMemoization(calledByList: mutable.Map[String, ListBuffer[SootMethod]],
+                                     currentCallChains: ListBuffer[ControlFlowChain],
+                                     currentChain: List[ControlFlowItem], methodName: String,
+                                     checkingClasses: Boolean): Unit = {
+    if (savedCallChainMap.contains(methodName)){
+      return savedCallChainMap(methodName)
+    } else {
+      createCallChainsDepthFirst(calledByList, currentCallChains, currentChain, methodName, checkingClasses)
+      savedCallChainMap += (methodName -> currentCallChains)
+    }
+  }
+
+  def getStartingMethodAndCallChainWithMemoization(methodNameToCheckFor: String): Tuple2[Option[SootMethod], mutable.Map[String, ListBuffer[SootMethod]]] = {
+    if(savedStartingTuples.contains(methodNameToCheckFor)){
+      return savedStartingTuples(methodNameToCheckFor)
+    } else {
+      val startingTuple = getStartingMethodAndCallChain(methodNameToCheckFor)
+      savedStartingTuples += (methodNameToCheckFor -> startingTuple)
+      return startingTuple
+    }
+  }
+
 
   def runAnalysis(args: Array[String]): Unit = {
     val startTime = System.nanoTime()

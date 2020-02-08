@@ -1,10 +1,13 @@
 package analysis
 
 import analysis.AnalyzeExclusiveCallsOnAVariableType
+import analysis.DetectIncorrectGetActivityMain.{createCallChainsDepthFirst, getStartingMethodAndCallChain}
 import soot.toolkits.graph.ExceptionalUnitGraph
 import soot.{SootClass, SootMethod}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import util.control.Breaks._
 
 object ParseAPIStatements {
@@ -18,11 +21,12 @@ object ParseAPIStatements {
     //val statementToParse: String = "instanceOf(\"Intent\").exclusiveOrInstance(\"setPackage\", \"setSelector\")"
     //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
     //val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").contains(\"inflate(*,*,false)\")"
+    //val statementToParse: String = "checkSubclassOf(\"Fragment\").if(contains(\"onCreateOptionsMenu\")) then (methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true)\")"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
-    //val statementToParse: String  = "and(and(method(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
-    val statementToParse: String = "checkSubclassOf(\"Fragment\").if(contains(\"onCreateOptionsMenu\")) then (methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true)\")"
+    //val statementToParse: String  = "and(and(methodToCheck(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
+    val statementToParse: String = "checkSubclassOf(\"Fragment\").in(\"getActivity\", \"activityAttachedState\"))"
 
     val setHasOptionsMenuErrorTemplate = "@@@@@ Found a problem: setHasOptionsMenu(true) must be called in the onCreate method to display the OptionsMenu in %s"
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second
@@ -36,6 +40,13 @@ object ParseAPIStatements {
     //val statementToParse: String = "if(methodToCheck(\"onResume\").contains(\"Context.registerReceiver\").firstParameterMustMatch() then (methodToCheck(\"onPause\").contains(\"Context.unregisterReceiver\").firstParameterMustMatch())"
 
     val methodShorthandToFullDeclaration: Map[String, String] = Map("getResources" -> "android.content.res.Resources getResources()")
+
+    //I'm not sure the right way to do this, but I'll guess for my current case and then adjust this when I
+    //get more examples - I'm not sure how much of the check to pull out here and make variable vs hardcoding the rest
+    //this variable contains the state checking methods for each checker that needs a state check
+    //(used with the in keyword))
+    val getActivityAttachedCheck = (call:ControlFlowItem) => {FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall)}
+    val stateChecks: Map[String, ControlFlowItem => Boolean] = Map("activityAttachedState" -> getActivityAttachedCheck)
 
     def getPositionOfEndingParenthesisInNestedString(stringToCheck: String): Option[Int] = {
       var modifierEndLoc: Option[Int] = None
@@ -64,6 +75,15 @@ object ParseAPIStatements {
      */
     def parseStatement(parsingObj: ParseCodeObj): ParseCodeObj = {
       parsingObj.stringToParse = parsingObj.stringToParse.trim()
+
+      //might want to refactor this, but only keep track of previous class if it's for the
+      //in keyword
+      //Currently, classForStateCheck isn't used, but I could see it being useful, so I'll
+      //leave it
+      if(!parsingObj.stringToParse.startsWith("in(")){
+        parsingObj.classForStateCheck = None
+      }
+
       //TODO: change and to the new meaning
       if (parsingObj.stringToParse.startsWith("and(")) {
         //save but don't parse it yet, we need to read from the end to the front
@@ -145,6 +165,7 @@ object ParseAPIStatements {
         val endString = "\")"
         var endLoc = parsingObj.stringToParse.indexOf(endString)
         val classOfInterest = parsingObj.stringToParse.substring("checkSubclassOf(".length() + 1, endLoc)
+        parsingObj.classForStateCheck = Some(classOfInterest)
         println(parsingObj.stringToParse(endLoc + endString.length))
         if (parsingObj.stringToParse(endLoc + endString.length) == '.') {
           endLoc += 1
@@ -154,6 +175,7 @@ object ParseAPIStatements {
         val wasInNot = parsingObj.inNot
         parsingObj.checkEndOfContexts()
         val updatedParsingObj = parseStatement(parsingObj)
+        //you might want to remove the check below if it is followed by an in
 
         //parsingObj.addToCodeResult(s"if(DetectionUtils.classIsSubClass(cl,$classOfInterest)){\n", "}\n")
         def classFilterWrapper(innerFunc: SootClass => Int, filterClass: String, excludeSubclass: Boolean = false): SootClass => Int = {
@@ -545,6 +567,80 @@ object ParseAPIStatements {
         val updatedParsingObj = parseStatement(parsingObj)
         return updatedParsingObj
 
+      }
+      else if (parsingObj.stringToParse.startsWith("in(")) {
+        //exclusiveOrInstance("setPackage", "setSelector")
+        val stringToParse = parsingObj.stringToParse.substring("in(".length())
+        println(s"string to parse: ${stringToParse}")
+        val commaLoc = stringToParse.indexOf(',')
+        val endLoc = stringToParse.indexOf(')')
+        val method1String = stringToParse.substring(1, commaLoc - 1)
+        //the last substring call removes the " from the beginning of the method
+        val stateName = stringToParse.substring(commaLoc + 1, endLoc - 1).trim().substring(1)
+        println(s"method 1: ${method1String}")
+        println(s"method 2: ${stateName}")
+
+        //actually, what really would make sense for the isSubclass would be to pass that information here,
+        //but that would require looking ahead in the parsing, or sending the information forward and
+        def inHandlerWrapper(methodNameToCheckFor: String, stateCheckFunction: ControlFlowItem => Boolean,checkingClasses: Boolean = true): SootClass => Int = {
+          var alreadyChecked = false
+          def inHandler(cl: SootClass): Int = {
+            //this only needs to run once, not once for each class
+            var problemCount = 0
+            if (! alreadyChecked) {
+              println("inHandler called")
+              var callChains: List[ControlFlowChain] = List()
+              var (startingMethod, calledByList) = getStartingMethodAndCallChain(methodNameToCheckFor)
+              val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
+              if (startingMethod.isDefined) {
+                createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
+              }
+              callChains = fullCallChains.toList
+              var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
+              println(s"length of call chains: ${callChains.length}, length of distinct call chains: ${callChains.distinct.length}")
+              for (chain <- callChains) {
+                println("new chain")
+                println(s"${chain.controlChain}")
+                Console.flush
+                val reversedList = chain.controlChain.reverse
+                val methodCallWithError = reversedList(1)
+                println(s"method call with error: ${methodCallWithError.methodCall.toString}")
+                print("already reported errors: ")
+                for (m <- alreadyReportedErrors) {
+                  print(s"${m._1} ")
+                }
+                print("\n")
+                if (!alreadyReportedErrors.contains(methodCallWithError.methodCall.toString)) {
+                  //println("checking call chain")
+                  //check if the chain contains a call to a method that demonstrates the fragment has been initialized
+                  println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
+                  println(s"${!checkingClasses}")
+                  println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+                  if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
+                    && (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
+                    alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
+                    val errorString = "@@@@@ Found a problem: getActivity may be called when " +
+                      "the Fragment is not attached to an Activity" +
+                      s": call sequence ${chain.controlChain}"
+                    println(errorString)
+                    System.out.flush()
+                    System.err.println(errorString)
+                    System.err.flush()
+                    problemCount += 1
+                  }
+                }
+              }
+              alreadyChecked = true
+            }
+            return problemCount
+          }
+
+          return inHandler
+        }
+
+        parsingObj.codeResult = Some(inHandlerWrapper(method1String, stateChecks(stateName)))
+        parsingObj.stringToParse = stringToParse.substring(endLoc + 1)
+        return parsingObj
       }
       else {
         throw new RuntimeException(s"unable to parse |${parsingObj.stringToParse}|")

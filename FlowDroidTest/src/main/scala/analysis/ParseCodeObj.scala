@@ -1,9 +1,10 @@
 package analysis
 
 class ParseCodeObj(var stringToParse: String, var codeResult:Option[_ =>Int], var instanceType:Option[String] = None,
-                   var inNot:Boolean = false, var contexts: List[String]= List()) {
+                   var inNot:Boolean = false, var contexts: List[String]= List(), var classForStateCheck: Option[String] = None) {
 
-
+//classForStateCheck - this is to notify the in( check that it's only for Fragments or Activity classes
+  //or another class. Currently, this isn't used in the implementation, so it can probably be removed.
 
   /*This assumes and inside out build. I might have to do it the
   other way
