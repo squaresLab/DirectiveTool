@@ -281,6 +281,8 @@ def nodeToCodeLine(node):
     unsupportedAttributes = ["dimensions"]
     testAttributesNotHandledAreBlank(node, unsupportedAttributes)
     return str(node.name)
+  elif isinstance(node, javalang.tree.LambdaExpression):
+    return str(node.body) 
   else:
     print('error: unsupported node type: {0}'.format(type(node)))
     print('node: {0}'.format(node))
@@ -361,7 +363,8 @@ def isStatementOfInterest(nodeToTest):
     isinstance(nodeToTest, javalang.tree.ArrayInitializer) or \
     isinstance(nodeToTest, javalang.tree.ThrowStatement) or \
     isinstance(nodeToTest, javalang.tree.CatchClauseParameter) or \
-    isinstance(nodeToTest, javalang.tree.LambdaExpression):
+    isinstance(nodeToTest, javalang.tree.LambdaExpression) or \
+    isinstance(nodeToTest, javalang.tree.EnhancedForControl):
     return False
   else:
     print('unsupported expression: {0}'.format(nodeToTest))

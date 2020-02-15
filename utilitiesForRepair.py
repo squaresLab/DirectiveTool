@@ -5,6 +5,7 @@ import os
 import sys
 import shlex
 import subprocess
+import traceback
 
 buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug')
 permissionCommand = shlex.split('chmod +x gradlew')
@@ -267,5 +268,31 @@ def buildApp(repoDir):
     buildFilesToCheck.append(possibleBuildFiles[0])
   os.chdir(originalDir)
   return buildFilesToCheck
+
+def getFilesFullPath(projectDir, fileBaseName):
+  originalFileNameForDebugging = fileBaseName
+  if fileBaseName.startswith(os.path.sep):
+    #assume that the file is already a full path
+    return fileBaseName
+  if "$" in fileBaseName:
+    fileBaseName = fileBaseName.split("$")[0]
+  if '.' in fileBaseName:
+    fileItems = fileBaseName.split('.')
+    fileBaseName = fileItems[-1]
+    if fileBaseName == 'java':
+      fileBaseName = '.'.join(fileItems[-2:])
+  if not fileBaseName.endswith('.java'):
+    fileBaseName='{0}.java'.format(fileBaseName)
+  #print('file base name: {0}'.format(fileBaseName))
+  for dirpath, dirnames, filenames in os.walk(projectDir):
+    #print(filenames)
+    for filename in [f for f in filenames if f.endswith(".java")]:
+      #print('checking filename: {0}'.format(filename))
+      if filename == fileBaseName:
+        return os.path.join(dirpath, filename)  
+  #shouldn't reach this point
+  print('error getting file path for {0} in {1} (original file name: {2})'.format(fileBaseName, projectDir, originalFileNameForDebugging))
+  traceback.print_exc(file=sys.stdout) 
+  #input('stop to see this error')
 
 

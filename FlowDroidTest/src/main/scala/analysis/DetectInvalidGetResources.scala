@@ -13,6 +13,8 @@ import soot.jimple.toolkits.ide.icfg.OnTheFlyJimpleBasedICFG
 import soot.options.Options
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object DetectInvalidGetResources {
 
@@ -78,44 +80,45 @@ object DetectInvalidGetResources {
 
      */
 
-   // println("printing cfg")
-/*    for (entry <- Scene.v().getReachableMethods.listener().asScala) {
-      entry match {
-        case m: SootMethod =>
-          if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
-            println(s"calls for ${m}")
-            for (call <- cfg.getCallsFromWithin(m).asScala) {
-              println(call)
-            }
-            println("")
+    // println("printing cfg")
+    /*    for (entry <- Scene.v().getReachableMethods.listener().asScala) {
+          entry match {
+            case m: SootMethod =>
+              if (DetectionUtils.isCustomClassName(m.getDeclaringClass.toString)) {
+                println(s"calls for ${m}")
+                for (call <- cfg.getCallsFromWithin(m).asScala) {
+                  println(call)
+                }
+                println("")
+              }
+            case _ =>
+              ()
           }
-        case _ =>
-          ()
-      }
-    }
-
- */
-
-/*    println("classes of interest")
-    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-      println(s"${cl}");
-      if (cl.toString().contains("BackgroundTestFragment$ResourcesTask")){
-        println("found the class of interest")
-        println("methods in class:")
-        for (m: SootMethod <- cl.getMethods().asScala) {
-          println(m.getName())
         }
-        println(s"outer class ${cl.getOuterClass.toString()}")
-      }
-      if (DetectionUtils.classIsSubClassOfAsyncTask(cl)) {
-        println("is a subclass of asyncTask")
-      }
 
-    }
-  */
+     */
 
-//    println("printing bodies")
+    /*    println("classes of interest")
+        for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+          println(s"${cl}");
+          if (cl.toString().contains("BackgroundTestFragment$ResourcesTask")){
+            println("found the class of interest")
+            println("methods in class:")
+            for (m: SootMethod <- cl.getMethods().asScala) {
+              println(m.getName())
+            }
+            println(s"outer class ${cl.getOuterClass.toString()}")
+          }
+          if (DetectionUtils.classIsSubClassOfAsyncTask(cl)) {
+            println("is a subclass of asyncTask")
+          }
 
+        }
+      */
+
+    //    println("printing bodies")
+
+    var classesToCheck = new ListBuffer[SootClass]
     for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
       if (DetectionUtils.classIsSubClassOfAsyncTask(cl)) {
@@ -137,14 +140,53 @@ object DetectInvalidGetResources {
               if (stmt.toString().contains("android.content.res.Resources getResources()") && cl.getOuterClassUnsafe() != null && DetectionUtils.classIsSubClassOfFragment(cl.getOuterClass())) {
                 //println("start of call chain")
                 //at the moment, the whole call chain isn't needed, just the failing method
-                println(s"${m.toString}   ${m.getDeclaringClass.toString}")
-                println("end of call chain")
-                println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")
-                System.out.flush()
-                System.err.println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")
-                System.err.flush()
-                problemCount = problemCount + 1
+                classesToCheck += cl
+
               }
+            }
+          }
+        }
+      }
+    }
+    for (cl <- classesToCheck) {
+      println(cl.toString)
+      val methodNameToCheckFor = cl.toString
+      var (startingMethod, calledByList) = analysis.DetectIncorrectGetActivityMain.getStartingMethodAndCallChain(methodNameToCheckFor)
+      val checkingClasses = true
+      var callChains: List[ControlFlowChain] = List()
+      val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
+      if (startingMethod.isDefined) {
+        analysis.DetectIncorrectGetActivityMain.createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
+      }
+      callChains = fullCallChains.toList
+      var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
+      for (chain <- callChains) {
+        if (chain.controlChain.length > 0) {
+          val controlChainLength = chain.controlChain.length
+          //since we can't save the initalization as the method, use the method the initalization was declared in
+          var controlItem = chain.controlChain(controlChainLength-1)
+          println(alreadyReportedErrors)
+          println(controlItem.methodCall.toString)
+          if (!alreadyReportedErrors.contains(controlItem.methodCall.toString)) {
+            if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenGetResourcesWorks(call.methodCall)) &&
+            chain.controlChain.exists(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))) {
+              alreadyReportedErrors += (chain.controlChain.reverse(0).methodCall.toString -> true)
+
+              //val testString = chain.controlChain.slice(chain.controlChain.length - 2, chain.controlChain.length).toString()
+              //            if (!foundControlFlowItemStrings.contains(testString)) {
+              val errorString = "@@@@@ Found a problem: getResources may be called when " +
+                "the Fragment is not attached to an Activity" +
+                s": call sequence ${chain.controlChain}"
+              println(errorString)
+              //println(s"${m.toString}   ${m.getDeclaringClass.toString}")
+              //println("end of call chain")
+              //println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")
+              System.out.flush()
+              //System.err.println(s"@@@@@ Found a problem: calling getResources on a background fragment in ${m.getName()} of ${cl.getName()} with outer Fragment class ${cl.getOuterClass.getName}")
+              System.err.println(errorString)
+              System.err.flush()
+              problemCount = problemCount + 1
+              //foundControlFlowItemStrings += s"List(${m.toString()}, <android.app.Fragment: void setArguments(android.os.Bundle)>)"
             }
           }
         }
@@ -153,6 +195,6 @@ object DetectInvalidGetResources {
     println(s"total number of caught problems: ${problemCount}")
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
-    println(s"total time (in seconds): ${totalTime/1000000000}")
+    println(s"total time (in seconds): ${totalTime / 1000000000}")
   }
 }

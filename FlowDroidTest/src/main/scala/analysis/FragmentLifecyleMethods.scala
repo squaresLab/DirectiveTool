@@ -29,6 +29,24 @@ object FragmentLifecyleMethods {
 
   }
 
+  //for some reason, it doesn't work in onCreate
+  def isMethodWhenGetResourcesWorks(methodToCheck: SootMethod): Boolean = {
+    //commented out to test if I can catch the error without this check; this check is probably
+    //correct, but it throws off my current analysis due to the number of anonymous inner classes
+    //whose parents are not subclasses of Fragment - maybe also check for that in the future?
+    //if (DetectionUtils.classIsSubClassOfFragment(methodToCheck.getDeclaringClass)) {
+    val fragmentLifecycleMethods = List("onAttach", "onCreateView", "onViewCreated",
+      "onActivityCreated", "onStart", "onResume", "onPause", "onStop", "onDestroyView",
+      "onDestroy", "onDetach", "onActivityResult", "onClick")
+    return (fragmentLifecycleMethods.contains(methodToCheck.getName))
+    /*}
+    else {
+      return false
+    }
+    */
+
+  }
+
   def isMethodWhenFragmentIsAttached(methodToCheck: SootMethod): Boolean = {
     if ((methodToCheck.getDeclaringClass.isInnerClass && DetectionUtils.classIsSubClassOfFragment(methodToCheck.getDeclaringClass.getOuterClass))
       || DetectionUtils.classIsSubClassOfFragment(methodToCheck.getDeclaringClass)) {

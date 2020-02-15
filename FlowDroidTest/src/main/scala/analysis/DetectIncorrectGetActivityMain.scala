@@ -58,26 +58,46 @@ object DetectIncorrectGetActivityMain {
       //work on other checkers
       if (DetectionUtils.isCustomClassName(cl.getName) && !cl.getName.contains("xmlpull")) {
         for (m: SootMethod <- cl.getMethods().asScala) {
+          println(m.getName())
           val listBuffer: ListBuffer[SootMethod] = ListBuffer[SootMethod]()
           try {
             for (stmt <- m.getActiveBody.getUnits.asScala) {
-              extractMethodCallInStatement(stmt) match {
-                case Some(call) => {
-                  if (startingMethod.isEmpty) {
-                    if (call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)) {
-
-                      startingMethod = Some(call)
-                    }
-                  }
-                  if (calledByList.contains(call.toString())) {
-                    if (!calledByList(call.toString()).contains(m)) {
-                      calledByList(call.toString()) += m
+              //check for initializations as well, unfortunately, these can't
+              //be treated as methods, so I'll save the method that the
+              //initialization occurs in instead
+              if (stmt.toString().contains(s"new ${methodNameToCheckFor}")) {
+                if (stmt.isInstanceOf[JAssignStmt]) {
+                  val assignStmt = stmt.asInstanceOf[JAssignStmt]
+                  startingMethod = Some(m)
+                  if (calledByList.contains(m.toString())) {
+                    if (!calledByList(m.toString()).contains(m)) {
+                      calledByList(m.toString()) += m
                     }
                   } else {
-                    calledByList += (call.toString() -> ListBuffer[SootMethod](m))
+                    //calledByList += (m.toString() -> ListBuffer[SootMethod](m))
                   }
                 }
-                case None => ()
+              }
+              else {
+                extractMethodCallInStatement(stmt) match {
+                  case Some(call) => {
+                    println(s"found call: ${call.toString()}")
+                    if (startingMethod.isEmpty) {
+                      if (call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)) {
+
+                        startingMethod = Some(call)
+                      }
+                    }
+                    if (calledByList.contains(call.toString())) {
+                      if (!calledByList(call.toString()).contains(m)) {
+                        calledByList(call.toString()) += m
+                      }
+                    } else {
+                      calledByList += (call.toString() -> ListBuffer[SootMethod](m))
+                    }
+                  }
+                  case None => ()
+                }
               }
             }
           }
@@ -326,8 +346,8 @@ object DetectIncorrectGetActivityMain {
   def extractMethodCallInStatement(u: soot.Unit): Option[SootMethod] = {
     def handleStmt(stmt: soot.jimple.Stmt): Option[SootMethod] = {
       stmt match {
-        case assignmentStatment: JAssignStmt => {
-          assignmentStatment.rightBox.getValue match {
+        case assignmentStatement: JAssignStmt => {
+          assignmentStatement.rightBox.getValue match {
             case staticExpr: JStaticInvokeExpr => {
               return Some(staticExpr.getMethod)
             }

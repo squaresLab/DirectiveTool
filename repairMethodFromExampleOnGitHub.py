@@ -122,32 +122,6 @@ def saveLines(linesToSave, nestingCount, line):
       nestingCount = nestingCount - 1
   return (linesToSave, nestingCount)
 
-def getFilesFullPath(projectDir, fileBaseName):
-  originalFileNameForDebugging = fileBaseName
-  if fileBaseName.startswith(os.path.sep):
-    #assume that the file is already a full path
-    return fileBaseName
-  if "$" in fileBaseName:
-    fileBaseName = fileBaseName.split("$")[0]
-  if '.' in fileBaseName:
-    fileItems = fileBaseName.split('.')
-    fileBaseName = fileItems[-1]
-    if fileBaseName == 'java':
-      fileBaseName = '.'.join(fileItems[-2:])
-  if not fileBaseName.endswith('.java'):
-    fileBaseName='{0}.java'.format(fileBaseName)
-  #print('file base name: {0}'.format(fileBaseName))
-  for dirpath, dirnames, filenames in os.walk(projectDir):
-    #print(filenames)
-    for filename in [f for f in filenames if f.endswith(".java")]:
-      #print('checking filename: {0}'.format(filename))
-      if filename == fileBaseName:
-        return os.path.join(dirpath, filename)  
-  #shouldn't reach this point
-  print('error getting file path for {0} in {1} (original file name: {2})'.format(fileBaseName, projectDir, originalFileNameForDebugging))
-  traceback.print_exc(file=sys.stdout) 
-  input('stop to see this error')
-
 def extractOriginalMethodsOfInterest(repairItem):
   #I was going to search all Java files in the original project, 
   #but then I remembered that the checker prints out the file 
@@ -172,7 +146,7 @@ def extractOriginalMethodsOfInterest(repairItem):
   #at this time, use original folder, because we haven't copied anything to the
   #test folder
   print('project dir: {0}'.format(repairItem.originalFolder))
-  repairItem.fileToChange = getFilesFullPath(repairItem.originalFolder, repairItem.fileToChange)
+  repairItem.fileToChange = utilitiesForRepair.getFilesFullPath(repairItem.originalFolder, repairItem.fileToChange)
   print('file to extract from: {0}'.format(repairItem.fileToChange))
   #input('confirming that file extracted from is the one injected into')
   #print('file to extract from: {0}'.format(fileToExtractFrom))
@@ -266,7 +240,7 @@ def addChangeToFile(repairItem, change, method):
   #this stays true after the method is found
   #unlike the variable with the similar name below
   everFoundMethodOfInterest = False
-  fullFileToChange = getFilesFullPath(repairItem.testFolder, repairItem.fileToChange)
+  fullFileToChange = utilitiesForRepair.getFilesFullPath(repairItem.testFolder, repairItem.fileToChange)
   with open(fullFileToChange,'r') as fin:
     fileContents = fin.read().splitlines()
   #this is only true right when the method is found
@@ -328,7 +302,7 @@ def deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, fileToChan
       if c == '}':
         nestingCount = nestingCount - 1
     return nestingCount
-  fullFileToChange = getFilesFullPath(projectDir, fileToChange)
+  fullFileToChange = utilitiesForRepair.getFilesFullPath(projectDir, fileToChange)
   resultLines = []
   deletedALine = False
   with open(fullFileToChange, 'r') as fin:
@@ -426,7 +400,7 @@ def ensureMethodOfInterestWasntDeleted(repairItem):
     print('unsupported checker ({0}) for ensure method of interest wasn\'t deleted'.format(repairItem.checkerToRun))
     traceback.print_exc(file=sys.stdout)
     sys.exit(1)
-  fullFileToChange = getFilesFullPath(repairItem.testFolder, repairItem.fileToChange)
+  fullFileToChange = utilitiesForRepair.getFilesFullPath(repairItem.testFolder, repairItem.fileToChange)
   with open(fullFileToChange,'r') as fin:
     fileContents = fin.read().splitlines()
   #this is only true right when the method is found
@@ -908,7 +882,6 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
   #print(uniqueMismatchList)
   #input('stopping to check filter function ')
   for changeItemList in itertools.chain.from_iterable(itertools.combinations(uniqueMismatchList,n) for n in range(len(uniqueMismatchList)+1)):
-    print('testing a change')
     wasFixed = False
     #containsFalse = False
     createNewCopyOfTestProgram(repairItem)
@@ -925,7 +898,7 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
       addedLineList = []
       deletedLineList = []
       indexOfMethodStart = -1
-      fullFileToChange = getFilesFullPath(repairItem.testFolder, fileToChange)
+      fullFileToChange = utilitiesForRepair.getFilesFullPath(repairItem.testFolder, repairItem.fileToChange)
       with open(fullFileToChange, 'r') as fin:
         #initializing the line count to negative one so that 0 starts on the 
         #first valid line in the method
@@ -1000,10 +973,10 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
                 if 'inflate' in addedLine and ('false)' in addedLine or 'false )' in addedLine):
                   print('addedLine: {0}'.format(addedLine))
                   input('stopping to check added line that might fix the problem')
-                print('length of new file contents before adding: {0}'.format(len(newFileContents)))
+                #print('length of new file contents before adding: {0}'.format(len(newFileContents)))
                 newFileContents.append(addedLine)
-                print('length of new file contents after adding: {0}'.format(len(newFileContents)))
-                print('added line: {0}'.format(addedLine))
+                #print('length of new file contents after adding: {0}'.format(len(newFileContents)))
+                #print('added line: {0}'.format(addedLine))
                 addedLineCount = addedLineCount + 1
                 addedLineList.append(addedLine)
                 if(addedLine.strip().endswith('false);')):
@@ -1041,10 +1014,10 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
                 #if containsFalse and len(newFileContents) - indexOfMethodStart == 2:
                 #  input('stop with false and single line changed')
           if incrementLineCountInMethodOfInterest:
-            print('length of new file contents at this point: {0}'.format(len(newFileContents)))
+            #print('length of new file contents at this point: {0}'.format(len(newFileContents)))
             lineCountInMethodOfInterest = lineCountInMethodOfInterest + 1
             changesToLine = [ i for i in changeItemList if i[2] == lineCountInMethodOfInterest]
-            print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
+            #print('line count in method of interest: {0}'.format(lineCountInMethodOfInterest))
             #if there are no changes to the line, just keep it in the file
             if len(changesToLine) < 1:
               newFileContents.append(line)
@@ -1138,6 +1111,7 @@ def addAndDeleteTypeDifferences(repairItem, originalFileName, downloadedFileTree
       #    break
       #if addedInflate and deletedInflate:
       #  foundFixOfInterest = True
+      print('changing: {0}'.format(fullFileToChange))
       with open(fullFileToChange, 'w') as fout:
         for line in newFileContents:
           fout.write(line)

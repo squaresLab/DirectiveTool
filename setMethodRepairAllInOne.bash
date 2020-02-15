@@ -84,7 +84,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=2
+currentCheckerNumber=6
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901
@@ -172,6 +172,11 @@ currentCheckerNumber=2
    # 10) gitBranch=setContentViewFindViewByIDOrdering
    #    checker=DetectInvalidSetContentViewFindViewByIdOrdering
    #    appName=Application;;
+    10) gitBranch=missingOnCreateOptionsMenu
+       checker=DetectMissingOptionsMenuDefinition
+       appName=Application
+       repairType=Template;;
+
 
   esac
   testFolder=/Users/zack/git/DirectiveTool/testFolder
@@ -187,8 +192,6 @@ currentCheckerNumber=2
   cd $originalAppDir
   git checkout $gitBranch
   #added this stop in for testing - remove later
-  echo "stopping after git checkout"
-  read n
   rm -rf $testDir
   cp -r $originalAppDir $testDir
 
@@ -279,8 +282,17 @@ currentCheckerNumber=2
       #exit 0
       echo "file to change before github repair: $fileToChange"
       /Users/zack/git/DirectiveTool/repairMethodFromExampleOnGitHub.py "$runCheckerString" $checker $scriptDir "$methodDeclarationStringToCompare" $testDir $fileToChange $appLocation "$termsOfInterest"
+      checkerResult=$?
     fi
   #fi
+  fi
+  if [ $checkerResult -ne 0 ] && [ ! -z "$fileToChange" ]
+  then 
+    echo "running template repair"
+    #currently template repair doesn't check to see if the template worked or not;
+    #I probably should add that functionality to it later
+    /Users/zack/git/DirectiveTool/templateRepair.py $testDir $fileToChange "$runCheckerString" $checker $appLocation
+    #main(sourceDir, fileWithProblem, runFlowDroidCommand, checkerToRun, apkLocation):
   fi
 showDiff $testFolder $testDir
 

@@ -2,6 +2,7 @@ package analysis
 
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
+import java.security.KeyStore.TrustedCertificateEntry
 import java.util
 
 import soot.jimple.Stmt
@@ -93,7 +94,7 @@ object DetectInvalidInflateCallMain {
 */
 
      */
-    for(cl:SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+    for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
       //println(s"class: ${cl.getName}")
       /*if (cl.getName().contains("FilmDetailsFragment")){
         println(cl.getName())
@@ -111,28 +112,45 @@ object DetectInvalidInflateCallMain {
           }*/
           if (m.isConcrete && m.hasActiveBody) {
             if (m.getName.contains("onCreateView")) {
+              var hasNoFalse = false
+              var isReturned = false
+              var returnedItem: Option[String] = None
               //println("new method")
               //println(s"class: ${m.getDeclaringClass.getName} method: ${m.getName}")
               for (stmt <- m.getActiveBody.getUnits.asScala) {
-                //println(stmt)
+                println(stmt)
                 if (stmt.toString().contains("android.view.LayoutInflater: android.view.View inflate(")) {
                   // 0 is how soot stores the final false parameter
                   if (!stmt.toString().endsWith("0)")) {
-                    println("start of call chain")
-                    //at the moment, the whole call chain isn't needed, just the failing method
-                    println(s"${m.toString}   ${m.getDeclaringClass.toString}")
-                    println("end of call chain")
-                    //The two classes that are printed here are often the same class
-                    // - I don't remember when they are different; maybe the two should be replaced with one
-                    println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)
-                    System.out.flush()
-                    System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: "+cl.toString)
-                    System.err.flush();
-                    problemCount = problemCount + 1
+                    hasNoFalse = true
+                    if (stmt.toString().startsWith("return ")) {
+                      isReturned = true
+                    } else if (stmt.toString().contains("=")) {
+                      returnedItem = Some(stmt.toString().replaceAll(" ", "").split("=")(0))
+                    }
+                  }
+                }
+                if (stmt.toString().startsWith("return ") && returnedItem.isDefined) {
+                  if (stmt.toString().contains(returnedItem.get)) {
+                    isReturned = true
                   }
                 }
               }
-              //println("")
+              if (isReturned && hasNoFalse) {
+                isReturned = false
+                hasNoFalse = false
+                println("start of call chain")
+                //at the moment, the whole call chain isn't needed, just the failing method
+                println(s"${m.toString}   ${m.getDeclaringClass.toString}")
+                println("end of call chain")
+                //The two classes that are printed here are often the same class
+                // - I don't remember when they are different; maybe the two should be replaced with one
+                println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: " + cl.toString)
+                System.out.flush()
+                System.err.println("@@@@@ Found a problem: inflate is missing the false parameter in onCreateView in class " + m.getDeclaringClass.getName + " in file of class: " + cl.toString)
+                System.err.flush();
+                problemCount = problemCount + 1
+              }
             }
           }
         }
@@ -141,22 +159,22 @@ object DetectInvalidInflateCallMain {
     println(s"total number of caught problems: ${problemCount}")
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
-    println(s"total time (in seconds): ${totalTime/1000000000}")
+    println(s"total time (in seconds): ${totalTime / 1000000000}")
 
     //println(s"main method of scene: ${Scene.v().getMainMethod}")
 
     // Iterate over the callgraph
-   /* println("printing callgraph")
-    val callGraph = Scene.v.getCallGraph
-    //val callGraph = cfg.
-    println(s"size of call graph: ${callGraph.size()}")
-    for (edge <- Scene.v.getCallGraph.iterator.asScala) {
-      val smSrc = edge.src
-      val uSrc = edge.srcStmt
-      val smDest = edge.tgt
-      println(s"Edge from ${uSrc} in ${smSrc} to ${smDest}")
-    }
-    */
+    /* println("printing callgraph")
+     val callGraph = Scene.v.getCallGraph
+     //val callGraph = cfg.
+     println(s"size of call graph: ${callGraph.size()}")
+     for (edge <- Scene.v.getCallGraph.iterator.asScala) {
+       val smSrc = edge.src
+       val uSrc = edge.srcStmt
+       val smDest = edge.tgt
+       println(s"Edge from ${uSrc} in ${smSrc} to ${smDest}")
+     }
+     */
     /*val lifecycleMethods = AndroidEntryPointConstants.getActivityLifecycleMethods
     for( l <- lifecycleMethods){
       cfg.

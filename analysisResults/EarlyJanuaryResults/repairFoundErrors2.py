@@ -28,7 +28,7 @@ copyRepoLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryRe
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
 #errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
-errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/rerunFDroidCheckResults.txt'
+errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/inflateCheckerResults.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedAPKsFile = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/triedFixes.txt'
 
@@ -156,7 +156,8 @@ def main():
   #the checkers to run the repairs for; allows only running the repair on 
   #specific checkers; use 'all' if you want to run on all cases
   #checkersList = ['DetectMissingSetHasOptionsMenu']
-  checkersList = ['DetectIncorrectGetActivityMain','DetectInvalidInflateCallMainn']
+  #checkersList = ['DetectIncorrectGetActivityMain','DetectInvalidInflateCallMain']
+  checkersList = ['DetectInvalidInflateCallMain']
   errorList = extractErrorList(errorListLocation)
   print('error list size: {0}'.format(len(errorList)))
 
