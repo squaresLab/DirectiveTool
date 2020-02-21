@@ -11,7 +11,6 @@ import re
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-import runAllRepairs
 import extractRepoInfo
 import utilitiesForRepair
 
@@ -27,8 +26,8 @@ copyRepoLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryRe
 #I may need to convert them to using gradlew instead of gradle wrapper
 #buildAppCommand = shlex.split('gradle wrapper assembleDebug')
 #testAppCommand = shlex.split('gradle wrapper test')
-#errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
-errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/inflateCheckerResults.txt'
+errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
+#errorListLocation = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/inflateCheckerResults.txt'
 fDroidRepoDir = '/Users/zack/git/reposFromFDroid/'
 attemptedAPKsFile = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/triedFixes.txt'
 
@@ -73,6 +72,7 @@ def changeToRepoAndCommit(repoName, commitHash):
     print('unable to get folder name from repo name: {0}'.format(repoName))
     return None
   repoDir = os.path.join(fDroidRepoDir, folderName) 
+  print("original source code folder: {0}".format(repoDir))
   if repoDir == fDroidRepoDir:
     print('invalid repo directory')
     print('original repo name: {0}'.fromat(repoName))
@@ -157,7 +157,7 @@ def main():
   #specific checkers; use 'all' if you want to run on all cases
   #checkersList = ['DetectMissingSetHasOptionsMenu']
   #checkersList = ['DetectIncorrectGetActivityMain','DetectInvalidInflateCallMain']
-  checkersList = ['DetectInvalidInflateCallMain']
+  checkersList = ['DetectMissingOptionsMenuDefinition']
   errorList = extractErrorList(errorListLocation)
   print('error list size: {0}'.format(len(errorList)))
 
@@ -190,6 +190,7 @@ def main():
           attemptedAPKsDict[line.strip()] = True
 
   errorList = filterErrorList(checkersList, attemptedAPKsDict, errorList)
+  utilitiesForRepair.setJavaEnvironmentVariable()
 
   with open(attemptedAPKsFile,'a') as fout:
     print('errors to check count: {0}'.format(len(errorList)))
@@ -224,10 +225,8 @@ def main():
         print(apkName, file=fout)
         #input('stop before moving to next repo')
         continue
-      runInjectionTests.clearAPKS(copyRepoLocation)
-      print('trying to build apps in: {0}'.format(copyRepoLocation))
-      appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
-      print('built apps: {0}'.format(appBuilds))
+      utilitiesForRepair.clearAPKS(copyRepoLocation)
+      appBuilds = utilitiesForRepair.buildApp(copyRepoLocation, apkBasename)
       if len(appBuilds) < 1:
         print('there was a problem building the app. Aborting before injecting problem.')
         debuggingResultList.append("couldn't build the app")

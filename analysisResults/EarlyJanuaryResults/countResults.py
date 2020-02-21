@@ -12,7 +12,7 @@ jarLocation = '/Users/zack/git/DirectiveTool/FlowDroidTest/out/artifacts/Multipl
 currentAppFolder = '/Users/zack/git/DirectiveTool/appsFromFDroid/'
 #outputFileName = '/Users/zack/git/DirectiveTool/runResults.txt'
 androidJarLocation = '/Users/zack/git/DirectiveTool/runCheckerPackage/android.jar'
-fileToCount = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/optionsMenuCheckerResults.txt'
+fileToCount = '/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/setArgumentsCheckerResults.txt'
 
 successDict = {}
 errorDict = {}

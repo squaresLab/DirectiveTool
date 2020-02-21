@@ -6,9 +6,12 @@ import sys
 import shlex
 import subprocess
 import traceback
+import pathlib
+import shutil
 
-buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug')
+buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug --stacktrace')
 permissionCommand = shlex.split('chmod +x gradlew')
+buildErrorFolder = '/Users/zack/git/DirectiveTool/buildErrors'
 
 class CallChainItem:
   def __init__(self, className, methodName):
@@ -45,9 +48,6 @@ class ProblemInfo:
     else:
       return False
 
-#class ProblemSetk:
-  #def __init__(self):
-    #pass
 
   def getFilenameWithProblem(self):
     if not self.outerClassName is None:
@@ -55,8 +55,11 @@ class ProblemInfo:
     elif not self.className is None:
       return '{0}.java'.format(self.className)
     elif not self.chainsInfo is None:
-      for chainItem in list(reversed(callChains[0]))[1:]:
-        if not chainItem.className.startswith('android.app'):
+      for chainItem in list(reversed(self.chainsInfo)):
+        print('chainItem: {0}'.format(chainItem))
+        if not chainItem.className.startswith('android.') and \
+          not chainItem.className.startswith('androidx.') and \
+          not chainItem.className.startswith('com.google'):
           classToGetMethodFrom = chainItem.className
           classItems = classToGetMethodFrom.split('.')
           fileBaseName = classItems[-1]
@@ -70,6 +73,51 @@ class ProblemInfo:
       #outputs; currently some checkers don't define problem files in the output
       #since knowledge of the problem file isn't needed to repair that issue
       return None
+
+def setJavaEnvironmentVariable():
+  os.putenv('JAVA_HOME','/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home')
+
+#class ProblemSetk:
+  #def __init__(self):
+    #pass
+def clearAPKS(dirToClear):
+  for root, dirs, files in os.walk(dirToClear, topdown=False):
+    for f in files:
+      if f.endswith('.apk'):
+        os.remove(os.path.join(root,f))
+    for d in dirs:
+      if d == 'build':
+        shutil.rmtree(os.path.join(root,d))
+
+
+def addImportLineIfRequired(fullFilename, importLine):
+  #added filesToSkip for debugging
+  foundToastImportLine = False
+  fileContents = []
+  lastImportLineCount = -1
+  with open(fullFilename, 'r') as fin:
+    for lineCount, line in enumerate(fin):
+      fileContents.append(line)
+      line = line.strip()
+      if line == importLine:
+        foundToastImportLine = True
+      if line.startswith('import '):
+        lastImportLineCount = lineCount
+  #if the view import line isn't in there, add the import line to the file
+  if not foundToastImportLine and lastImportLineCount > 0:
+    fileContents.insert(lastImportLineCount, importLine)
+  else:
+    # handle the case where there are no import lines in the file - this is 
+    # unlikely but it can happen
+    packageLineCount = None
+    for lineCount, line in enumerate(fileContents):
+      if line.startswith('package '):
+        packageLineCount = lineCount
+    if not packageLineCount is None:
+      fileContents.insert(packageLineCount + 1, importLine)
+  with open(fullFilename, 'w') as fout:
+    for line in fileContents:
+      print(line, file=fout, end="")
 
 def checkForSootError(checkerResult):
   for line in checkerResult.stderr.decode('utf-8').splitlines():
@@ -137,7 +185,8 @@ def parseCallChains(testResultLines):
 #slow
 def extractProblemCountFromCheckerOutput(checkerOutputLines):
   for line in checkerOutputLines:
-    if line.startswith('total number of caught problems'):
+    if line.startswith('total number of caught problems') or \
+      line.startswith('total number of problems'):
       errorCount = int(line.split()[-1]) 
       return errorCount
   return None
@@ -215,17 +264,24 @@ def extractImportantCheckerLines(checkerOutputLines):
       importantLines.append(line)
     elif line.startswith('total number of caught problems'):
       importantLines.append(line)
+    elif line.startswith('total number of problems'):
+      importantLines.append(line)
     elif line.startswith('@@@@@ problem:'):
       importantLines.append(line)
   return importantLines
 
 
 #If you are getting an error, you might need to 
-def buildApp(repoDir):
+def buildApp(repoDir, appName = None):
+  clearAPKS(repoDir)
+  pathlib.Path(buildErrorFolder).mkdir(parents=True, exist_ok=True) 
   originalDir = os.getcwd()
   os.chdir(repoDir)
   if not os.path.exists('./gradlew'):
     print('unable to find the gradle build file in directory: {0}'.format(repoDir))
+    if not appName is None:
+      with open(os.path.join(buildErrorFolder,'{0}.txt'.format(appName)),'w') as fout:
+        fout.write('unable to find the gradle build file in app: {0}\n'.format(appName))
     os.chdir(originalDir)
     return []
   try:
@@ -234,6 +290,11 @@ def buildApp(repoDir):
   except PermissionError as p:
     subprocess.run(permissionCommand, capture_output=True)
     buildResult = subprocess.run(buildAppCommand, capture_output=True)
+  if buildResult.returncode != 0:
+    if not appName is None:
+      with open(os.path.join(buildErrorFolder,'{0}.txt'.format(appName)),'w') as fout:
+        for line in buildResult.stderr.decode('utf-8').splitlines():
+          print(line, end='', file=fout)
   #for line in buildResult.stdout.decode('utf-8').splitlines():
     #print(line)
   possibleBuildFiles = []
@@ -244,6 +305,11 @@ def buildApp(repoDir):
       if f.endswith('.apk'):
         possibleBuildFiles.append(os.path.join(os.getcwd(), root,f))
   if len(possibleBuildFiles) < 1:
+    if not appName is None:
+      with open(os.path.join(buildErrorFolder,'{0}.txt'.format(appName)),'w') as fout:
+        fout.write('no successful builds for app: {0}\n'.format(appName))
+        for line in buildResult.stderr.decode('utf-8').splitlines():
+          print(line, end='', file=fout)
     print('error: no successful builds')
     #input('stopping to inspect the error')
   elif len(possibleBuildFiles) > 1:

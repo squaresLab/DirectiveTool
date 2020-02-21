@@ -22,11 +22,11 @@ object ParseAPIStatements {
     //val statementToParse: String  = "checkSubclassOf(\"Activity\").methodToCheck(\"onCreate\").firstCannotFollowSecond(\"setContentView\", \"setTheme\"))"
     //val statementToParse: String = "checkSubclassOf(\"Fragment\").not(checkSubclassOf(\"DialogFragment\")).methodToCheck(\"onCreateView\").contains(\"inflate(*,*,false)\")"
     //val statementToParse: String = "checkSubclassOf(\"Fragment\").if(contains(\"onCreateOptionsMenu\")) then (methodToCheck(\"onCreate\").contains(\"setHasOptionsMenu(true)\")"
+    val statementToParse: String = "checkSubclassOf(\"Fragment\").in(\"getActivity\", \"activityAttachedState\"))"
 
     //Not done:
     //maybe change and to multipleCheckCountFirst
     //val statementToParse: String  = "and(and(methodToCheck(\"onClick\").contains(\"setArguments\"), and (methodToCheck(\"onTabSelected\").contains(\"add\")), methodToCheck(\"onTabUnselected\").contains(\"hide\")))"
-    val statementToParse: String = "checkSubclassOf(\"Fragment\").in(\"getActivity\", \"activityAttachedState\"))"
 
     val setHasOptionsMenuErrorTemplate = "@@@@@ Found a problem: setHasOptionsMenu(true) must be called in the onCreate method to display the OptionsMenu in %s"
     //notes: requireCallOrder - both are not required but the first one must come before the second one -> error if the second

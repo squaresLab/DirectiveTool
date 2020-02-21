@@ -14,7 +14,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import RegexUtils._
-import analysis.DetectIncorrectGetActivityMain
+//import analysis.DetectIncorrectGetActivityMain
+import soot.jimple.internal.{JAssignStmt, JNewExpr}
 
 import scala.collection.mutable
 
@@ -60,6 +61,7 @@ object DetectSetArgumentsMain {
     analyzer.getConfig.getCallbackConfig.setCallbackAnalyzer(CallbackAnalyzer.Fast)
     analyzer.constructCallgraph()
     var possibleProblemCount = 0
+    var problemCount = 0
     var tabsAreAdded = false
     var tabsAreHidden = false
     //var tabIsReferencedInHasSetArguments = false
@@ -174,7 +176,7 @@ object DetectSetArgumentsMain {
                 val errorString = "@@@@@ Found a problem: onClick contains a call to " +
                   "setArguments on a Fragment when the Fragment may already be initialized in " +
                   s"call sequence List(${m.toString()}, " +
-                    "<android.app.Fragment: void setArguments(android.os.Bundle)>)}"
+                  "<android.app.Fragment: void setArguments(android.os.Bundle)>)}"
                 possibleErrorString += errorString + "\n"
                 //println(errorString)
                 //System.out.flush()
@@ -197,45 +199,127 @@ object DetectSetArgumentsMain {
     if (startingMethod.isDefined) {
       analysis.DetectIncorrectGetActivityMain.createCallChainsDepthFirst(calledByList, fullCallChains, List[ControlFlowItem](new ControlFlowItem(startingMethod.get, checkingClasses)), methodNameToCheckFor, checkingClasses)
     }
+    var foundSetArguments = false
     callChains = fullCallChains.toList
     var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
     for (chain <- callChains) {
-      if (! alreadyReportedErrors.contains(chain.controlChain(-2).methodCall.toString)) {
-        println(s"${chain.controlChain}")
-        println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
-        println(s"${!checkingClasses}")
-        println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
+      if (chain.controlChain.length > 1 ) {
+        val callLocationItem = chain.controlChain(chain.controlChain.length - 2)
+        if (!alreadyReportedErrors.contains(callLocationItem.methodCall.toString)
+          //skip the cases where the arguments are set internally
+          && !callLocationItem.methodCall.getDeclaringClass.getName.startsWith("com.google")) {
+          var hasViolation = false
+
+          //this determines if setArguments is called in the wrong point in the Fragment
+          if (DetectionUtils.classIsSubClassOfFragment(callLocationItem.methodCall.getDeclaringClass) &&
+            chain.controlChain.exists(call => (call.methodCall.getDeclaringClass.toString == callLocationItem.methodCall.getReturnType.toString
+              && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
+            )) {
+            /*for (c <- chain.controlChain){
+              if(c.methodCall.getDeclaringClass.toString == callLocationItem.methodCall.getReturnType.toString
+                && FragmentLifecyleMethods.isMethodWhenFragmentInitialized(c.methodCall)){
+                println(s"call item: ${c}")
+                val returnVal = callLocationItem.methodCall.getReturnType
+                println(returnVal)
+                println(returnVal.getClass)
+                println(s"call location item: ${callLocationItem}")
+              }
+            }*/
+            println("setArguments is called in the wrong point of the fragment lifecycle")
+            hasViolation = true
+          }
+          if (!hasViolation) {
+            val methodWhereSetArgumentsIsCalled = chain.controlChain(chain.controlChain.length - 2).methodCall
+            if (!methodWhereSetArgumentsIsCalled.isConcrete) {
+              methodWhereSetArgumentsIsCalled.getActiveBody
+            }
+            if (methodWhereSetArgumentsIsCalled.isConcrete && methodWhereSetArgumentsIsCalled.hasActiveBody) {
+              var instanceList: ListBuffer[Tuple2[String, Boolean]] = ListBuffer()
+              val initializationPattern = "=(| )new ([a-zA-Z_][a-zA-Z0-9_\\.]*)".r
+              var foundSetArguments = false
+              println(s"method: ${methodWhereSetArgumentsIsCalled}")
+              for (stmt <- methodWhereSetArgumentsIsCalled.getActiveBody.getUnits.asScala) {
+                val initializationMatch = initializationPattern.findFirstMatchIn(stmt.toString())
+                if (initializationMatch.isDefined) {
+                  if (stmt.isInstanceOf[JAssignStmt]) {
+                    val assignStmt = stmt.asInstanceOf[JAssignStmt]
+                    if (DetectionUtils.classIsSubClassOfFragment(assignStmt.rightBox.getValue.asInstanceOf[JNewExpr].getBaseType.getSootClass)) {
+                      val instanceToAdd = assignStmt.leftBox.getValue.toString()
+                      //need to remove old instances from the list (the instances are just variable counts, and they
+                      //might be reused
+                      for (i <- instanceList.indices){
+                        if (instanceList(i)._1 == instanceToAdd){
+                          instanceList.remove(i)
+                        }
+                      }
+                      instanceList += Tuple2(instanceToAdd, false)
+                      println(s"adding instance: ${assignStmt.leftBox.getValue.toString()}")
+                    }
+                  }
+                } else {
+                  for (i <- instanceList.indices) {
+                    if (stmt.toString().contains(instanceList(i)._1)) {
+                        println(s"instance: ${instanceList(i)._1}, statement: ${stmt}")
+                      //scala.io.StdIn.readLine()
+                      if (stmt.toString().contains("setArguments")) {
+                        if (instanceList(i)._2 == true) {
+                          println(s"(found setArguments) instance: ${instanceList(i)._1}, statement: ${stmt}")
+                          hasViolation = true
+                          println("setArguments is called after being initialized")
+                          foundSetArguments = true
+                        }
+                      }
+                      else if (stmt.toString().contains("show(") || stmt.toString().contains("add(") || stmt.toString().contains("replace(")) {
+                        println(s"(in show) instance: ${instanceList(i)._1}, statement: ${stmt}")
+                        instanceList(i) = (instanceList(i)._1, true)
+                        foundSetArguments = false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
 
 
-        if (chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))) {
           //I might add the next part of the check back in, but I'm not sure how to apply to the setArgument case at
           //the moment
           //&& (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
           //println("caught problem")
           /*println("start of call chain")
-        for(chainItem <- chain.controlChain){
-          println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
-        }
-        println("end of call chain")*/
+      for(chainItem <- chain.controlChain){
+        println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
+      }
+      println("end of call chain")*/
           //don't record the error again if we've already found it from the earlier check
+          /*   val m = chain.controlChain(chain.controlChain.length - 1).methodCall
+           if (!m.hasActiveBody) {
+             m.retrieveActiveBody()
+           }
+           if (m.hasActiveBody) {
+             for (stmt <- m.getActiveBody.getUnits.asScala) {
+ */
 
-          alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
-
-          val testString = chain.controlChain.slice(chain.controlChain.length - 2, chain.controlChain.length).toString()
-          println(testString)
-          if (!foundControlFlowItemStrings.contains(testString)) {
-            val errorString = "@@@@@ Found a problem: setArguments may be called when " +
-              "the Fragment is attached to an Activity" +
-              s": call sequence ${chain.controlChain}"
-            println(errorString)
-            System.out.flush()
-            System.err.println(errorString)
-            System.err.flush()
-            possibleProblemCount += 1
+          if (hasViolation) {
+            alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
+            val testString = chain.controlChain.slice(chain.controlChain.length - 2, chain.controlChain.length).toString()
+            if (!foundControlFlowItemStrings.contains(testString)) {
+              val errorString = "@@@@@ Found a problem: setArguments may be called when " +
+                "the Fragment is attached to an Activity" +
+                s": call sequence ${chain.controlChain}"
+              println(errorString)
+              System.out.flush()
+              System.err.println(errorString)
+              System.err.flush()
+              problemCount += 1
+              //            }
+              //           }
+            }
           }
         }
       }
     }
+
     /*
         def superClassIsActivity(c: SootClass) : Boolean = {
           if (c.getName.contains("android.app.Activity")){
@@ -347,16 +431,20 @@ object DetectSetArgumentsMain {
         println("")
     }
   }
-}
-*/
-    //if(tabsAreAdded && tabsAreHidden){
-    println("printing results")
-    System.err.println("printing results")
-    System.err.print(possibleErrorString)
-    println(possibleErrorString)
-    println(s"total number of problems: ${possibleProblemCount}")
+  }
+  */
+    if (tabsAreAdded && tabsAreHidden) {
+      println("found problem with tabs are hidden")
+      println("printing results")
+      System.err.println("printing results")
+      System.err.print(possibleErrorString)
+      println(possibleErrorString)
+      problemCount += possibleProblemCount
+    }
+    println(s"total number of problems: ${problemCount}")
     val totalTime = System.nanoTime() - startTime
     println(s"total time (in nanoseconds): ${totalTime}")
     println(s"total time (in seconds): ${totalTime / 1000000000}")
   }
+
 }

@@ -149,9 +149,10 @@ object DetectInvalidGetResources {
       }
     }
     for (cl <- classesToCheck) {
-      println(cl.toString)
-      val methodNameToCheckFor = cl.toString
+      println(s"async class to check: ${cl.toString}")
+      var methodNameToCheckFor = cl.toString
       var (startingMethod, calledByList) = analysis.DetectIncorrectGetActivityMain.getStartingMethodAndCallChain(methodNameToCheckFor)
+      methodNameToCheckFor = startingMethod.get.toString()
       val checkingClasses = true
       var callChains: List[ControlFlowChain] = List()
       val fullCallChains: ListBuffer[ControlFlowChain] = new ListBuffer[ControlFlowChain]()
@@ -163,10 +164,11 @@ object DetectInvalidGetResources {
       for (chain <- callChains) {
         if (chain.controlChain.length > 0) {
           val controlChainLength = chain.controlChain.length
+          //println(s"control chain: ${chain.controlChain}")
           //since we can't save the initalization as the method, use the method the initalization was declared in
           var controlItem = chain.controlChain(controlChainLength-1)
-          println(alreadyReportedErrors)
-          println(controlItem.methodCall.toString)
+          //println(alreadyReportedErrors)
+          //println(controlItem.methodCall.toString)
           if (!alreadyReportedErrors.contains(controlItem.methodCall.toString)) {
             if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenGetResourcesWorks(call.methodCall)) &&
             chain.controlChain.exists(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))) {

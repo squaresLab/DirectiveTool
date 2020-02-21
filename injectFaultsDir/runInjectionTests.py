@@ -97,15 +97,6 @@ def getTestResultsOfRepo(repoDir):
   os.chdir(originalDir)
   return testsSucceeded
 
-def clearAPKS(dirToClear):
-  for root, dirs, files in os.walk(dirToClear, topdown=False):
-    for f in files:
-      if f.endswith('.apk'):
-        os.remove(os.path.join(root,f))
-    for d in dirs:
-      if d == 'build':
-        shutil.rmtree(os.path.join(root,d))
-
 def downloadRepo(folderInfoDict, repoDir):
   downloadDir = os.path.dirname(repoDir)
   originalDir = os.getcwd()
@@ -468,7 +459,7 @@ def main():
             debuggingResultList.append('problem copying repo')
             print('problem copying repo')
             continue
-          clearAPKS(copyRepoLocation)
+          utilitiesForRepair.clearAPKS(copyRepoLocation)
           appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
           if len(appBuilds) < 1:
             print('there was a problem building the app. Aborting before injecting problem.')
@@ -491,7 +482,7 @@ def main():
             else:
               print('injecting problem')
               injectorInstance.injectIssue(copyRepoLocation)
-              clearAPKS(copyRepoLocation)
+              utilitiesForRepair.clearAPKS(copyRepoLocation)
               appBuilds = utilitiesForRepair.buildApp(copyRepoLocation)
               if len(appBuilds) < 1:
                 print('there was a problem building the app. Aborting before checking for injected problem.')

@@ -6,6 +6,7 @@ import subprocess
 import shutil
 import defusedxml.ElementTree
 import utilitiesForRepair
+import levenshteinDistance
 
 defaultAppDir = '/Users/zack/git/ViolationOfDirectives'
 defaultFileWithProblem = '/Users/zack/git/ViolationOfDirectives/Application/src/main/java/com/example/android/lnotifications/HeadsUpNotificationFragment.java'
@@ -58,6 +59,12 @@ public void onCreateOptionsMenu(Menu menu,MenuInflater menuInflater)
     menu.clear();
     menuInflater.inflate({0},menu);
 }}\n""".format(staticFileName)
+
+def getMenuInflaterImportLine():
+  return 'import android.view.MenuInflater;\n'
+
+def getMenuImportLine():
+  return 'import android.view.Menu;\n'
 
 def getNestingCountOfLine(line, nestingCount):
   for c in line:
@@ -175,10 +182,10 @@ def createNewCopyOfTestProgram(originalFolder, fileToChange, apkLocation, newTes
   return newFolder, newApkLocation, newFileToChange
 
 
-
 #currently this only works for when onCreateOptionsMenu is missing; I'll need
 #to make this more general later
-def main(sourceDir, fileWithProblem, runFlowDroidCommand, checkerToRun, apkLocation):
+def main(sourceDir, fileWithProblem, runFlowDroidCommand, checkerToRun, apkLocation, originalProblemCount = 1):
+  fileWithProblem = utilitiesForRepair.getFilesFullPath(sourceDir, fileWithProblem) 
   newFolder, newApkLocation, newFileWithProblem = createNewCopyOfTestProgram(sourceDir, fileWithProblem, apkLocation)
   staticFileName = getStaticFileName(newFolder)
   if staticFileName is None:
@@ -187,10 +194,17 @@ def main(sourceDir, fileWithProblem, runFlowDroidCommand, checkerToRun, apkLocat
   onCreateFunction = createOnCreateTemplate(staticFileName)
   #print(onCreateFunction)
   addFunctionToFile(newFileWithProblem, onCreateFunction)
+  utilitiesForRepair.addImportLineIfRequired(newFileWithProblem, getMenuInflaterImportLine())
+  utilitiesForRepair.addImportLineIfRequired(newFileWithProblem, getMenuImportLine())
   utilitiesForRepair.buildApp(newFolder)
   testResultLines = runCheckerAndGetOutput(runFlowDroidCommand, checkerToRun, newApkLocation, newFolder)
   print('finished main of template repair')
-  
+  importantLines = utilitiesForRepair.extractImportantCheckerLines(testResultLines)
+  currentProblems = utilitiesForRepair.extractProblemCountFromCheckerOutput(importantLines)
+  if currentProblems >= originalProblemCount:
+    input('stopping to check unsuccessful template fix')
+  return currentProblems < originalProblemCount
+ 
 
 
 

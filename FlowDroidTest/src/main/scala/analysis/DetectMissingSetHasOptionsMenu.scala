@@ -29,7 +29,14 @@ object DetectMissingSetHasOptionsMenu {
   def checkMethodsInClass(cl: SootClass): Tuple2[Boolean, Boolean] = {
     var containsHasSetOptionsMenu = false
     var containsOnCreateOptionsMenu = false
+    if (cl.getName.toString().contains("PageFragment")){
+        println(cl.getName())
+      for(m: SootMethod <- cl.getMethods().asScala){
+        println(m.getName())
+      }
+    }
     for (m: SootMethod <- cl.getMethods().asScala) {
+
       if (cl.toString().contains("ShareableListFragment")) {
         println(m.getName())
         println("printing method")
@@ -65,7 +72,7 @@ object DetectMissingSetHasOptionsMenu {
 
 
   def buildAnalysis(checkForProblemFunction: (Int, SootClass, Boolean, Boolean) => Int): Array[String] => Unit = {
-    def runCompleteAnalysis(args: Array[String]):Unit = {
+    def runCompleteAnalysis(args: Array[String]): Unit = {
       val startTime = System.nanoTime()
       println(s"number of command line arguments: ${args.length}")
       println(args)
@@ -100,19 +107,8 @@ object DetectMissingSetHasOptionsMenu {
       var problemCount = 0
 
       for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
-        if(cl.toString().contains("Fragment")) {
-          println("new class of interest")
-      println(cl.toString())
-      println(DetectionUtils.isCustomClassName(cl.getName))
-      println(!cl.getName.contains("xmlpull"))
-      println(DetectionUtils.classIsSubClassOfFragment(cl))
-      println(cl.getMethodCount())
-        }
         //don't check abstract classes
         if (!cl.isAbstract) {
-          if(cl.toString().contains("Fragment")) {
-            println(cl.isAbstract)
-          }
           var containsOnCreateOptionsMenu = false
           var containsHasSetOptionsMenu = false
           //println("in class loop")
@@ -123,30 +119,23 @@ object DetectMissingSetHasOptionsMenu {
             && DetectionUtils.isCustomClassName(currentClass.getName) && !currentClass.getName.contains("xmlpull")
             && DetectionUtils.classIsSubClassOfFragment(currentClass) && currentClass.getMethodCount > 0) {
             //trying to change the abstract check: !cl.isAbstract()) {
-            /*println(cl.toString())
-    println("here")
-    println(cl.getMethods.size())
-    println(cl.getMethods())*/
-            if(cl.toString().contains("Fragment")) {
-              println(currentClass)
-            }
             val (classesSetHasOptionsMenu, classesOnCreateDefinition) = checkMethodsInClass(currentClass)
             if (classesSetHasOptionsMenu) {
               //maybe I should move the Fragment check to the while loop
-              if(cl.toString().contains("Fragment")) {
-                println(s"class where setHasoptionsMenu was found: {currentClass}")
+              if (cl.toString().contains("Fragment")) {
+                println(s"class where setHasoptionsMenu was found: ${currentClass}")
               }
               containsHasSetOptionsMenu = true
             }
             if (classesOnCreateDefinition) {
-              if(cl.toString().contains("Fragment")) {
-                println(s"class where onCreate definition was found: {currentClass}")
+              if (cl.toString().contains("Fragment")) {
+                println(s"class where onCreate definition was found: ${currentClass}")
               }
               containsOnCreateOptionsMenu = true
             }
-            if (currentClass.hasSuperclass){
+            if (currentClass.hasSuperclass) {
               currentClass = currentClass.getSuperclass
-            } else{
+            } else {
               //I think this shouldn't happen but I want to catch it if it does
               System.err.println(s"error - class without super class: ${currentClass}")
               System.exit(1)
@@ -160,12 +149,13 @@ object DetectMissingSetHasOptionsMenu {
       println(s"total time (in nanoseconds): ${totalTime}")
       println(s"total time (in seconds): ${totalTime / 1000000000}")
     }
+
     return runCompleteAnalysis
   }
 
-  def checkForProblem(problemCount: Int, cl: SootClass, containsHasSetOptionsMenu: Boolean, containsOnCreateOptionsMenu: Boolean):Int = {
+  def checkForProblem(problemCount: Int, cl: SootClass, containsHasSetOptionsMenu: Boolean, containsOnCreateOptionsMenu: Boolean): Int = {
     var newProblemCount = problemCount
-    if (containsOnCreateOptionsMenu && !containsHasSetOptionsMenu){
+    if (containsOnCreateOptionsMenu && !containsHasSetOptionsMenu) {
       val errorString = "@@@@@ Found a problem: setHasOptionsMenu(true) must " +
         s"be called in the onCreate method to display the OptionsMenu in ${cl.getName}"
       newProblemCount = notifyOfProblem(problemCount, cl.getName, errorString)
