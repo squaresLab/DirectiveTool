@@ -109,7 +109,7 @@ def runCheckerAndGetOutput(runFlowDroidCommand, checkerToRun, apkLocation, testF
   if os.path.exists(apkLocation):
     commandList.append(apkLocation)
   else:
-    repairItem.apkLocation = levenshteinDistance.findAPKInRepo(testFolder, apkLocation)
+    apkLocation = levenshteinDistance.findAPKInRepo(testFolder, apkLocation)
     commandList.append(apkLocation)
   try: 
     #print("running command: {0} {1} {2}".format("\"".join(unquotedAndQuotedList),checkerToRun, repairItem.apkLocation))
@@ -190,7 +190,7 @@ def main(sourceDir, fileWithProblem, runFlowDroidCommand, checkerToRun, apkLocat
   staticFileName = getStaticFileName(newFolder)
   if staticFileName is None:
     print('error: no static file name found')
-    sys.exit(1)
+    return 1
   onCreateFunction = createOnCreateTemplate(staticFileName)
   #print(onCreateFunction)
   addFunctionToFile(newFileWithProblem, onCreateFunction)

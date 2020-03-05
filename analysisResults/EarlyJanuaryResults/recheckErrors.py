@@ -92,7 +92,7 @@ def runChecker(checker, filename, repoName):
       print("found an error with checker {0} in app {1}".format(checker, filename))
       repoDir = repairFoundErrors2.changeToRepoAndCommit(repoName, commitHash)
       print('repo dir: {0}'.format(repoDir))
-      openFileInRepo(repoDir, problemList[0].getFilenameWithProblem())
+      #openFileInRepo(repoDir, problemList[0].getFilenameWithProblem())
   else: 
     wasCallGraphError = False
     for line in checkerResult.stderr.decode('utf-8').splitlines():
@@ -118,7 +118,8 @@ for a in apkSourceInfo:
 
 #with open('rerunFDroidCheckResults.txt','r') as fin:
 newAppsWithErrorCount = 0
-usingApkList = True
+recheckedAppsCount = 0
+usingApkList = False
 if usingApkList:
   with open('secondSetArgumentsCheck.txt', 'r') as fin:
     for line in fin:
@@ -128,7 +129,7 @@ if usingApkList:
       if not mergedName in successDict:
         successDict[mergedName] = True
 else:
-  with open('setArgumentsCheckerResults.txt','r') as fin:
+  with open('rerunFDroidCheckResults.txt','r') as fin:
     for line in fin:
       line = line.strip()
       if line.startswith('success!'):
@@ -186,7 +187,7 @@ for mergedName in successDict:
   if os.path.sep in apkName:
     apkName = os.path.basename(apkName) 
   print(apkName)
-  if checkerName == "DetectSetArgumentsMain":
+  if checkerName == "DetectIncorrectGetActivityMain":
     repName = None
     apkBasename = extractRepoInfo.extractAPKBasename(apkName)
     try:
@@ -198,13 +199,16 @@ for mergedName in successDict:
     if not repoName is None:
       print('repo name: {0}'.format(repoName))
     if (not problemCount is None) and problemCount != 0:
-      input('press enter to continue')
-      print('\n')
+      #input('press enter to continue')
+      #print('\n')
       newAppsWithErrorCount += 1
       #with open('secondSetArgumentsCheck.txt','a') as fout:
       #  print(apkName, file=fout)
     else:
       print('skipped stopping with problem count: {0}'.format(problemCount))
+    recheckedAppsCount += 1
+    print('@@@@@@@rechecked apps: {0}, apps with error counts: {1}'.format(recheckedAppsCount, newAppsWithErrorCount))
+
 print('found {0} errors now'.format(newAppsWithErrorCount))
 #for mergedName in timeoutDict:
 #  periodLoc = mergedName.rindex('.')  

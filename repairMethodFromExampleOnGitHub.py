@@ -185,8 +185,8 @@ def extractOriginalMethodsOfInterest(repairItem):
             #fout.write('\n')
         linesToSave = []
   #print('reading methods from file: {0}'.format(repairItem.fileToChange))
-  #print(repairItem.methodsToCompare)
-  #input('stopping to check original methods to compare')
+  print('methods to compare: {0}'.format(repairItem.methodsToCompare))
+  input('stopping to check original methods to compare')
 
 
 #newAPKLoation originally points to the apk location in the provided repo;
@@ -541,66 +541,70 @@ def testAddingOrRemovingMethodCalls(repairItem):
     print('comparing method: {0}'.format(method))
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
-    print('downloaded file: {0}'.format(os.path.join(os.getcwd(), downloadedFileName)))
-    with open(downloadedFileName,'r') as fin:
-      print('file contents: {0}'.format(fin.read()))
-    #input('stopping to check downloaded file')
+    fullDownloadedPath = os.path.join(os.getcwd(), downloadedFileName)
+    if os.path.exists(fullDownloadedPath):
+      print('downloaded file: {0}'.format(os.path.join(os.getcwd(), downloadedFileName)))
+      with open(downloadedFileName,'r') as fin:
+        print('file contents: {0}'.format(fin.read()))
+      #input('stopping to check downloaded file')
 
-    (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
-      determineMethodDifferences.getParseInfo(originalFileName)
-    (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
-      determineMethodDifferences.getParseInfo(downloadedFileName)
-    methodCallMismatches = determineMethodDifferences.checkMethodCallsInLines(originalFileTree, downloadedFileTree)
-    print('number of method ')
-    for mismatchTestItem in itertools.chain.from_iterable(itertools.combinations(methodCallMismatches,n) for n in range(len(methodCallMismatches)+1)):
-      createNewCopyOfTestProgram(repairItem)
-      if len(mismatchTestItem) > 0:
-        #TODO: see if you also need the filename here        
-        for (missingMethodName, listNumber, lineNumber) in mismatchTestItem:  
-          #handle the adding case at the moment
-          #later, you need to implement a deleting case for list 1
-          if listNumber == 1:
-            #renaming the variable to make the use of the variable more obvious
-            #in this context
-            #renaming the variable to make the use of the variable more obvious
-            #in this context
-            methodCallToDelete = missingMethodName
-            methodToFindTheCall = repairItem.methodDeclarationStringToCompare
-            deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, repairItem.fileToChange, repairItem.testFolder)
-          elif listNumber == 2:
-            with open(downloadedFileName,'r') as fin:
-              downloadedFileLines = fin.readlines()
-            lineOfInterest = downloadedFileLines[lineNumber+1].strip()
-            changeString = lineOfInterest
-            #split the line of interest by periods, commas, and both parenthesis typesj
-            variablesInLine = []
-            lineItems = lineOfInterest.split('.')
-            lineItemsList = map(operator.methodcaller("split", "("), lineItems)
-            lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
-            lineItemsList = map(operator.methodcaller("split", ")"), lineItems)
-            lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
-            lineItemsList = map(operator.methodcaller("split", ","), lineItems)
-            lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
-            for item in lineItems:
-              #get the type of the item in the downloaded item set
-              #find an item of that type in the original item set and replace it
-              if item in downloadedVariableTypeDict:
-                for var, typeName in originalVariableTypeDict.items():
-                  if downloadedVariableTypeDict[item] == typeName:
-                    lineOfInterest = lineOfInterest.replace(item, var)
-                    print('changed line: {0}'.format(lineOfInterest))
-                    print('replace {0} with {1}'.format(item, var))
-                    #sys.exit(1)
-                    break
-            addChangeToFile(repairItem, lineOfInterest, method)
-            #essentially breaking the code here with the return - done for debugging
-            wasFixed = executeTestOfChangedApp(repairItem)
-        #print('was fixed: {0}'.format(wasFixed))
-        #input('checking if was fixed')
-            if wasFixed:
-              if listNumber == 2:
-                print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
-              return True
+      (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
+        determineMethodDifferences.getParseInfo(originalFileName)
+      (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
+        determineMethodDifferences.getParseInfo(downloadedFileName)
+      methodCallMismatches = determineMethodDifferences.checkMethodCallsInLines(originalFileTree, downloadedFileTree)
+      print('number of method ')
+      for mismatchTestItem in itertools.chain.from_iterable(itertools.combinations(methodCallMismatches,n) for n in range(len(methodCallMismatches)+1)):
+        createNewCopyOfTestProgram(repairItem)
+        if len(mismatchTestItem) > 0:
+          #TODO: see if you also need the filename here        
+          for (missingMethodName, listNumber, lineNumber) in mismatchTestItem:  
+            #handle the adding case at the moment
+            #later, you need to implement a deleting case for list 1
+            if listNumber == 1:
+              #renaming the variable to make the use of the variable more obvious
+              #in this context
+              #renaming the variable to make the use of the variable more obvious
+              #in this context
+              methodCallToDelete = missingMethodName
+              methodToFindTheCall = repairItem.methodDeclarationStringToCompare
+              deleteMethodCallFromFile(methodCallToDelete, methodToFindTheCall, repairItem.fileToChange, repairItem.testFolder)
+            elif listNumber == 2:
+              with open(downloadedFileName,'r') as fin:
+                downloadedFileLines = fin.readlines()
+              lineOfInterest = downloadedFileLines[lineNumber+1].strip()
+              changeString = lineOfInterest
+              #split the line of interest by periods, commas, and both parenthesis typesj
+              variablesInLine = []
+              lineItems = lineOfInterest.split('.')
+              lineItemsList = map(operator.methodcaller("split", "("), lineItems)
+              lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
+              lineItemsList = map(operator.methodcaller("split", ")"), lineItems)
+              lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
+              lineItemsList = map(operator.methodcaller("split", ","), lineItems)
+              lineItems = [ item for itemList in lineItemsList for item in itemList if not item == "" ]
+              for item in lineItems:
+                #get the type of the item in the downloaded item set
+                #find an item of that type in the original item set and replace it
+                if item in downloadedVariableTypeDict:
+                  for var, typeName in originalVariableTypeDict.items():
+                    if downloadedVariableTypeDict[item] == typeName:
+                      lineOfInterest = lineOfInterest.replace(item, var)
+                      print('changed line: {0}'.format(lineOfInterest))
+                      print('replace {0} with {1}'.format(item, var))
+                      #sys.exit(1)
+                      break
+              addChangeToFile(repairItem, lineOfInterest, method)
+              #essentially breaking the code here with the return - done for debugging
+              wasFixed = executeTestOfChangedApp(repairItem)
+          #print('was fixed: {0}'.format(wasFixed))
+          #input('checking if was fixed')
+              if wasFixed:
+                if listNumber == 2:
+                  print("succeeded - change: added {0} to the end of method {1}".format(lineOfInterest, method))
+                return True
+    else:
+      print('unable to find download file: {0}'.format(fullDownloadedPath))
   print('Unable to find fix')
   return False
 
@@ -1144,17 +1148,18 @@ def testTypeDifferences(repairItem) :
   for method in repairItem.methodsToCompare:
     originalFileName = "original_{0}.txt".format(method)
     downloadedFileName = "downloaded_{0}.txt".format(method)
-    #TODO: currently swapping for a test I need to do; REMEMBER to change it badk
-    #downloadedFileName = "original_{0}.txt".format(method)
-    ##originalFileName = "downloaded_{0}.txt".format(method)
-    #debating if I should group these 7 variables into an object. Leaving them
-    #separate for now and may combine them later
-    (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
-      determineMethodDifferences.getParseInfo(originalFileName)
-    (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
-      determineMethodDifferences.getParseInfo(downloadedFileName)
-    typeMismatches = determineMethodDifferences.checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
-    if len(typeMismatches) < 1:
+    typeMismatches = None
+    if os.path.exists(downloadedFileName):
+      #debating if I should group these 7 variables into an object. Leaving them
+      #separate for now and may combine them later
+      (originalDependencyChains, originalVariableTypeDict, originalFileTree) = \
+        determineMethodDifferences.getParseInfo(originalFileName)
+      (downloadedDependencyChains, downloadedVariableTypeDict, downloadedFileTree) = \
+        determineMethodDifferences.getParseInfo(downloadedFileName)
+      typeMismatches = determineMethodDifferences.checkUnmatchedTypesForBothLists(originalDependencyChains, downloadedDependencyChains)
+    else:
+      print('download file not found: {0}'.format(downloadedFileName))
+    if typeMismatches is None or len(typeMismatches) < 1:
       print('type mismatches is 0; returning False')
       return False
     else:

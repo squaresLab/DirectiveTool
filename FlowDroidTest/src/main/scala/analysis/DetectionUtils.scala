@@ -156,6 +156,9 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
         case invokeSmt: JInvokeStmt => {
           return Some(invokeSmt.getInvokeExpr)
         }
+        case invokeStmt: JIfStmt => {
+          return extractInvokeStmtInStmt(invokeStmt.getTarget)
+        }
         case _ => return None
       }
     }
@@ -223,7 +226,6 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
     if (args.length > 0){
       return args(0)
     } else {
-      //return "/Users/zack/git/ViolationOfDirectives/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/git/DirectiveTool/testFolder/Application/build/outputs/apk/debug/Application-debug.apk"
       //return "/Users/zack/git/ViolationOfDirectives/app/build/outputs/apk/debug/app-debug.apk"
       //return "/Users/zack/git/DirectiveTool/testFolder/app/build/outputs/apk/debug/app-debug.apk"
@@ -238,7 +240,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/tempRepoForRepair/app/build/outputs/apk/debug/ammx-2019.02.24.1-debug.apk"
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/build/outputs/apk/debug/RxDroid-debug.apk"
       //return "/Users/zack/git/DirectiveTool/FlowDroidTest\napk location: /Users/zack/git/DirectiveTool/temporaryTestOfChange/./app/build/outputs/apk/beta/debug/app-beta-debug.apk"
-      return "/Users/zack/git/DirectiveTool/appsFromFDroid/com.sovworks.edslite_224.apk"
+      return "/Users/zack/git/reposFromFDroid/pslab-android/app/build/outputs/apk/debug/app-debug.apk"
     }
   }
 }

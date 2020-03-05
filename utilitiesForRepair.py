@@ -9,7 +9,8 @@ import traceback
 import pathlib
 import shutil
 
-buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug --stacktrace')
+#buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home assembleDebug --stacktrace')
+buildAppCommand = shlex.split('./gradlew -Dorg.gradle.java.home=/Library/Java/JavaVirtualMachines/jdk1.8.0_211.jdk/Contents/Home build --stacktrace')
 permissionCommand = shlex.split('chmod +x gradlew')
 buildErrorFolder = '/Users/zack/git/DirectiveTool/buildErrors'
 
@@ -291,10 +292,13 @@ def buildApp(repoDir, appName = None):
     subprocess.run(permissionCommand, capture_output=True)
     buildResult = subprocess.run(buildAppCommand, capture_output=True)
   if buildResult.returncode != 0:
+    errorLineList = buildResult.stderr.decode('utf-8').splitlines()
     if not appName is None:
       with open(os.path.join(buildErrorFolder,'{0}.txt'.format(appName)),'w') as fout:
-        for line in buildResult.stderr.decode('utf-8').splitlines():
+        for line in errorLineList:
           print(line, end='', file=fout)
+    for line in errorLineList:
+      print(line)
   #for line in buildResult.stdout.decode('utf-8').splitlines():
     #print(line)
   possibleBuildFiles = []

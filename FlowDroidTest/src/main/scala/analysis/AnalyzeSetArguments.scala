@@ -1,6 +1,7 @@
 package analysis
 
 import soot.ValueBox
+import soot.jimple.internal.{JAssignStmt, JNewExpr}
 import soot.toolkits.graph.UnitGraph
 import soot.toolkits.scalar.ForwardFlowAnalysis
 
@@ -17,6 +18,25 @@ class AnalyzeSetArguments(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Uni
   val endTime = System.currentTimeMillis + 300 * 1000 // 60 seconds * 1000 ms/sec
   doAnalysis()
   //println("setting number of caught problems to 0")
+
+
+  val initializationPattern = "=(| )new ([a-zA-Z_][a-zA-Z0-9_\\.]*)".r
+
+  def getInstanceFromStatement(stmt: soot.Unit): Option[String] = {
+    val initializationMatch = initializationPattern.findFirstMatchIn(stmt.toString())
+    if (initializationMatch.isDefined) {
+      if (stmt.isInstanceOf[JAssignStmt]) {
+        val assignStmt = stmt.asInstanceOf[JAssignStmt]
+        if (DetectionUtils.classIsSubClassOfFragment(assignStmt.rightBox.getValue.asInstanceOf[JNewExpr].getBaseType.getSootClass)) {
+          val instanceToAdd = assignStmt.leftBox.getValue.toString()
+          println(s"adding instance: ${assignStmt.leftBox.getValue.toString()}")
+          return Some(instanceToAdd)
+        }
+      }
+    }
+    return None
+  }
+
   /**
     * Given the merge of the <code>out</code> sets, compute the <code>in</code> set for <code>s</code> (or in to out,
     * depending on direction).
@@ -37,17 +57,51 @@ class AnalyzeSetArguments(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Uni
     if (System.currentTimeMillis() > endTime) {
       throw new RuntimeException("analysis timed out")
     }
+    copy(in, out)
     //println("in flow through")
     val possibleM = DetectionUtils.extractMethodCallInStatement(d)
     if (possibleM.isDefined) {
-      copy(in, out)
       /*if(possibleM.get.toString().contains("setArguments")){
         out.
       }
        */
+      val possibleDeclaration = getInstanceFromStatement(d)
+      if (possibleDeclaration.isDefined) {
+        out.addVar(possibleDeclaration.get, false)
+      } else {
+        val possibleM = DetectionUtils.extractMethodCallInStatement(d)
+        if (possibleM.isDefined) {
+          //this could throw an error for Intents
+          if (DetectionUtils.classIsSubClassOfFragment(possibleM.get.getDeclaringClass)) {
+            val methodName = possibleM.get.getName
+            for (ub <- d.getUseBoxes.asScala) {
+              ub match {
+                case vb: ValueBox =>
+                  val valueName = vb.getValue.toString()
+                  if (methodName.contains("setArguments")) {
+                    val varInfoOption = out.getVar(valueName)
+                    if (varInfoOption.isDefined) {
+                      checkForViolation(varInfoOption.get)
+                    }
+                  } else if (methodName.contains("show(") || methodName.contains("add(") ||
+                    methodName.contains("replace(")){
+                    val varInfoOption = out.getVar(valueName)
+                    if (varInfoOption.isDefined) {
+                      varInfoOption.get.isAttached = true
+                    }
+                  }
+              }
+            }
 
-    } else {
-      copy(in, out)
+
+            //println(s"found setSelector with ${valueName}: ${d.toString()}")
+            //println(s"${possibleM.get.}")
+            //println("found setSelector")
+
+            //println(s"var option info: hasSetSelector: ${varInfoOption.get.hasSetSelector}, hasSetPackage ${varInfoOption.get.hasSetPackage}")
+          }
+        }
+      }
     }
   }
 
@@ -67,15 +121,15 @@ class AnalyzeSetArguments(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Uni
     out.clear()
     for (variable <- in1.varMap.keySet) {
       if (in2.varMap.contains(variable)) {
-        out.addVar(variable, (in1.varMap(variable).hasSetArguments || in2.varMap(variable).hasSetArguments))
+        out.addVar(variable, (in1.varMap(variable).isAttached || in2.varMap(variable).isAttached))
         checkForViolation(out.getVar(variable).getOrElse(null))
       } else {
-        out.addVar(variable, in1.varMap(variable).hasSetArguments)
+        out.addVar(variable, in1.varMap(variable).isAttached)
       }
     }
     for (variable <- in2.varMap.keySet) {
       if (!out.varMap.contains(variable)) {
-        out.addVar(variable, in2.varMap(variable).hasSetArguments)
+        out.addVar(variable, in2.varMap(variable).isAttached)
       }
     }
   }
@@ -89,8 +143,8 @@ class AnalyzeSetArguments(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Uni
     if (d == null) {
       return false
     }
-    if (numberOfCaughtProblems != 1 && d.hasSetArguments) {
-      Predef.println("error: code calls both setSelector and setPackage on the same intent")
+    if (numberOfCaughtProblems != 1 && d.isAttached) {
+      Predef.println("error: setArguments is called after the object is already attached")
       //just determine if there is an error - earlier I was trying to count all errors and
       //I was getting the number of control flow paths that included the error instead.
       //Since this analysis only checks one method at a time, we only throw an error per
@@ -109,14 +163,14 @@ class AnalyzeSetArguments(graph: UnitGraph) extends ForwardFlowAnalysis[soot.Uni
 
 object AnalyzeSetArguments {
 
-  class DirectiveInfo(var hasSetArguments: Boolean = false) {
+  class DirectiveInfo(var isAttached: Boolean = false) {
 
   }
 
   class AnalysisInfo(var varMap: mutable.HashMap[String, DirectiveInfo] = new mutable.HashMap[String, DirectiveInfo]()) { //extends java.util.BitSet{
 
-    def addVar(varName: String, hasSetArguments: Boolean = false): Unit = {
-      varMap.+=(varName -> new DirectiveInfo(hasSetArguments))
+    def addVar(varName: String, isAttached: Boolean = false): Unit = {
+      varMap.+=(varName -> new DirectiveInfo(isAttached))
     }
 
     def getVar(varName: String): Option[DirectiveInfo] = {
@@ -142,7 +196,7 @@ object AnalyzeSetArguments {
               if (!varMap.contains(varName)) {
                 return false
               } else {
-                if (ai.varMap(varName).hasSetArguments != varMap(varName).hasSetArguments) {
+                if (ai.varMap(varName).isAttached != varMap(varName).isAttached) {
                   return false
                 }
               }

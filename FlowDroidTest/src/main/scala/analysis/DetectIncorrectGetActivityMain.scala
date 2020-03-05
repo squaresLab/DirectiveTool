@@ -49,7 +49,7 @@ object DetectIncorrectGetActivityMain {
     })
     */
 
-  def getStartingMethodAndCallChain(methodNameToCheckFor: String): Tuple2[Option[SootMethod], mutable.Map[String, ListBuffer[SootMethod]]] = {
+  def getStartingMethodAndCallChain(methodNameToCheckFor: String, mustBeCalledOnCurrentObject: Boolean = false): Tuple2[Option[SootMethod], mutable.Map[String, ListBuffer[SootMethod]]] = {
     var startingMethod: Option[SootMethod] = None
     val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
     println(s"method name to check for: ${methodNameToCheckFor}")
@@ -93,14 +93,23 @@ object DetectIncorrectGetActivityMain {
               else  {
                 extractMethodCallInStatement(stmt) match {
                   case Some(call) => {
-                    if(call.getName.toString().contains("syncIcons")){
-                      println(call.toString)
-                      println(call.getName().toString())
-                      println(m.toString())
-                    }
                     if (startingMethod.isEmpty) {
                       if (call.getName.contains(methodNameToCheckFor) && DetectionUtils.classIsSubClassOfFragment(call.getDeclaringClass)) {
-                        startingMethod = Some(call)
+                        //ignore the case where getActivity is called on another object
+                        if(mustBeCalledOnCurrentObject) {
+                          val possibleInvokeStmt = DetectionUtils.extractInvokeStmtInStmt(stmt)
+                          if (possibleInvokeStmt.isDefined) {
+                            println(s"invoke expression type: ${possibleInvokeStmt.get.toString()}, ${stmt.toString()}")
+                            println(s"method of interest call location: ${m.getName()}, ${m.getDeclaringClass.toString()}")
+                            if (stmt.toString().split(" ")(0) == "$r0"){
+                              println("found the this object")
+                            }
+                            startingMethod = Some(call)
+                          }
+                        }
+                        else {
+                          startingMethod = Some(call)
+                        }
                       }
                     }
                     if (calledByList.contains(call.toString())) {
@@ -262,7 +271,7 @@ object DetectIncorrectGetActivityMain {
     val checkingClasses = true
     //var startingMethod: Option[SootMethod] = None
     //val calledByList: mutable.Map[String, ListBuffer[SootMethod]] = mutable.Map[String, ListBuffer[SootMethod]]()
-    var (startingMethod, calledByList) = getStartingMethodAndCallChain(methodNameToCheckFor)
+    var (startingMethod, calledByList) = getStartingMethodAndCallChain(methodNameToCheckFor, true)
     //not sure how to write this functionally; might want to figure out later to clean this
     //up but I'm going to implement the quick way first
     //unsure about this variable type at this point
@@ -319,17 +328,13 @@ object DetectIncorrectGetActivityMain {
         }*/
     var alreadyReportedErrors = new mutable.HashMap[String, Boolean]()
     for (chain <- callChains) {
-      println(s"${chain.controlChain}")
-      Console.flush
+      //println(s"${chain.controlChain}")
+      //Console.flush
       val reversedList = chain.controlChain.reverse
       val methodCallWithError = reversedList(1)
       if (!alreadyReportedErrors.contains(methodCallWithError.methodCall.toString)) {
         //println("checking call chain")
         //check if the chain contains a call to a method that demonstrates the fragment has been initialized
-        println(s"${!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))}")
-        println(s"${!checkingClasses}")
-        println(s"${!chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass))}")
-
 
         if (!chain.controlChain.exists(call => FragmentLifecyleMethods.isMethodWhenFragmentInitialized(call.methodCall))
           && (!checkingClasses || !chain.controlChain.forall(call => DetectionUtils.classIsSubClassOfFragment(call.methodCall.getDeclaringClass)))) {
@@ -339,16 +344,65 @@ object DetectIncorrectGetActivityMain {
           println(s"${chainItem.methodCall.toString}   ${chainItem.methodCall.getDeclaringClass.toString}")
         }
         println("end of call chain")*/
-          alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
+          val methodToFind = chain.controlChain.reverse(1).methodCall.toString
+          var foundMethod = false
+          var foundAnError = false
+          breakable {
+            for (cl: SootClass <- Scene.v().getClasses(SootClass.BODIES).asScala) {
+              //println(s"class: ${cl.getName}")
+              for (m: SootMethod <- cl.getMethods().asScala) {
+                if (m.toString() == methodToFind) {
+                  println(s"chain: ${chain.controlChain}")
+                  println(s" method to find: ${methodToFind}")
+                  println(s"method name: ${m.getName()}")
+                  var index = 0
+                  val methodLineList:List[soot.Unit] = m.getActiveBody.getUnits().iterator().asScala.toList
+                  for (stmt <- methodLineList) {
+                    if(stmt.toString().contains(methodNameToCheckFor )){
+                      println(s" original statement: ${stmt.toString()}")
+                      val invokeStmt = DetectionUtils.extractInvokeStmtInStmt(stmt).get.toString().trim
+                      println(s" invoke statement: ${invokeStmt.toString()}")
+                      println(s"second item: ${invokeStmt.split(" ")(1).split("\\.").toString()}")
+                      val instanceObject = invokeStmt.split(" ")(1).split("\\.")(0)
+                      //check the case where getActivity is called on a this object
+                      if (instanceObject == "$r0" ){
+                        foundAnError = true
+                        break()
+                      }else {
+                        if (index > 1) {
+                          val previousLine = methodLineList(index - 1).toString()
+                          println(s"previous line: ${previousLine}")
+                          //check for the case where getActivity is called on the this
+                          //object from an inner class
+                          if (previousLine.startsWith(s"${instanceObject} =")
+                            && previousLine.endsWith("this$0>")) {
+                            foundAnError = true
+                            break()
+                          }
+                        }
+                      }
+                    }
+                    index += 1
+                  }
+                }
+              }
+              if (foundMethod){
+                break()
+              }
+            }
+          }
+          if (foundAnError) {
+            alreadyReportedErrors += (chain.controlChain.reverse(1).methodCall.toString -> true)
 
-          val errorString = "@@@@@ Found a problem: getActivity may be called when " +
-            "the Fragment is not attached to an Activity" +
-            s": call sequence ${chain.controlChain}"
-          println(errorString)
-          System.out.flush()
-          System.err.println(errorString)
-          System.err.flush()
-          problemCount += 1
+            val errorString = "@@@@@ Found a problem: getActivity may be called when " +
+              "the Fragment is not attached to an Activity" +
+              s": call sequence ${chain.controlChain}"
+            println(errorString)
+            System.out.flush()
+            System.err.println(errorString)
+            System.err.flush()
+            problemCount += 1
+          }
         }
       }
     }
@@ -359,6 +413,9 @@ object DetectIncorrectGetActivityMain {
     val timeAfterFlowDroid = totalTime - flowDroidTime
     println(s"time minus flowdroid (in nanoseconds): ${timeAfterFlowDroid}")
     println(s"time minus flowdroid (in seconds): ${timeAfterFlowDroid / 1000000000}")
+
+
+
   }
 
   def addControlFlowChain(controlFlowChainList: List[ControlFlowChain], controlFlowChainToAdd: ControlFlowChain): List[ControlFlowChain] = {

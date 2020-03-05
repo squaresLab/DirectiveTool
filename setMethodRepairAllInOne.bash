@@ -84,7 +84,7 @@ echo "end of show diff"
 #for currentCheckerNumber in 1 2 3 4 5 6 7 8 9
 #do
 #TODO: add methods of interest
-currentCheckerNumber=4
+currentCheckerNumber=2
   case $currentCheckerNumber in
     #works!
     1) gitBranch=FAULT_012_SO_19597901

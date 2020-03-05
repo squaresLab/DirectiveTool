@@ -14,6 +14,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import RegexUtils._
+import soot.toolkits.graph.ExceptionalUnitGraph
 //import analysis.DetectIncorrectGetActivityMain
 import soot.jimple.internal.{JAssignStmt, JNewExpr}
 
@@ -234,7 +235,22 @@ object DetectSetArgumentsMain {
               methodWhereSetArgumentsIsCalled.getActiveBody
             }
             if (methodWhereSetArgumentsIsCalled.isConcrete && methodWhereSetArgumentsIsCalled.hasActiveBody) {
-              var instanceList: ListBuffer[Tuple2[String, Boolean]] = ListBuffer()
+              try {
+                val s = new AnalyzeSetSelectorSetPackage(new ExceptionalUnitGraph(methodWhereSetArgumentsIsCalled.getActiveBody))
+                if (s.getCaughtProblems() > 0) {
+                  hasViolation = true
+                  println("setArguments is called after being initialized")
+                }
+                if (s.getCaughtProblems() > 0) {
+                  println(s"caught problems: ${s.getCaughtProblems()}")
+                }
+                problemCount += s.getCaughtProblems()
+              } catch {
+                case r: RuntimeException => {
+                  //println("caught analysis timing out")
+                }
+              }
+              /*var instanceList: ListBuffer[Tuple2[String, Boolean]] = ListBuffer()
               val initializationPattern = "=(| )new ([a-zA-Z_][a-zA-Z0-9_\\.]*)".r
               var foundSetArguments = false
               println(s"method: ${methodWhereSetArgumentsIsCalled}")
@@ -278,6 +294,8 @@ object DetectSetArgumentsMain {
                   }
                 }
               }
+
+               */
             }
           }
 

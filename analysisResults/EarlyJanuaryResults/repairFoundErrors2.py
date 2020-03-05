@@ -8,6 +8,7 @@ import sys
 import random
 import timeout_decorator
 import re
+import time
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -155,9 +156,10 @@ def main():
 
   #the checkers to run the repairs for; allows only running the repair on 
   #specific checkers; use 'all' if you want to run on all cases
-  #checkersList = ['DetectMissingSetHasOptionsMenu']
+  checkersList = ['DetectMissingSetHasOptionsMenu']
   #checkersList = ['DetectIncorrectGetActivityMain','DetectInvalidInflateCallMain']
-  checkersList = ['DetectMissingOptionsMenuDefinition']
+  #checkersList = ['DetectIncorrectGetActivityMain']
+  #checkersList = ['DetectMissingOptionsMenuDefinition']
   errorList = extractErrorList(errorListLocation)
   print('error list size: {0}'.format(len(errorList)))
 
@@ -238,6 +240,7 @@ def main():
         #input('stop before moving to next repo')
         continue
       else: 
+        startTime = time.time()
         attemptedFixCount, successfulRepairCount, repairedApps, debuggingResultList = runInjectionTests.tryToRepairApps(checkerName, appBuilds, debuggingResultList, copyRepoLocation, repoDir)
         if attemptedFixCount < 1:
           print('never tried to fix any of the applications')
@@ -258,6 +261,7 @@ def main():
             debuggingResultList.append('the application was completely repaired!')
             print('fixed repo: {0}'.format(repoDir))
             successfullyFixedRepoSet.add(repoDir)
+            print('time to fix: {0}'.format(time.time() - startTime))
             input('stopping to see the successful fix!!')
                   #input('stopping to see checker result after injecting error')
                         #run the automated fix on this application
@@ -265,6 +269,7 @@ def main():
                   #run checker on the new app
           else:
             debuggingResultList.append('the tests failed after trying to repair the app/apps')
+            print('time to fix: {0}'.format(time.time() - startTime))
             print('failed tests')
         totalAttemptedFixCount += attemptedFixCount
         totalSuccessfulRepairCount += successfulRepairCount
