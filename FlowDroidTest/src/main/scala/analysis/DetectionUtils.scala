@@ -218,6 +218,7 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       return args(1)
     } else {
       return "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar"
+      //return "your-path-to-android-jar"
     }
   }
 
@@ -240,7 +241,11 @@ def classIsSubClassOfFragment(c: SootClass): Boolean = {
       //return "/Users/zack/git/DirectiveTool/analysisResults/EarlyJanuaryResults/tempRepoForRepair/app/build/outputs/apk/debug/ammx-2019.02.24.1-debug.apk"
       //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/build/outputs/apk/debug/RxDroid-debug.apk"
       //return "/Users/zack/git/DirectiveTool/FlowDroidTest\napk location: /Users/zack/git/DirectiveTool/temporaryTestOfChange/./app/build/outputs/apk/beta/debug/app-beta-debug.apk"
-      return "/Users/zack/git/reposFromFDroid/pslab-android/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/reposFromFDroid/pslab-android/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/temporaryTestOfChange/app/build/outputs/apk/debug/app-debug.apk"
+      //return "/Users/zack/git/DirectiveTool/appsFromFDroid/io.pslab_19.apk"
+      //return "your-path-to-apk"
+      return "/Users/zack/git/DirectiveTool/injectFaultsDir/tempRepoForInjection//app/build/outputs/apk/oss/debug/tempRepoForInjection-Oss-2.969.apk"
     }
   }
 }

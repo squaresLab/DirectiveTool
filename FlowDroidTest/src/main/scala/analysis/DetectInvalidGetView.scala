@@ -32,7 +32,7 @@ object DetectInvalidGetView {
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val apkLocation = DetectionUtils.getAndroidJarLocation(args)
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation)
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
     //There seems to be an analysis blocker at Infoflow.java on line 293 that stops building the callgraph
@@ -40,7 +40,7 @@ object DetectInvalidGetView {
     analyzer.getConfig.setTaintAnalysisEnabled(true)
     analyzer.getConfig.setMergeDexFiles(true)
     analyzer.getConfig.setCodeEliminationMode(InfoflowConfiguration.CodeEliminationMode.NoCodeElimination)
-    analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("/Users/zack/Documents/intelliJWorkspace/FlowDroidTest/SourcesAndSinks.txt")
+    analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("./SourcesAndSinks.txt")
     Scene.v().releaseCallGraph()
     //Options.v().set_process_multiple_dex(true)
     Options.v().set_process_multiple_dex(false)

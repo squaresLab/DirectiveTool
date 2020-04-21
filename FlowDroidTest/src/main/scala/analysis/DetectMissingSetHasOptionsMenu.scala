@@ -49,7 +49,12 @@ object DetectMissingSetHasOptionsMenu {
         //println(m.hasActiveBody)
         //println(m.getSource())
         if (!m.hasActiveBody) {
-          m.retrieveActiveBody()
+          try {
+            m.retrieveActiveBody()
+          }
+          catch {
+            case _ => println("unable to retrieve the class")
+          }
         }
         if (m.hasActiveBody) {
           for (stmt <- m.getActiveBody.getUnits.asScala) {
@@ -89,7 +94,7 @@ object DetectMissingSetHasOptionsMenu {
       analyzer.getConfig.setTaintAnalysisEnabled(true)
       analyzer.getConfig.setMergeDexFiles(true)
       analyzer.getConfig.setCodeEliminationMode(InfoflowConfiguration.CodeEliminationMode.NoCodeElimination)
-      analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("/Users/zack/Documents/intelliJWorkspace/FlowDroidTest/SourcesAndSinks.txt")
+      analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("./SourcesAndSinks.txt")
       Scene.v().releaseCallGraph()
       //Options.v().set_process_multiple_dex(true)
       Options.v().set_process_multiple_dex(false)

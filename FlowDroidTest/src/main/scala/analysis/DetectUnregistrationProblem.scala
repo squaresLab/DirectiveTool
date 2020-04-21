@@ -20,7 +20,8 @@ object DetectUnregistrationProblem {
     println(s"apk location variable: ${apkLocation}")
     System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE")
     val analyzer = new SetupApplication(
-      "/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      //"/Users/zack/Library/Android/sdk/platforms/android-21/android.jar",
+      DetectionUtils.getAndroidJarLocation(args),
       apkLocation
     )
     //  "/Users/zack/git/ViolationOfDirectives/Application/build/intermediates/instant-run-apk/debug/Application-debug.apk")
@@ -29,7 +30,7 @@ object DetectUnregistrationProblem {
     analyzer.getConfig.setTaintAnalysisEnabled(true)
     analyzer.getConfig.setMergeDexFiles(true)
     analyzer.getConfig.setCodeEliminationMode(InfoflowConfiguration.CodeEliminationMode.NoCodeElimination)
-    analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("/Users/zack/Documents/intelliJWorkspace/FlowDroidTest/SourcesAndSinks.txt")
+    analyzer.getConfig.getAnalysisFileConfig.setSourceSinkFile("./SourcesAndSinks.txt")
     Scene.v().releaseCallGraph()
     //Options.v().set_process_multiple_dex(true)
     Options.v().set_process_multiple_dex(false)

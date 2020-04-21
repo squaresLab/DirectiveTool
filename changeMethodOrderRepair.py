@@ -293,6 +293,7 @@ def executeTestOfChangedAppAndGetCallChains(repairItem):
   else:
     buildSucceeded = False
   if not buildSucceeded:
+    print('build failed in execute test and get call chains')
     return False
   testResultLines = runCheckerAndGetOutput(repairItem)
     #input('press enter when looking at output')
@@ -809,10 +810,12 @@ def moveLineToNewMethod(projectDir, methodToMove, moveLocationObj, callChains):
   #to count how long the function declaration is and adjust later
   insertLocation = int(moveLocationObj.lineNumber) + 2
   contentsOfFileWithAddedLine[insertLocation: insertLocation] = lineToMoveWithDependencies
+  print('inserted line |{0}| to line number {1} in file {2}'.format(lineToMoveWithDependencies, insertLocation, moveLocationObj.fileName))
   with open(moveLocationObj.fileName, 'w') as fout:
     for line in contentsOfFileWithAddedLine:
       fout.write(line)
   print('rewrote {0}'.format(moveLocationObj.fileName))
+  input('stopping to check file rewrite')
 
 
 
